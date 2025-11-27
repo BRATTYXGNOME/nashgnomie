@@ -1,0 +1,38 @@
+fan_reviews_url: "https://fan.reviews/creator/adult-content-model/nash-gnomie-brattyxgnome"
+
+pagination:
+  enabled: true
+  mode: "discover"
+  max_pages: 20
+
+selectors:
+  review_container: "ol.commentlist.main-comment > li.comment.depth-1"
+  username: ".comment-header .author-link"
+  avatar: ".comment-header .comment-author a img"
+  rating_text: ".comment-rate .comment-rate__cur"
+  rating_data_attr: null
+  review_content: ".comment-content p"
+  review_title: ".comment-content .review_title"
+  time_text: ".comment-header .comment-date .time, .comment-mobile .comment-date .time"
+
+storage:
+  json_path: "data/reviews.json"
+  use_sqlite: false
+  sqlite_path: "data/reviews.sqlite3"
+
+request:
+  user_agent: "Mozilla/5.0 (compatible; GnomeMod-ReviewBot/1.0; +https://nashgnomie.vip)"
+  timeout: 20
+  sleep_between_pages_ms: 700
+
+dedupe:
+  fields: ["username", "rating", "review_text"]
+
+server:
+  host: "0.0.0.0"
+  port: 8989
+  cors_origins:
+    - "https://nashgnomie.vip"
+    - "https://www.nashgnomie.vip"
+    - "https://nashgnomie.com"
+    - "https://www.nashgnomie.com"
