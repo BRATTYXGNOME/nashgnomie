@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nash Gnomie | Links</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Press+Start+2P&family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Force navigation to be visible on links page */
+    .main-nav {
+      display: flex !important;
+    }
+
+    /* Links Page Specific Styles */
+    .links-container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 32px 24px 60px;
+    }
+
+    .links-hero {
+      text-align: center;
+      margin-bottom: 48px;
+      animation: fadeInDown 0.6s ease-out;
+    }
+
+    .links-hero h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.6em;
+      color: #ff5fa2;
+      text-shadow: 0 0 4px #ff5fa2;
+      margin: 0 0 12px;
+      letter-spacing: 1px;
+    }
+
+    .links-hero p {
+      font-size: 1.1em;
+      color: #ffb6d5;
+      margin: 0;
+    }
+
+    /* Category Section */
+    .link-category {
+      margin-bottom: 48px;
+      animation: fadeInUp 0.6s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .link-category:nth-child(2) { animation-delay: 0.1s; }
+    .link-category:nth-child(3) { animation-delay: 0.2s; }
+    .link-category:nth-child(4) { animation-delay: 0.3s; }
+    .link-category:nth-child(5) { animation-delay: 0.4s; }
+    .link-category:nth-child(6) { animation-delay: 0.5s; }
+    .link-category:nth-child(7) { animation-delay: 0.6s; }
+
+    .category-header {
+      text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .category-header h2 {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.4em;
+      color: #ff5fa2;
+      text-shadow: 0 0 4px #ff5fa2, 0 0 8px #ff5fa2;
+      margin: 0;
+      padding: 0 20px;
+      display: inline-block;
+      position: relative;
+      z-index: 1;
+      background: #111;
+      letter-spacing: 1px;
+    }
+
+    .category-header::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #ff5fa2, transparent);
+      opacity: 0.3;
+      z-index: 0;
+    }
+
+    /* Link Grid */
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    /* Link Card (Star Button) */
+    .link-card {
+      position: relative;
+      background: rgba(25, 25, 25, 0.8);
+      border: 2px solid rgba(255, 95, 162, 0.3);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      text-decoration: none;
+      color: #fff;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(255, 95, 162, 0.15);
+      overflow: hidden;
+    }
+
+    .link-card::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 95, 162, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .link-card:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .link-card:hover {
+      border-color: #ff5fa2;
+      box-shadow: 0 0 30px rgba(255, 95, 162, 0.5), 0 0 60px rgba(255, 95, 162, 0.3);
+      transform: translateY(-4px);
+    }
+
+    .link-icon {
+      font-size: 2.5em;
+      filter: drop-shadow(0 0 8px #ff5fa2);
+      position: relative;
+      z-index: 1;
+      animation: twinkle 3s infinite;
+    }
+
+    .link-card:hover .link-icon {
+      animation: pulse 0.6s ease-in-out;
+      filter: drop-shadow(0 0 16px #ff5fa2) drop-shadow(0 0 24px #fff);
+    }
+
+    .link-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.1em;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 4px #ff5fa2;
+    }
+
+    .link-promo {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75em;
+      color: #ffb6d5;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 1;
+      background: linear-gradient(90deg, #ff5fa2, #e94560);
+      padding: 4px 12px;
+      border-radius: 12px;
+      margin-top: -4px;
+      box-shadow: 0 0 12px rgba(255, 95, 162, 0.6);
+      animation: promoPulse 2s infinite;
+    }
+
+    /* Special Email Section */
+    .email-section {
+      background: rgba(25, 25, 25, 0.9);
+      border: 2px solid rgba(255, 95, 162, 0.3);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .email-section p {
+      color: #ffb6d5;
+      margin: 0 0 12px;
+      font-size: 0.95em;
+    }
+
+    .email-display {
+      font-family: 'Orbitron', monospace;
+      font-size: 1em;
+      color: #ff5fa2;
+      background: rgba(255, 95, 162, 0.1);
+      border: 1px solid rgba(255, 95, 162, 0.3);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      word-break: break-all;
+    }
+
+    .email-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .email-btn {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.9em;
+      padding: 10px 20px;
+      background: linear-gradient(90deg, #ff5fa2, #e94560);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 12px rgba(255, 95, 162, 0.4);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .email-btn:hover {
+      box-shadow: 0 0 24px rgba(255, 95, 162, 0.8);
+      transform: scale(1.05);
+    }
+
+    .email-btn.copied {
+      background: linear-gradient(90deg, #4caf50, #45a049);
+    }
+
+    /* Warning message styling */
+    .warning-message {
+      display: none;
+      color: #ff5fa2;
+      background: rgba(255, 95, 162, 0.1);
+      border: 1px solid rgba(255, 95, 162, 0.3);
+      padding: 12px;
+      border-radius: 8px;
+      margin: 12px 0;
+      font-size: 0.9em;
+      line-height: 1.5;
+    }
+
+    .warning-message.show {
+      display: block;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    @keyframes promoPulse {
+      0%, 100% { box-shadow: 0 0 12px rgba(255, 95, 162, 0.6); }
+      50% { box-shadow: 0 0 24px rgba(255, 95, 162, 0.9); }
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .links-container {
+        padding: 24px 16px 48px;
+      }
+
+      .links-hero h1 {
+        font-size: 1.8em;
+      }
+
+      .links-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .link-card {
+        padding: 18px;
+      }
+
+      .category-header h2 {
+        font-size: 1.2em;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .links-hero h1 {
+        font-size: 1.5em;
+      }
+
+      .email-buttons {
+        flex-direction: column;
+      }
+
+      .email-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="stars"></div>
+
+  <!-- MAIN NAV -->
+  <nav class="main-nav" id="main-nav">
+    <a href="index.html">Home</a>
+  </nav>
+  <div class="nav-divider"></div>
+
+  <div class="links-container">
+    <!-- Hero Section -->
+    <div class="links-hero">
+      <h1>Find Me Everywhere</h1>
+      <p>Support me! Pick your poison...</p>
+    </div>
+
+    <!-- CHAT WITH ME -->
+    <section class="link-category">
+      <div class="category-header">
+        <h2>💬 CHAT WITH ME</h2>
+      </div>
+      <div class="links-grid">
+        <a href="#" class="link-card" data-link="loyalfans">
+          <div class="link-icon">🖤</div>
+          <div class="link-name">LOYALFANS</div>
+          <div class="link-promo" style="font-size: 0.7em; background: rgba(255, 95, 162, 0.2); box-shadow: none; animation: none;">Optional sub $14.99/m</div>
+        </a>
+        <a href="#" class="link-card" data-link="sextpanther">
+          <div class="link-icon">💋</div>
+          <div class="link-name">SEXTPANTHER</div>
+        </a>
+        <a href="#" class="link-card" data-link="flirtback">
+          <div class="link-icon">💜</div>
+          <div class="link-name">FLIRTBACK</div>
+        </a>
+        <a href="#" class="link-card" data-link="telegram">
+          <div class="link-icon">💬</div>
+          <div class="link-name">TELEGRAM</div>
+          <div class="link-promo" style="font-size: 0.7em; background: rgba(255, 95, 162, 0.2); box-shadow: none; animation: none;">Expect to pay</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- CONTENT SUBSCRIPTION OPTIONS -->
+    <section class="link-category">
+      <div class="category-header">
+        <h2>🔥 CONTENT SUBSCRIPTION OPTIONS</h2>
+      </div>
+      <div class="links-grid">
+        <a href="#" class="link-card" data-link="onlyfans">
+          <div class="link-icon">💎</div>
+          <div class="link-name">ONLYFANS</div>
+          <div class="link-promo">50% OFF • NO PPV</div>
+        </a>
+        <a href="#" class="link-card" data-link="fansly">
+          <div class="link-icon">💙</div>
+          <div class="link-name">FANSLY</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- CAMMING & VIDEO OPTIONS -->
+    <section class="link-category">
+      <div class="category-header">
+        <h2>🎹 CAMMING & VIDEO OPTIONS</h2>
+      </div>
+      <div class="links-grid">
+        <a href="#" class="link-card" data-link="manyvids">
+          <div class="link-icon">🎬</div>
+          <div class="link-name">MANYVIDS</div>
+        </a>
+        <a href="#" class="link-card" data-link="pornhub">
+          <div class="link-icon">🖤</div>
+          <div class="link-name">PORNHUB</div>
+        </a>
+        <a href="#" class="link-card" data-link="myfreecams">
+          <div class="link-icon">💚</div>
+          <div class="link-name">MYFREECAMS</div>
+        </a>
+        <a href="#" class="link-card" data-link="chaturbate">
+          <div class="link-icon">📺</div>
+          <div class="link-name">CHATURBATE</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- TEASERS -->
+    <section class="link-category">
+      <div class="category-header">
+        <h2>🆓 TEASERS</h2>
+      </div>
+      <div class="links-grid">
+        <a href="#" class="link-card" data-link="telegram-channel">
+          <div class="link-icon">📸</div>
+          <div class="link-name">TELEGRAM CHANNEL</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- SOCIAL MEDIA -->
+    <section class="link-category">
+      <div class="category-header">
+        <h2>📱 I'M ON YOUR FAVORITE PLATFORM</h2>
+      </div>
+      <div class="links-grid">
+        <a href="#" class="link-card" data-link="reddit">
+          <div class="link-icon">🤖</div>
+          <div class="link-name">REDDIT</div>
+        </a>
+        <a href="#" class="link-card" data-link="twitter">
+          <div class="link-icon">✖️</div>
+          <div class="link-name">X (TWITTER)</div>
+        </a>
+        <a href="#" class="link-card" data-link="tumblr">
+          <div class="link-icon">🖤</div>
+          <div class="link-name">TUMBLR</div>
+        </a>
+        <a href="https://www.instagram.com/kittenxboo" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">📷</div>
+          <div class="link-name">INSTAGRAM</div>
+        </a>
+        <a href="#" class="link-card" data-link="bluesky">
+          <div class="link-icon">🦋</div>
+          <div class="link-name">BLUESKY</div>
+        </a>
+        <a href="#" class="link-card" data-link="snapchat">
+          <div class="link-icon">👻</div>
+          <div class="link-name">SNAPCHAT</div>
+        </a>
+        <a href="https://open.spotify.com/user/gnomeherbs?si=6ce1a12d1ade4d68&nd=1&dlsi=7d1fd5b05a7f4f24" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">🎵</div>
+          <div class="link-name">SPOTIFY</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- WISHLIST & GIFT CARDS -->
+    <section class="link-category">
+      <div class="category-header">
+        <h2>🎁 WISHLIST & GIFT CARDS</h2>
+      </div>
+      
+      <!-- Wishlists -->
+      <div class="links-grid">
+        <a href="https://www.amazon.com/hz/wishlist/ls/3GIMM66C0BNFN?ref_=wl_share" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">📦</div>
+          <div class="link-name">AMAZON</div>
+        </a>
+        <a href="https://www.wish.ly/nashgnomie" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">⭐</div>
+          <div class="link-name">WISH.LY</div>
+        </a>
+        <a href="https://throne.com/nashgnomie" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">👑</div>
+          <div class="link-name">THRONE</div>
+        </a>
+        <a href="https://youpay.me/NashGnomie" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">💸</div>
+          <div class="link-name">YOUPAY</div>
+        </a>
+      </div>
+
+      <!-- Gift Cards Email Section -->
+      <div class="email-section">
+        <p><strong>💳 GIFT CARDS</strong> (send to my email):</p>
+        <div class="email-display" id="email-display">nashgnomie@proton.me</div>
+        <div class="email-buttons">
+          <button class="email-btn" id="copy-email-btn">
+            📋 Copy Email
+          </button>
+          <a href="mailto:nashgnomie@proton.me" class="email-btn">
+            ✉️ Open Email App
+          </a>
+        </div>
+      </div>
+
+      <!-- Gift Card Links -->
+      <div class="links-grid">
+        <a href="https://www.lanebryant.com/on/demandware.store/Sites-LaneBryant-Site/default/Product-Show?pid=EGift-Card" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">👗</div>
+          <div class="link-name">LANE BRYANT</div>
+        </a>
+        <a href="https://www.torrid.com/giftcertpurchase" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">👗</div>
+          <div class="link-name">TORRID</div>
+        </a>
+        <a href="https://www.localboogeyman.com/collections/gift-cards/products/local-boogeyman-gift-card?variant=40167273037933" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">🎃</div>
+          <div class="link-name">LOCAL BOOGEYMAN</div>
+        </a>
+        <a href="https://www.dollskill.com/collections/gift-cards?c_page=1" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">💀</div>
+          <div class="link-name">DOLLSKILL</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- RESOURCES -->
+    <section class="link-category">
+      <div class="category-header">
+        <h2>🔧 RESOURCES</h2>
+      </div>
+      <div class="links-grid">
+        <a href="https://creatorresourcehub.com" class="link-card" target="_blank" rel="noopener">
+          <div class="link-icon">🛠️</div>
+          <div class="link-name">18+ CREATOR RESOURCES</div>
+        </a>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Universal Age Verification Modal -->
+  <div id="age-verify-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div id="age-verify-input-container">
+        <h2 class="neon-text">🔞 Age Verification Required</h2>
+        
+        <!-- Warning message (hidden by default, shown after mismatch) -->
+        <div id="mismatch-warning" class="warning-message">
+          <strong>⚠️ WARNING</strong><br>
+          Please enter your actual birthdate accurately!<br>
+          Lying about your birthdate for any reason may get you locked out of the site for a while.
+        </div>
+
+        <!-- Telegram DM specific message (hidden by default, shown only for Telegram) -->
+        <div id="telegram-payment-notice" style="display: none; color: #ffb6d5; background: rgba(255, 95, 162, 0.1); border: 1px solid rgba(255, 95, 162, 0.3); padding: 12px; border-radius: 8px; margin: 12px 0; font-size: 0.9em; line-height: 1.5;">
+          <strong>📌 Please note:</strong><br>
+          Free to DM but users will be expected to spend money for my time.<br>
+          <strong>More money = more motivation.</strong><br>
+          My time goes where the money flows.
+        </div>
+
+        <p class="age-prompt" style="color: #fff; line-height: 1.6; margin: 16px 0 20px; font-size: 0.95em;">
+          This link contains <strong>adult content (18+)</strong>.<br>
+          Please enter your birthdate to continue:
+        </p>
+        <form id="age-verify-form" autocomplete="off">
+          <label for="age-verify-birthdate" style="border: none !important; box-shadow: none !important; background: none !important; padding: 0 !important; margin: 0 0 6px 0 !important; display: inline-block; color: #ff5fa2; font-family: 'Orbitron', monospace; font-weight: 700; letter-spacing: 0.04em; text-shadow: 0 0 3px #ff5fa2, 0 0 6px #ff5fa2;">Birthdate:</label>
+          <input type="date" id="age-verify-birthdate" name="birthdate" required style="width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; font-size: 1em;" />
+          <div id="age-verify-error" style="color: #ff5fa2; margin: 12px 0; font-size: 0.9em;" aria-live="polite"></div>
+          <button type="submit" class="neon-btn">Verify & Continue</button>
+        </form>
+      </div>
+      <div id="age-verify-underage-block" style="display:none; margin-top:24px; text-align:center;">
+        <p style="color:#ffb6d5; margin-bottom:12px;">
+          Sorry, you must be 18 or older to access this content.
+        </p>
+        <div class="video-container">
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/FEDXbfnw7W0?autoplay=1&mute=1&playsinline=1"
+            frameborder="0"
+            allow="autoplay; encrypted-media"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lockout Modal -->
+  <div id="lockout-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="neon-text">🚫 LOCKED OUT</h2>
+      <p class="age-prompt" style="color: #ffb6d5; line-height: 1.6; margin: 20px 0;">
+        You have been temporarily locked out due to multiple mismatched birthdates.<br><br>
+        <strong>You can try again in:</strong><br>
+        <span id="lockout-timer" style="font-size: 1.5em; color: #ff5fa2; font-family: 'Orbitron', monospace;">--:--:--</span>
+      </p>
+      <div class="video-container">
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube.com/embed/FEDXbfnw7W0?autoplay=1&mute=1&playsinline=1"
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="thankyou-footer">
+    © 2025 NASH | GNOMIE | <span class="neon-text">18+ ONLY</span>
+  </footer>
+
+  <!-- Main JavaScript -->
+  <script src="main.js"></script>
+  <script>
+    // ==========================================
+    // AGE VERIFICATION SYSTEM
+    // ==========================================
+    
+    const AGE_VERIFICATION = {
+      STORAGE_KEY: 'nashgnomie_dob',
+      MISMATCH_KEY: 'nashgnomie_mismatches',
+      LOCKOUT_KEY: 'nashgnomie_lockout',
+      MISMATCH_FLAG_KEY: 'nashgnomie_has_mismatched',
+      MAX_MISMATCHES: 3,
+      LOCKOUT_HOURS: 24,
+
+      // Link URLs mapping
+      LINK_URLS: {
+        'loyalfans': 'https://www.loyalfans.com/BrattyGnomie?ref=EsDvOGi-2BVwTKmTpvB-2FcuG-2BwZDrhfpPSPcEVnVrP3OyU',
+        'sextpanther': 'https://www.sextpanther.com/brattyxgnome',
+        'flirtback': 'https://flirtback.com/BRATTYXGNOME',
+        'telegram': 'https://t.me/nashgnomie',
+        'onlyfans': 'https://onlyfans.com/brattyxgnome/c240',
+        'fansly': 'https://fans.ly/brattyxgnome/t2',
+        'manyvids': 'https://www.manyvids.com/Profile/1001458033/brattyxgnome/Store/Videos',
+        'pornhub': 'https://www.pornhub.com/model/nash-gnomie',
+        'myfreecams': 'https://www.myfreecams.com/#BRATTYXGNOME',
+        'chaturbate': 'https://chaturbate.com/cannaxkitten',
+        'telegram-channel': 'https://t.me/+XbX3ZBx7takwMjY5',
+        'reddit': 'https://www.reddit.com/user/Simp4Gnomie',
+        'twitter': 'https://x.com/BRATTYXGNOME',
+        'tumblr': 'https://sexy-gnome.tumblr.com',
+        'bluesky': 'https://bsky.app/profile/brattyxgnome.bsky.social',
+        'snapchat': 'https://www.snapchat.com/add/nashgnomie'
+      },
+
+      currentLink: null,
+
+      // Check if user has ever had a mismatch
+      hasMismatched() {
+        return localStorage.getItem(this.MISMATCH_FLAG_KEY) === 'true';
+      },
+
+      // Set mismatch flag
+      setMismatchFlag() {
+        localStorage.setItem(this.MISMATCH_FLAG_KEY, 'true');
+      },
+
+      // Check if user is currently locked out
+      isLockedOut() {
+        const lockoutUntil = localStorage.getItem(this.LOCKOUT_KEY);
+        if (!lockoutUntil) return false;
+        
+        const now = new Date().getTime();
+        const lockoutTime = parseInt(lockoutUntil);
+        
+        if (now < lockoutTime) {
+          return true;
+        } else {
+          // Lockout expired, clear it
+          this.clearLockout();
+          return false;
+        }
+      },
+
+      // Set lockout
+      setLockout() {
+        const now = new Date().getTime();
+        const lockoutUntil = now + (this.LOCKOUT_HOURS * 60 * 60 * 1000);
+        localStorage.setItem(this.LOCKOUT_KEY, lockoutUntil.toString());
+      },
+
+      // Clear lockout
+      clearLockout() {
+        localStorage.removeItem(this.LOCKOUT_KEY);
+        localStorage.removeItem(this.MISMATCH_KEY);
+      },
+
+      // Get stored DOB
+      getStoredDOB() {
+        return localStorage.getItem(this.STORAGE_KEY);
+      },
+
+      // Store DOB
+      storeDOB(dob) {
+        localStorage.setItem(this.STORAGE_KEY, dob);
+      },
+
+      // Get mismatch count
+      getMismatchCount() {
+        const count = localStorage.getItem(this.MISMATCH_KEY);
+        return count ? parseInt(count) : 0;
+      },
+
+      // Increment mismatch count
+      incrementMismatch() {
+        const count = this.getMismatchCount() + 1;
+        localStorage.setItem(this.MISMATCH_KEY, count.toString());
+        this.setMismatchFlag(); // Set the flag that they've mismatched
+        return count;
+      },
+
+      // Calculate age from DOB
+      calculateAge(dob) {
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        
+        return age;
+      },
+
+      // Verify DOB
+      verifyDOB(dob) {
+        // Check if locked out
+        if (this.isLockedOut()) {
+          return { success: false, reason: 'locked_out' };
+        }
+
+        // Check if under 18
+        const age = this.calculateAge(dob);
+        if (age < 18) {
+          return { success: false, reason: 'underage' };
+        }
+
+        // Check if DOB matches stored DOB
+        const storedDOB = this.getStoredDOB();
+        
+        if (!storedDOB) {
+          // First time - store it
+          this.storeDOB(dob);
+          return { success: true };
+        }
+
+        if (storedDOB !== dob) {
+          // Mismatch!
+          const mismatchCount = this.incrementMismatch();
+          
+          if (mismatchCount >= this.MAX_MISMATCHES) {
+            this.setLockout();
+            return { success: false, reason: 'locked_out' };
+          }
+          
+          return { success: false, reason: 'mismatch', count: mismatchCount };
+        }
+
+        // Match - all good
+        return { success: true };
+      },
+
+      // Show lockout modal
+      showLockout() {
+        const lockoutModal = document.getElementById('lockout-modal');
+        const timerElement = document.getElementById('lockout-timer');
+        
+        if (!lockoutModal || !timerElement) return;
+
+        lockoutModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Update timer
+        const updateTimer = () => {
+          const lockoutUntil = localStorage.getItem(this.LOCKOUT_KEY);
+          if (!lockoutUntil) {
+            lockoutModal.classList.remove('active');
+            document.body.style.overflow = '';
+            return;
+          }
+
+          const now = new Date().getTime();
+          const remaining = parseInt(lockoutUntil) - now;
+
+          if (remaining <= 0) {
+            this.clearLockout();
+            lockoutModal.classList.remove('active');
+            document.body.style.overflow = '';
+            location.reload(); // Refresh page
+          } else {
+            const hours = Math.floor(remaining / (1000 * 60 * 60));
+            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+            
+            timerElement.textContent = 
+              `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          }
+        };
+
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+      }
+    };
+
+    // Check lockout on page load
+    if (AGE_VERIFICATION.isLockedOut()) {
+      AGE_VERIFICATION.showLockout();
+    }
+
+    // ==========================================
+    // UNIVERSAL AGE VERIFICATION MODAL
+    // ==========================================
+    const ageVerifyModal = document.getElementById('age-verify-modal');
+    const ageVerifyForm = document.getElementById('age-verify-form');
+    const ageVerifyBirthdate = document.getElementById('age-verify-birthdate');
+    const ageVerifyError = document.getElementById('age-verify-error');
+    const ageVerifyInputContainer = document.getElementById('age-verify-input-container');
+    const ageVerifyUnderageBlock = document.getElementById('age-verify-underage-block');
+    const mismatchWarning = document.getElementById('mismatch-warning');
+    const telegramPaymentNotice = document.getElementById('telegram-payment-notice');
+
+    // Set max date to today
+    if (ageVerifyBirthdate) {
+      ageVerifyBirthdate.max = new Date().toISOString().split('T')[0];
+    }
+
+    // Handle all 18+ link clicks
+    document.querySelectorAll('.link-card[data-link]').forEach(card => {
+      card.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        const linkKey = card.getAttribute('data-link');
+        AGE_VERIFICATION.currentLink = linkKey;
+        
+        // Check if locked out
+        if (AGE_VERIFICATION.isLockedOut()) {
+          AGE_VERIFICATION.showLockout();
+          return;
+        }
+
+        // Show warning if they've mismatched before
+        if (AGE_VERIFICATION.hasMismatched()) {
+          mismatchWarning.classList.add('show');
+        } else {
+          mismatchWarning.classList.remove('show');
+        }
+
+        // Show Telegram payment notice only for Telegram DM
+        if (linkKey === 'telegram') {
+          telegramPaymentNotice.style.display = 'block';
+        } else {
+          telegramPaymentNotice.style.display = 'none';
+        }
+
+        ageVerifyModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+    // Handle form submission
+    if (ageVerifyForm) {
+      ageVerifyForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        ageVerifyError.textContent = '';
+        
+        if (!ageVerifyBirthdate.value) {
+          ageVerifyError.textContent = 'Please enter your birthdate.';
+          return;
+        }
+
+        const result = AGE_VERIFICATION.verifyDOB(ageVerifyBirthdate.value);
+
+        if (result.success) {
+          // Success - open link
+          const url = AGE_VERIFICATION.LINK_URLS[AGE_VERIFICATION.currentLink];
+          if (url) {
+            window.open(url, '_blank', 'noopener');
+          }
+          ageVerifyModal.classList.remove('active');
+          document.body.style.overflow = '';
+          // Reset form
+          ageVerifyInputContainer.style.display = 'block';
+          ageVerifyUnderageBlock.style.display = 'none';
+          ageVerifyError.textContent = '';
+          ageVerifyBirthdate.value = '';
+          mismatchWarning.classList.remove('show');
+          telegramPaymentNotice.style.display = 'none';
+        } else if (result.reason === 'underage') {
+          // Show underage block
+          ageVerifyInputContainer.style.display = 'none';
+          ageVerifyUnderageBlock.style.display = 'block';
+        } else if (result.reason === 'mismatch') {
+          // Show mismatch error and warning
+          ageVerifyError.textContent = 'Birthdate does not match your previous entry. Please enter your actual birthdate accurately.';
+          mismatchWarning.classList.add('show');
+        } else if (result.reason === 'locked_out') {
+          // Show lockout
+          ageVerifyModal.classList.remove('active');
+          document.body.style.overflow = '';
+          AGE_VERIFICATION.showLockout();
+        }
+      });
+    }
+
+    // Close modal handlers
+    if (ageVerifyModal) {
+      ageVerifyModal.addEventListener('click', (e) => {
+        if (e.target === ageVerifyModal) {
+          ageVerifyModal.classList.remove('active');
+          document.body.style.overflow = '';
+          // Reset form
+          ageVerifyInputContainer.style.display = 'block';
+          ageVerifyUnderageBlock.style.display = 'none';
+          ageVerifyError.textContent = '';
+          ageVerifyBirthdate.value = '';
+          mismatchWarning.classList.remove('show');
+          telegramPaymentNotice.style.display = 'none';
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && ageVerifyModal.classList.contains('active')) {
+          ageVerifyModal.classList.remove('active');
+          document.body.style.overflow = '';
+          ageVerifyInputContainer.style.display = 'block';
+          ageVerifyUnderageBlock.style.display = 'none';
+          ageVerifyError.textContent = '';
+          ageVerifyBirthdate.value = '';
+          mismatchWarning.classList.remove('show');
+          telegramPaymentNotice.style.display = 'none';
+        }
+      });
+    }
+
+    // ==========================================
+    // EMAIL COPY FUNCTIONALITY
+    // ==========================================
+    const copyBtn = document.getElementById('copy-email-btn');
+    const email = 'nashgnomie@proton.me';
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(email);
+          const originalText = copyBtn.innerHTML;
+          copyBtn.innerHTML = '✔ Copied!';
+          copyBtn.classList.add('copied');
+          
+          setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        } catch (err) {
+          // Fallback for older browsers
+          const textarea = document.createElement('textarea');
+          textarea.value = email;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          
+          const originalText = copyBtn.innerHTML;
+          copyBtn.innerHTML = '✔ Copied!';
+          copyBtn.classList.add('copied');
+          
+          setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
