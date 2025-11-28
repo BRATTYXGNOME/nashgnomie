@@ -6,6 +6,7 @@ from pydantic import BaseModel
 import uvicorn
 import yaml
 from threading import Thread
+import traceback
 
 class Review(BaseModel):
     username: str
@@ -27,8 +28,16 @@ def load_config(path: str = "config.yaml"):
 cfg = load_config()
 JSON_PATH = cfg["storage"]["json_path"]
 
-# Ensure data directory exists
-os.makedirs(os.path.dirname(JSON_PATH) if os.path.dirname(JSON_PATH) else ".", exist_ok=True)
+# Ensure data directory exists with better error handling
+try:
+    data_dir = os.path.dirname(JSON_PATH)
+    if data_dir:
+        os.makedirs(data_dir, exist_ok=True)
+        print(f"✅ Data directory ensured: {data_dir}")
+    else:
+        print(f"⚠️  No directory in path: {JSON_PATH}")
+except Exception as e:
+    print(f"❌ Error creating data directory: {e}")
 
 app = FastAPI(
     title="Nash Gnomie Fan Reviews API",
@@ -63,7 +72,7 @@ def read_store() -> Storage:
             hashes=data.get("hashes", [])
         )
     except Exception as e:
-        print(f"Error reading storage: {e}")
+        print(f"❌ Error reading storage: {e}")
         return Storage(reviews=[], hashes=[])
 
 # ==========================================
@@ -71,21 +80,29 @@ def read_store() -> Storage:
 # ==========================================
 
 def run_scraper():
-    """Run the scraper and return results."""
+    """Run the scraper and return results with detailed error logging."""
     try:
-        # Import scraper module
+        print("📥 Importing scraper module...")
         from scraper import ReviewScraper, load_config
         
-        # Load config and run scraper
+        print("📋 Loading config...")
         cfg = load_config()
+        
+        print("🔧 Initializing scraper...")
         scraper = ReviewScraper(cfg)
+        
+        print("🌐 Starting scrape...")
         result = scraper.scrape()
         
         print(f"✅ Scraper completed: {result['count']} reviews saved to {result['path']}")
         return result
+        
     except Exception as e:
-        print(f"❌ Scraper error: {e}")
-        return {"error": str(e)}
+        error_msg = f"❌ Scraper error: {type(e).__name__}: {str(e)}"
+        print(error_msg)
+        print("📋 Full traceback:")
+        traceback.print_exc()
+        return {"error": str(e), "type": type(e).__name__}
 
 def scraper_background_loop():
     """Background thread that runs scraper every 15 minutes."""
@@ -93,17 +110,22 @@ def scraper_background_loop():
     
     # Run immediately on startup
     print("⏳ Running initial scrape...")
-    run_scraper()
+    result = run_scraper()
+    print(f"📊 Initial scrape result: {result}")
     
     # Then run every 15 minutes
     while True:
+        print("⏰ Sleeping for 15 minutes...")
         time.sleep(900)  # 15 minutes = 900 seconds
         print("⏳ Running scheduled scrape...")
-        run_scraper()
+        result = run_scraper()
+        print(f"📊 Scheduled scrape result: {result}")
 
 # Start background scraper thread
+print("🎬 Starting background scraper thread...")
 scraper_thread = Thread(target=scraper_background_loop, daemon=True)
 scraper_thread.start()
+print("✅ Background thread started successfully")
 
 # ==========================================
 # API ENDPOINTS
