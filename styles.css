@@ -312,7 +312,7 @@ main {
   height: 60%;
   transform: translate(-50%, -50%) rotate(-15deg);
   pointer-events: none;
-  background-image: url('images/watermark.png');
+  background-image: url('https://i.ibb.co/PZsQFRbp/watermark.png');
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
