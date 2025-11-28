@@ -1,10 +1,11 @@
-import json, os
+import json, os, time
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 import yaml
+from threading import Thread
 
 class Review(BaseModel):
     username: str
@@ -65,6 +66,49 @@ def read_store() -> Storage:
         print(f"Error reading storage: {e}")
         return Storage(reviews=[], hashes=[])
 
+# ==========================================
+# BACKGROUND SCRAPER - Runs every 15 minutes
+# ==========================================
+
+def run_scraper():
+    """Run the scraper and return results."""
+    try:
+        # Import scraper module
+        from scraper import ReviewScraper, load_config
+        
+        # Load config and run scraper
+        cfg = load_config()
+        scraper = ReviewScraper(cfg)
+        result = scraper.scrape()
+        
+        print(f"✅ Scraper completed: {result['count']} reviews saved to {result['path']}")
+        return result
+    except Exception as e:
+        print(f"❌ Scraper error: {e}")
+        return {"error": str(e)}
+
+def scraper_background_loop():
+    """Background thread that runs scraper every 15 minutes."""
+    print("🚀 Background scraper thread started")
+    
+    # Run immediately on startup
+    print("⏳ Running initial scrape...")
+    run_scraper()
+    
+    # Then run every 15 minutes
+    while True:
+        time.sleep(900)  # 15 minutes = 900 seconds
+        print("⏳ Running scheduled scrape...")
+        run_scraper()
+
+# Start background scraper thread
+scraper_thread = Thread(target=scraper_background_loop, daemon=True)
+scraper_thread.start()
+
+# ==========================================
+# API ENDPOINTS
+# ==========================================
+
 @app.get("/")
 def root():
     """Root endpoint - API information."""
@@ -74,9 +118,11 @@ def root():
         "endpoints": {
             "health": "/health",
             "reviews": "/reviews",
-            "reviews_by_user": "/reviews/{username}"
+            "reviews_by_user": "/reviews/{username}",
+            "scrape_now": "/scrape-now (POST)"
         },
-        "docs": "/docs"
+        "docs": "/docs",
+        "auto_scraper": "Runs every 15 minutes"
     }
 
 @app.get("/health")
@@ -87,7 +133,8 @@ def health():
         "status": "healthy",
         "reviews_count": len(store.reviews),
         "storage_path": JSON_PATH,
-        "storage_exists": os.path.exists(JSON_PATH)
+        "storage_exists": os.path.exists(JSON_PATH),
+        "auto_scraper": "active"
     }
 
 @app.get("/reviews", response_model=List[Review])
@@ -114,6 +161,21 @@ def reviews_by_user(username: str):
         raise HTTPException(status_code=404, detail=f"No reviews found for username: {username}")
     return out
 
+@app.post("/scrape-now")
+def trigger_scrape():
+    """
+    Manually trigger a scrape immediately.
+    
+    This endpoint allows you to run the scraper on-demand
+    instead of waiting for the 15-minute interval.
+    """
+    print("🔄 Manual scrape triggered via API")
+    result = run_scraper()
+    return {
+        "status": "completed",
+        "result": result
+    }
+
 # For local development only
 if __name__ == "__main__":
     host = os.getenv("HOST", cfg["server"].get("host", "0.0.0.0"))
@@ -121,6 +183,7 @@ if __name__ == "__main__":
     
     print(f"Starting Nash Gnomie Reviews API on {host}:{port}")
     print(f"Storage path: {JSON_PATH}")
+    print(f"Auto-scraper: Runs every 15 minutes")
     
     uvicorn.run(
         app,
