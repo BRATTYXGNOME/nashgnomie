@@ -8,7 +8,7 @@
   // ==========================================
   // PRODUCTION API CONFIGURATION
   // ==========================================
-  const BASE_URL = 'https://nashgnomie-reviews-api.onrender.com';
+  const BASE_URL = 'https://nashgnomie.onrender.com';
   const API_URL = BASE_URL + '/reviews';
   
   const MAX_RETRIES = 2;
@@ -331,5 +331,6 @@
 
   // Start initialization
   init();
+
 
 })();
