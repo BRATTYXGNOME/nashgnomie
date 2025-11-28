@@ -32,24 +32,20 @@
     const emptyStar = '☆';
     const maxStars = 10;
     
-    // Round to nearest 0.5
     const roundedRating = Math.round(rating * 2) / 2;
     const fullStars = Math.floor(roundedRating);
     const hasHalfStar = roundedRating % 1 !== 0;
     
     let starsHTML = '';
     
-    // Add full stars
     for (let i = 0; i < fullStars; i++) {
       starsHTML += fullStar;
     }
     
-    // Add half star (rendered as full star for simplicity)
     if (hasHalfStar) {
       starsHTML += fullStar;
     }
     
-    // Add empty stars
     const emptyCount = maxStars - Math.ceil(roundedRating);
     for (let i = 0; i < emptyCount; i++) {
       starsHTML += emptyStar;
@@ -63,15 +59,13 @@
   // ==========================================
   function calculateAverageRating(reviews) {
     if (!reviews || reviews.length === 0) return 0;
-    
     const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
     const avg = sum / reviews.length;
-    
-    return Math.round(avg * 10) / 10; // Round to 1 decimal place
+    return Math.round(avg * 10) / 10;
   }
 
   // ==========================================
-  // ESCAPE HTML (Security)
+  // ESCAPE HTML
   // ==========================================
   function escapeHTML(str) {
     if (!str) return '';
@@ -123,7 +117,6 @@
   function renderReviews(reviews) {
     if (!reviewsScroll) return;
     
-    // Clear loading skeletons
     reviewsScroll.innerHTML = '';
     
     if (!reviews || reviews.length === 0) {
@@ -136,35 +129,16 @@
       return;
     }
     
-    // Render each review card
     reviews.forEach(review => {
       const card = renderReviewCard(review);
       reviewsScroll.appendChild(card);
     });
     
-    // Update average rating display
     const avgRating = calculateAverageRating(reviews);
     if (avgStarsElement && avgRatingElement) {
       avgStarsElement.innerHTML = renderStars(avgRating);
       avgRatingElement.textContent = `${avgRating}/10`;
     }
-    
-    // Add scroll fade-in animation
-    setTimeout(() => {
-      const cards = reviewsScroll.querySelectorAll('.review-card');
-      cards.forEach((card, index) => {
-        setTimeout(() => {
-          card.style.opacity = '0';
-          card.style.transform = 'translateY(20px)';
-          card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-          
-          requestAnimationFrame(() => {
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-          });
-        }, index * 100); // Stagger by 100ms
-      });
-    }, 50);
   }
 
   // ==========================================
@@ -175,11 +149,10 @@
     
     reviewsScroll.innerHTML = `
       <div class="reviews-error">
-        ⚠️ ${escapeHTML(message || 'Could not load reviews. Please try again later.')}
+        ⚠️ ${escapeHTML(message || 'Could not load reviews.')}
       </div>
     `;
     
-    // Hide average rating on error
     if (avgStarsElement && avgRatingElement) {
       avgStarsElement.innerHTML = '';
       avgRatingElement.textContent = 'N/A';
@@ -187,41 +160,44 @@
   }
 
   // ==========================================
-  // FETCH REVIEWS FROM API
+  // FETCH REVIEWS FROM API (WITH SAFE DEBUG LOGS)
   // ==========================================
   async function fetchReviews(retryCount = 0) {
+
+    console.log('[reviews.js] Fetching:', API_URL);
+
     try {
       const response = await fetch(API_URL, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-        cache: 'no-store' // Always get fresh data
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
       });
-      
+
+      console.log('[reviews.js] Status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+        throw new Error(`API returned ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
-      // Validate data is an array
+
+      console.log('[reviews.js] Received items:', Array.isArray(data) ? data.length : 'NOT ARRAY');
+
       if (!Array.isArray(data)) {
-        throw new Error('Invalid API response format');
+        throw new Error('Invalid API format');
       }
-      
+
       return data;
-      
+
     } catch (error) {
-      console.error('Error fetching reviews:', error);
-      
-      // Retry logic
+      console.error('[reviews.js] Fetch error:', error);
+
       if (retryCount < MAX_RETRIES) {
-        console.log(`Retrying... (${retryCount + 1}/${MAX_RETRIES})`);
+        console.log(`[reviews.js] Retry ${retryCount + 1}/${MAX_RETRIES}`);
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
         return fetchReviews(retryCount + 1);
       }
-      
+
       throw error;
     }
   }
@@ -230,11 +206,16 @@
   // LOAD AND DISPLAY REVIEWS
   // ==========================================
   async function loadReviews() {
+    console.log('[reviews.js] loadReviews() called');
+
     try {
       const reviews = await fetchReviews();
+      console.log('[reviews.js] Rendering reviews…');
       renderReviews(reviews);
       initSwipeGestures();
+
     } catch (error) {
+      console.log('[reviews.js] loadReviews() FAILED');
       showError('Unable to load reviews at this time.');
     }
   }
@@ -262,24 +243,14 @@
     if (!reviewsScroll) return;
     
     const swipeDistance = touchEndX - touchStartX;
-    
-    // Not a swipe, just a tap
     if (Math.abs(swipeDistance) < swipeThreshold) return;
     
-    const scrollAmount = 340; // Card width (320px) + gap (18px)
+    const scrollAmount = 340;
     
     if (swipeDistance > 0) {
-      // Swiped right - scroll left (previous)
-      reviewsScroll.scrollBy({
-        left: -scrollAmount,
-        behavior: 'smooth'
-      });
+      reviewsScroll.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
     } else {
-      // Swiped left - scroll right (next)
-      reviewsScroll.scrollBy({
-        left: scrollAmount,
-        behavior: 'smooth'
-      });
+      reviewsScroll.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   }
 
@@ -290,7 +261,6 @@
     if (!reviewsScroll) return;
     
     reviewsScroll.addEventListener('wheel', (e) => {
-      // Only hijack vertical scroll if there's horizontal scrolling available
       if (reviewsScroll.scrollWidth > reviewsScroll.clientWidth) {
         e.preventDefault();
         reviewsScroll.scrollBy({
@@ -305,32 +275,24 @@
   // INITIALIZE
   // ==========================================
   function init() {
-    // Wait for DOM to be ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', init);
       return;
     }
     
-    // Get DOM elements
     reviewsScroll = document.getElementById('reviews-scroll');
     avgStarsElement = document.getElementById('avg-stars');
     avgRatingElement = document.getElementById('avg-rating');
     
-    // Check if reviews section exists on this page
     if (!reviewsScroll) {
-      console.log('Reviews section not found on this page');
+      console.log('[reviews.js] No #reviews-scroll element found');
       return;
     }
     
-    // Initialize mouse wheel horizontal scroll
     initMouseWheelScroll();
-    
-    // Load reviews
     loadReviews();
   }
 
-  // Start initialization
   init();
-
 
 })();
