@@ -6,7 +6,7 @@
   'use strict';
 
   // ==========================================
-  // PRODUCTION API CONFIGURATION
+  // PRODUCTION API CONFIGURATION — FIXED URL
   // ==========================================
   const BASE_URL = 'https://nashgnomie.onrender.com';
   const API_URL = BASE_URL + '/reviews';
@@ -160,7 +160,7 @@
   }
 
   // ==========================================
-  // FETCH REVIEWS FROM API (WITH SAFE DEBUG LOGS)
+  // FETCH REVIEWS FROM API — LOGGING ADDED
   // ==========================================
   async function fetchReviews(retryCount = 0) {
 
