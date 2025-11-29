@@ -54,6 +54,8 @@ const AGE_STORAGE_KEY = 'nashgnomie_dob'; // Single source of truth for DOB
 // Helper: Calculate age from DOB string (YYYY-MM-DD)
 function calculateAge(dob) {
   const birthDate = new Date(dob);
+  if (isNaN(birthDate.getTime())) return NaN;
+
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -85,36 +87,76 @@ document.addEventListener('DOMContentLoaded', () => {
   const mainNav           = document.getElementById('main-nav');
   const mainContent       = document.querySelector('main');
 
-  // DON'T auto-bypass - always show age gate on page load
-  // This ensures every visit requires verification
+  // Helpers to show/hide main site vs age gate
+  function showMainSite() {
+    if (ageModal) ageModal.classList.remove('active');
+    if (ageInputContainer) ageInputContainer.style.display = 'none';
+    if (underageBlock) underageBlock.style.display = 'none';
+    if (mainNav) mainNav.style.display = 'flex';
+    if (mainContent) mainContent.style.display = 'block';
+    document.body.style.overflow = '';
+  }
 
+  function showAgeGate() {
+    if (ageModal) ageModal.classList.add('active');
+    if (ageInputContainer) ageInputContainer.style.display = 'block';
+    if (underageBlock) underageBlock.style.display = 'none';
+    if (mainNav) mainNav.style.display = 'none';
+    if (mainContent) mainContent.style.display = 'none';
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Make sure you can't pick a future date
   if (birthdateIn) {
     birthdateIn.max = new Date().toISOString().split('T')[0];
   }
 
+  // On load: if we already have a valid adult DOB saved, skip the gate
+  try {
+    const storedDob  = localStorage.getItem(AGE_STORAGE_KEY);
+    const storedAge  = storedDob ? calculateAge(storedDob) : NaN;
+    const isAdult    = storedDob && Number.isFinite(storedAge) && storedAge >= 18;
+
+    if (isAdult) {
+      showMainSite();
+    } else {
+      showAgeGate();
+    }
+  } catch (e) {
+    console.warn('Age gate storage error, defaulting to gate on each visit', e);
+    showAgeGate();
+  }
+
+  // Handle age form submission
   if (ageForm) {
     ageForm.addEventListener('submit', e => {
       e.preventDefault();
-      ageError.textContent = '';
+      if (ageError) ageError.textContent = '';
       
-      if (!birthdateIn.value) {
-        ageError.textContent = 'Please enter your birthdate.';
+      if (!birthdateIn || !birthdateIn.value) {
+        if (ageError) ageError.textContent = 'Please enter your birthdate.';
         return;
       }
       
-      const dob = birthdateIn.value; // Raw YYYY-MM-DD string
-      const age = calculateAge(dob);
+      const dob  = birthdateIn.value; // Raw YYYY-MM-DD string
+      const age  = calculateAge(dob);
+
+      if (!Number.isFinite(age)) {
+        if (ageError) ageError.textContent = 'Please enter a valid date.';
+        return;
+      }
       
       if (age < 18) {
-        ageInputContainer.style.display = 'none';
-        underageBlock.style.display     = 'block';
+        if (ageInputContainer) ageInputContainer.style.display = 'none';
+        if (underageBlock) underageBlock.style.display     = 'block';
       } else {
         // User is 18+, store DOB as single source of truth
-        localStorage.setItem(AGE_STORAGE_KEY, dob);
-        ageModal.classList.remove('active');
-        if (mainNav) mainNav.style.display = 'flex';
-        if (mainContent) mainContent.style.display = 'block';
-        document.body.style.overflow = '';
+        try {
+          localStorage.setItem(AGE_STORAGE_KEY, dob);
+        } catch (err) {
+          console.warn('Could not persist age verification', err);
+        }
+        showMainSite();
       }
     });
   }
