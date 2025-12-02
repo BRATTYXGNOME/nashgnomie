@@ -3,12 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nash Gnomie | Home</title>
+  <title>Nash Gnomie | Adult Content Creator & GFE Specialist</title>
+  <meta name="description" content="Nash Gnomie (Gnomie) - Professional adult content creator with 10+ years experience. GFE chats, custom content, and intimate connections. 18+ only." />
+  
+  <!-- OpenGraph Tags -->
+  <meta property="og:title" content="Nash Gnomie | Adult Content Creator & GFE Specialist" />
+  <meta property="og:description" content="Professional adult content creator with 10+ years experience. GFE chats, custom content, and intimate connections. 18+ only." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://nashgnomie.vip/" />
+  <meta property="og:image" content="https://i.ibb.co/9ZKc5fN/pfp.jpg" />
+  
+  <!-- Twitter Card Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Nash Gnomie | Adult Content Creator" />
+  <meta name="twitter:description" content="Professional adult content creator with 10+ years experience. GFE chats, custom content, and intimate connections. 18+ only." />
+  <meta name="twitter:image" content="https://i.ibb.co/9ZKc5fN/pfp.jpg" />
+  
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Nash Gnomie",
+    "alternateName": "Gnomie",
+    "description": "Adult content creator and GFE specialist",
+    "url": "https://nashgnomie.vip",
+    "image": "https://i.ibb.co/9ZKc5fN/pfp.jpg",
+    "sameAs": [
+      "https://twitter.com/BRATTYXGNOME",
+      "https://www.reddit.com/user/Simp4Gnomie",
+      "https://t.me/nashgnomie"
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Nash Gnomie",
+    "url": "https://nashgnomie.vip",
+    "description": "Professional adult content creator offering GFE chats, custom content, and premium subscriptions"
+  }
+  </script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Press+Start+2P&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div id="stars"></div>
+  <div id="home"></div>
+
+  <!-- Hidden H1 for SEO -->
+  <h1 class="seo-hidden">Nash Gnomie - Adult Content Creator & GFE Specialist</h1>
 
   <!-- AGE GATE -->
   <div id="age-modal" class="modal-overlay active">
@@ -27,17 +73,19 @@
         </form>
       </div>
       <div id="underage-block" style="display:none; margin-top:24px; text-align:center;">
-        <div class="security-alert">
-          <div class="alert-icon">⛔</div>
-          <div class="alert-title">SECURITY ALERT</div>
-          <div class="alert-subtitle">UNDERAGE ACCESS ATTEMPT DETECTED</div>
-          <div class="alert-message">
-            Your attempt to access adult content has been logged.<br><br>
-            This activity is being monitored.<br>
-            Repeated attempts will have consequences.<br><br>
-            <strong>You must be 18+ to access this site.</strong><br><br>
-            Exit immediately.
-          </div>
+        <p style="color:#ffb6d5; margin-bottom:12px;">
+          Sorry, you must be 18 or older to enter this site.
+        </p>
+        <div class="video-container">
+          <iframe
+            id="underage-video"
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/FEDXbfnw7W0?autoplay=1&mute=1&playsinline=1"
+            frameborder="0"
+            allow="autoplay; encrypted-media"
+            allowfullscreen
+          ></iframe>
         </div>
       </div>
     </div>
@@ -45,6 +93,13 @@
 
   <!-- MAIN SITE CONTAINER -->
   <div id="main-site-container">
+    <!-- HAMBURGER MENU BUTTON (Mobile Only) -->
+    <button id="hamburger-btn" class="hamburger-btn" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
     <!-- MAIN NAV (hidden until age-gate passes) -->
     <nav class="main-nav" id="main-nav">
       <a href="#home" class="active">Home</a>
@@ -52,8 +107,8 @@
       <a href="#gallery">Gallery</a>
       <a href="links.html" id="links-btn">Links</a>
       <a href="#" id="contact-btn">Contact</a>
-      <a href="#adopt">Adopt a Bill</a>
-      <a href="#menu">Menu</a>
+      <a href="#adopt-bill">Adopt a Bill</a>
+      <a href="#" id="tip-btn">Tip Me</a>
     </nav>
     <div class="nav-divider"></div>
 
@@ -62,28 +117,16 @@
       <!-- ABOUT -->
       <section id="about" class="bio bio-flex uniform-section">
         <div class="bio-pic-col">
-          <img src="images/pfp.jpg" alt="Miss Nash Profile" class="profile-pic" />
+          <img src="https://i.ibb.co/9ZKc5fN/pfp.jpg" alt="Nash Gnomie profile picture - adult content creator" class="profile-pic" />
         </div>
         <div class="bio-text-col">
           <h2 class="neon-text about-header">About Me</h2>
           <div class="about-blurb">
             <p>
-              Heyy I'm Miss NASH | Gnomie 😊<br />
-              Your new favorite online crush!
+              Hi, I'm Miss Nash (or Gnomie)!<br />
+              Adult content creator, resource collector, and your new favorite online crush.<br />
+              <span class="about-highlight">10+ years</span> of online content experience.
             </p>
-            <p>
-              <span class="about-highlight">10+ years</span> of slingin' online experiences.. & collecting resources for adult content creators!
-            </p>
-            
-            <!-- Resource Link Callout -->
-            <div class="resource-callout">
-              <span class="resource-icon">🛠️</span>
-              <a href="https://creatorresourcehub.com" class="resource-link" target="_blank" rel="noopener">
-                <strong>Creator Resource Hub</strong>
-                <span class="resource-arrow">→</span>
-              </a>
-            </div>
-            
             <ul class="about-details">
               <li>
                 <span class="about-label">Age:</span> 31
@@ -95,10 +138,7 @@
                 flirty fun!
               </li>
             </ul>
-            <div class="action-buttons">
-              <button id="dm-btn" class="neon-btn">💌 DM Me</button>
-              <button id="tip-btn" class="neon-btn">💸 Tip Me</button>
-            </div>
+            <button id="dm-btn" class="neon-btn">DM Me</button>
           </div>
         </div>
       </section>
@@ -119,29 +159,29 @@
         <h2 class="neon-text">Teaser Gallery</h2>
         <div class="gallery-scroll">
           <div class="gallery-item">
-            <img src="images/teaser001.gif" alt="Teaser 1" class="teaser-thumb" />
+            <img src="https://i.ibb.co/Gv575Mxq/teaser001.gif" alt="Teaser preview 1" class="teaser-thumb" />
           </div>
           <div class="gallery-item">
-            <img src="images/teaser003.jpeg" alt="Teaser 2" class="teaser-thumb" />
+            <img src="https://i.ibb.co/grTRv9y/teaser003.jpg" alt="Teaser preview 2" class="teaser-thumb" />
           </div>
           <div class="gallery-item">
-            <img src="images/teaser004.png" alt="Teaser 3" class="teaser-thumb" />
+            <img src="https://i.ibb.co/MDMMkLdD/teaser004.png" alt="Teaser preview 3" class="teaser-thumb" />
           </div>
           <div class="gallery-item">
-            <img src="images/teaser005.png" alt="Teaser 4" class="teaser-thumb" />
+            <img src="https://i.ibb.co/7yhT9tX/teaser005.png" alt="Teaser preview 4" class="teaser-thumb" />
           </div>
           <div class="gallery-item">
-            <img src="images/teaser006.png" alt="Teaser 5" class="teaser-thumb" />
+            <img src="https://i.ibb.co/SVmN6Lq/teaser006.png" alt="Teaser preview 5" class="teaser-thumb" />
           </div>
           <div class="gallery-item">
-            <img src="images/teaser007.jpg" alt="Teaser 6" class="teaser-thumb" />
+            <img src="https://i.ibb.co/hLgT6bZ/teaser007.jpg" alt="Teaser preview 6" class="teaser-thumb" />
           </div>
           <div class="gallery-item">
-            <img src="images/teaser002.gif" alt="Teaser 7" class="teaser-thumb" />
+            <img src="https://i.ibb.co/ZfV6j3J/teaser002.gif" alt="Teaser preview 7" class="teaser-thumb" />
           </div>
         </div>
         <div class="gallery-btn-center">
-          <a href="https://t.me/+XbX3ZBx7takwMjY5" class="neon-btn" target="_blank">More Teasers</a>
+          <a href="https://t.me/+XbX3ZBx7takwMjY5" class="neon-btn" target="_blank" rel="noopener">More Teasers</a>
         </div>
       </section>
 
@@ -174,7 +214,7 @@
             </tr>
             <tr data-bill="groceries">
               <td>Groceries</td>
-              <td>Food, pantry, door dash, etc.</td>
+              <td>Food and pantry for one person</td>
               <td>$300</td>
             </tr>
             <tr data-bill="essentials">
@@ -225,7 +265,7 @@
              class="neon-btn" 
              target="_blank" 
              rel="noopener">
-            ★ Leave a Review
+            ⭐ Leave a Review
           </a>
         </div>
       </section>
@@ -240,23 +280,6 @@
       <div class="bill-popup-title" id="bill-popup-title"></div>
       <div class="bill-popup-desc" id="bill-popup-desc"></div>
       <div class="bill-popup-links" id="bill-popup-links"></div>
-    </div>
-  </div>
-
-  <!-- IBAN Pop-up Modal -->
-  <div id="iban-popup-overlay" class="bill-popup-overlay">
-    <div class="iban-popup" id="iban-popup">
-      <button class="bill-popup-close" id="iban-popup-close" aria-label="Close">&times;</button>
-      <div class="iban-popup-title">International Bank Transfer (IBAN)</div>
-      <div class="iban-popup-info">
-        <p><strong>Beneficiary:</strong> Stichting Custodian Yoursafe</p>
-        <p><strong>Address:</strong> Danzigerkade 23D, 1013 AP Amsterdam, Netherlands</p>
-        <p><strong>BIC:</strong> <span class="copy-iban" data-value="RABONL2U">RABONL2U</span></p>
-        <p><strong>Bank Name:</strong> Rabobank</p>
-        <p><strong>Bank Address:</strong> Croeselaan 18, 3521 CB Utrecht, Netherlands</p>
-        <p><strong>Account Number:</strong> <span class="copy-iban" data-value="NL18 RABO 0323 9242 47">NL18 RABO 0323 9242 47</span></p>
-        <p><strong>IBAN:</strong> <span class="copy-iban" data-value="NL81YOUR0318911469">NL81YOUR0318911469</span></p>
-      </div>
     </div>
   </div>
 
@@ -280,36 +303,8 @@
     <div class="bill-popup" id="tip-popup">
       <button class="bill-popup-close" id="tip-popup-close" aria-label="Close">&times;</button>
       <div class="bill-popup-title">💸 Tip Me</div>
-      <div class="bill-popup-desc">Send a tip via your favorite payment method!</div>
-      <div class="bill-popup-links">
-        <a href="https://cash.app/$pewpewser" target="_blank" rel="noopener">Cash App</a>
-        <a href="https://allmylinks.com/link/out?id=xsliz-3l6t6-unbtkc" target="_blank" rel="noopener">AllMyLinks</a>
-        <a href="https://youpay.me/NashGnomie" target="_blank" rel="noopener">YouPay</a>
-        <a href="#" id="revolut-link">Revolut</a>
-        <a href="#" id="paypal-link">PayPal</a>
-        <a href="https://www.wish.ly/nashgnomie" target="_blank" rel="noopener">Wish.ly</a>
-        <a href="https://throne.com/nashgnomie" target="_blank" rel="noopener">Throne</a>
-      </div>
-      <div class="bill-popup-links" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255, 95, 162, 0.2);">
-        <div style="color: #ffb6d5; font-size: 0.95em; margin-bottom: 8px; text-align: left;">
-          <strong>Chime:</strong> <span class="copy-cashtag" data-cashtag="$nashgnomie">$nashgnomie</span>
-        </div>
-        <div style="color: #ffb6d5; font-size: 0.95em; margin-bottom: 8px; text-align: left;">
-          <strong>Amazon Gift Card:</strong> <span class="copy-email" data-email="nashgnomie@gmail.com">nashgnomie@gmail.com</span>
-        </div>
-        <div style="color: #ffb6d5; font-size: 0.95em; margin-bottom: 8px; text-align: left;">
-          <strong>Apple Pay:</strong> <span class="copy-email" data-email="nashgnomie@gmail.com">nashgnomie@gmail.com</span>
-        </div>
-        <div style="color: #ffb6d5; font-size: 0.95em; margin-bottom: 8px; text-align: left;">
-          <strong>Zelle:</strong> <span class="copy-email" data-email="nashgnomie@gmail.com">nashgnomie@gmail.com</span>
-        </div>
-        <div style="color: #ffb6d5; font-size: 0.95em; text-align: left;">
-          <strong>Wise:</strong> <span class="copy-email" data-email="@naomih282">@naomih282</span>
-        </div>
-      </div>
-      <div style="margin-top: 16px;">
-        <a href="#" id="tip-iban-link" class="iban-link-btn">International Bank Transfer (IBAN)</a>
-      </div>
+      <div class="bill-popup-desc">Show some love! Every tip is appreciated!</div>
+      <div class="bill-popup-links" id="tip-popup-links"></div>
     </div>
   </div>
 
@@ -346,17 +341,18 @@
         </form>
       </div>
       <div id="contact-age-underage" style="display:none; margin-top:24px; text-align:center;">
-        <div class="security-alert">
-          <div class="alert-icon">⛔</div>
-          <div class="alert-title">SECURITY ALERT</div>
-          <div class="alert-subtitle">UNDERAGE ACCESS ATTEMPT DETECTED</div>
-          <div class="alert-message">
-            Your attempt to access adult content has been logged.<br><br>
-            This activity is being monitored.<br>
-            Repeated attempts will have consequences.<br><br>
-            <strong>You must be 18+ to access this site.</strong><br><br>
-            Exit immediately.
-          </div>
+        <p style="color:#ffb6d5; margin-bottom:12px;">
+          Sorry, you must be 18 or older to access this content.
+        </p>
+        <div class="video-container">
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/FEDXbfnw7W0?autoplay=1&mute=1&playsinline=1"
+            frameborder="0"
+            allow="autoplay; encrypted-media"
+            allowfullscreen
+          ></iframe>
         </div>
       </div>
     </div>
@@ -367,7 +363,7 @@
     <div class="teaser-modal-content">
       <span id="teaser-modal-close" class="teaser-close-x">&times;</span>
       <div class="teaser-modal-img-container">
-        <img id="teaser-modal-img" src="" alt="Large Teaser" />
+        <img id="teaser-modal-img" src="" alt="Full size teaser preview" />
         <div class="teaser-watermark-overlay"></div>
       </div>
       <div class="teaser-navigation">
