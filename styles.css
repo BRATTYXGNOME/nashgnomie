@@ -15,11 +15,16 @@ body {
 .seo-hidden {
   position: absolute;
   left: -10000px;
-  top: auto;
   width: 1px;
   height: 1px;
   overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  margin: 0;
+  padding: 0;
 }
+  
 
 #stars {
   position: fixed;
@@ -34,7 +39,7 @@ body {
   position: absolute;
   background: #fff;
   border-radius: 50%;
-  box-shadow: 0 0 8px #ff5fa2, 0 0 12px #fff;
+  box-shadow: 0 0 8px #e91e63, 0 0 12px #fff;
 }
 
 #main-nav,
@@ -85,7 +90,7 @@ main {
   object-fit: cover;
   border: 4px solid #e94560;
   border-radius: 50%;
-  box-shadow: 0 0 20px #ff5fa2, 0 0 10px #fff;
+  box-shadow: 0 0 20px #e91e63, 0 0 10px #fff;
   background: #222;
   cursor: pointer;
   transition: box-shadow 0.2s, border 0.2s;
@@ -177,12 +182,12 @@ main {
 /* Creator Resource Hub Link - Subtle styling for creators, not buyers */
 .resource-hub-link {
   display: inline-block;
-  margin: 10px 0 0 0;
-  padding: 10px 20px;
+  margin: 8px 0 12px 0;
+  padding: 8px 18px;
   background: rgba(255, 95, 162, 0.08);
   color: #fff;
   border-radius: 12px;
-  font-size: 0.95em;
+  font-size: 0.90em;
   font-family: 'Orbitron', monospace;
   text-decoration: none;
   border: 1px solid rgba(255, 95, 162, 0.3);
@@ -243,7 +248,7 @@ main {
 .main-nav a:focus,
 .main-nav a:hover {
   background: linear-gradient(90deg, #ff5fa2 60%, #e94560 100%);
-  box-shadow: 0 0 8px #ff5fa2, 0 0 18px #ff5fa2, 0 0 32px #fff8;
+  box-shadow: 0 0 8px #e91e63, 0 0 18px #ff5fa2, 0 0 32px #fff8;
   transform: translateY(-2px) scale(1.07);
   text-shadow: 0 0 6px #fff, 0 0 16px #ff5fa2;
   z-index: 2;
@@ -344,15 +349,15 @@ main {
   content: "";
   position: absolute;
   top: 50%; left: 50%;
-  width: 60%;
-  height: 60%;
+  width: 85%;
+  height: 85%;
   transform: translate(-50%, -50%) rotate(-15deg);
   pointer-events: none;
   background-image: url('https://i.ibb.co/QFYcGsJc/watermark.png');
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
-  opacity: 0.22;
+  opacity: 0.28;
   z-index: 1;
   animation: gallery-watermark-fade 3.5s linear infinite, gallery-watermark-rotate 8s linear infinite;
   will-change: opacity, transform;
@@ -550,7 +555,7 @@ main {
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  box-shadow: 0 0 20px #ff5fa2, 0 0 40px #ff5fa2;
+  box-shadow: 0 0 20px #e91e63, 0 0 40px #ff5fa2;
   font-family: 'Orbitron', monospace;
   font-weight: bold;
   border: 3px solid #fff;
@@ -662,14 +667,14 @@ main {
   font-size: 1.07em !important;
   font-family: 'Orbitron', monospace !important;
   text-shadow: 0 0 2px #ff5fa2, 0 0 6px #e94560 !important;
-  box-shadow: 0 0 8px #ff5fa2, 0 0 16px #fff !important;
+  box-shadow: 0 0 8px #e91e63, 0 0 12px #e91e63 !important;
   border: none !important;
   cursor: pointer !important;
 }
 
 #age-modal .neon-btn:hover {
   background: linear-gradient(90deg, #e94560 0%, #ff5fa2 100%) !important;
-  box-shadow: 0 0 36px #ff5fa2, 0 0 60px #fff !important;
+  box-shadow: 0 0 18px #e91e63, 0 0 32px #e91e63 !important;
   transform: scale(1.09) !important;
 }
 
@@ -914,7 +919,7 @@ button:focus {
   font-size: 1.08em;
   font-family: 'Orbitron', monospace;
   text-shadow: 0 0 2px #ff5fa2, 0 0 6px #e94560;
-  box-shadow: 0 0 8px #ff5fa2, 0 0 16px #fff;
+  box-shadow: 0 0 8px #e91e63, 0 0 12px #e91e63;
   border: none;
   font-weight: 700;
   text-decoration: none;
@@ -945,6 +950,40 @@ button:focus {
 .copy-email.copied {
   background: #ff5fa2;
   color: #fff;
+}
+/* IBAN Popup specific styling - make fields look copyable */
+.bill-popup-links div {
+  padding: 10px 12px;
+  background: rgba(255, 95, 162, 0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 95, 162, 0.25);
+  font-size: 0.95em;
+  line-height: 1.5;
+  text-align: left;
+}
+.bill-popup-links div strong {
+  color: #ff5fa2;
+  font-family: 'Orbitron', monospace;
+  margin-right: 6px;
+}
+.bill-popup-links .copy-text {
+  background: rgba(51, 54, 74, 0.8);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: monospace;
+  cursor: pointer;
+  color: #ffb6d5;
+  border: 1px solid rgba(255, 95, 162, 0.4);
+  font-size: 0.95em;
+  transition: all 0.2s;
+  display: inline-block;
+  margin-left: 6px;
+}
+.bill-popup-links .copy-text:hover {
+  background: rgba(255, 95, 162, 0.15);
+  border-color: #ff5fa2;
+  color: #fff;
+  transform: scale(1.02);
 }
 .bill-popup-close {
   position: absolute;
@@ -1024,10 +1063,10 @@ button:focus {
 
 @keyframes telegramPulse {
   0%, 100% {
-    box-shadow: 0 0 8px #ff5fa2, 0 0 16px #ff5fa2;
+    box-shadow: 0 0 8px #e91e63, 0 0 16px #ff5fa2;
   }
   50% {
-    box-shadow: 0 0 20px #ff5fa2, 0 0 40px #ff5fa2, 0 0 60px #ff5fa2;
+    box-shadow: 0 0 20px #e91e63, 0 0 40px #ff5fa2, 0 0 60px #ff5fa2;
   }
 }
 
