@@ -11,6 +11,16 @@ body {
   overflow-x: hidden;
 }
 
+/* SEO Hidden Header - Accessible to search engines but hidden from users */
+.seo-hidden {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 #stars {
   position: fixed;
   top: 0;
@@ -149,7 +159,7 @@ main {
   font-size: 1.07em;
   font-family: 'Orbitron', monospace;
   text-shadow: 0 0 2px #ff5fa2, 0 0 6px #e94560;
-  box-shadow: 0 0 8px #ff5fa2, 0 0 16px #fff;
+  box-shadow: 0 0 6px #e91e63, 0 0 12px #e91e63;
   border: none;
   transition: box-shadow 0.2s, background 0.2s, transform 0.12s, filter 0.15s;
   cursor: pointer;
@@ -158,10 +168,36 @@ main {
 .neon-btn:hover,
 .neon-btn:focus {
   background: linear-gradient(90deg, #e94560 0%, #ff5fa2 100%);
-  box-shadow: 0 0 36px #ff5fa2, 0 0 60px #fff;
+  box-shadow: 0 0 18px #e91e63, 0 0 32px #e91e63;
   transform: scale(1.09);
   filter: brightness(1.12);
   outline: 2px solid #fff;
+}
+
+/* Creator Resource Hub Link - Subtle styling for creators, not buyers */
+.resource-hub-link {
+  display: inline-block;
+  margin: 10px 0 0 0;
+  padding: 10px 20px;
+  background: rgba(255, 95, 162, 0.08);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 0.95em;
+  font-family: 'Orbitron', monospace;
+  text-decoration: none;
+  border: 1px solid rgba(255, 95, 162, 0.3);
+  transition: all 0.3s ease;
+  box-shadow: 0 0 8px rgba(255, 95, 162, 0.2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.resource-hub-link:hover,
+.resource-hub-link:focus {
+  background: rgba(255, 95, 162, 0.15);
+  border-color: rgba(255, 95, 162, 0.5);
+  box-shadow: 0 0 16px rgba(255, 95, 162, 0.4);
+  transform: translateX(2px);
+  color: #ffb6d5;
 }
 
 /* Modern Transparent Navigation */
@@ -312,7 +348,7 @@ main {
   height: 60%;
   transform: translate(-50%, -50%) rotate(-15deg);
   pointer-events: none;
-  background-image: url('https://i.ibb.co/PZsQFRbp/watermark.png');
+  background-image: url('https://i.ibb.co/QFYcGsJc/watermark.png');
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
