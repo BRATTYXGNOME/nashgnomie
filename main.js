@@ -1,153 +1,101 @@
 // ==========================================
-// STAR TWINKLING (Consolidated & Enhanced)
+// NASH | Gnomie — Main JavaScript
 // ==========================================
-function initStars() {
-  if (document.querySelector('#stars .star')) return; // Already initialized
-  
-  const stars = document.getElementById('stars');
-  if (!stars) return;
-  
-  // Create 180 stars for more twinkly effect
-  for (let i = 0; i < 180; i++) {
-    const star = document.createElement('div');
-    star.className = 'star';
-    
-    // Random positioning
-    star.style.left = Math.random() * 100 + 'vw';
-    star.style.top = Math.random() * 100 + 'vh';
-    
-    // Varied sizes (more variety = more depth)
-    const size = Math.random() * 2.5 + 0.5; // 0.5px to 3px
-    star.style.width = star.style.height = size + 'px';
-    
-    // Random initial opacity
-    star.style.opacity = Math.random();
-    
-    // Base styles
-    star.style.position = 'absolute';
-    star.style.background = '#fff';
-    star.style.borderRadius = '50%';
-    star.style.boxShadow = '0 0 8px #ff5fa2, 0 0 12px #fff';
-    
-    // Varied animation duration (0.8s to 2s)
-    star.style.transition = `opacity ${0.8 + Math.random() * 1.2}s ease-in-out`;
-    
-    stars.appendChild(star);
-  }
-  
-  // Staggered twinkling effect
-  setInterval(() => {
-    document.querySelectorAll('#stars .star').forEach((star, index) => {
-      // Stagger the updates so not all stars change at once
-      setTimeout(() => {
-        star.style.opacity = Math.random() * 0.8 + 0.2; // 0.2 to 1.0
-      }, (index % 10) * 50); // Stagger by 50ms per group
-    });
-  }, 1200);
-}
 
-// ==========================================
-// DOM READY
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-  
-  // Initialize stars
-  initStars();
-  
-  // ==========================================
-  // AGE GATE LOGIC
-  // ==========================================
-  const AGE_GATE_PASSED_KEY = 'nashgnomie_index_verified';
-  const ageForm           = document.getElementById('age-form');
-  const birthdateIn       = document.getElementById('birthdate');
-  const ageError          = document.getElementById('age-error');
-  const ageModal          = document.getElementById('age-modal');
-  const ageInputContainer = document.getElementById('age-input-container');
-  const underageBlock     = document.getElementById('underage-block');
-  const mainNav           = document.getElementById('main-nav');
-  const mainContent       = document.querySelector('main');
 
-  // Check if user already passed age gate
-  if (ageModal && localStorage.getItem(AGE_GATE_PASSED_KEY) === 'true') {
-    ageModal.classList.remove('active');
-    if (mainNav) mainNav.style.display = 'flex';
-    if (mainContent) mainContent.style.display = 'block';
-    document.body.style.overflow = '';
-  }
+  // ==========================================
+  // AGE GATE (homepage — always resets DOB)
+  // ==========================================
+  var ageGate = document.getElementById('age-gate');
+  var ageForm = document.getElementById('age-form');
+  var birthdateIn = document.getElementById('birthdate');
+  var ageError = document.getElementById('age-error');
+  var ageInputContainer = document.getElementById('age-input-container');
+  var underageBlock = document.getElementById('underage-block');
+  var mainSite = document.getElementById('main-site');
+  var mismatchWarning = document.getElementById('age-mismatch-warning');
 
   if (birthdateIn) {
     birthdateIn.max = new Date().toISOString().split('T')[0];
   }
 
+  // Show mismatch warning if redirected
+  if (mismatchWarning && window.location.search.indexOf('dob_mismatch') !== -1) {
+    mismatchWarning.style.display = 'block';
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  // Skip age gate if already verified this session (e.g. clicking Home button)
+  if (ageGate && mainSite && window.AgeGate && window.AgeGate.isVerified() && window.location.search.indexOf('dob_mismatch') === -1) {
+    ageGate.classList.add('hidden');
+    mainSite.style.display = 'block';
+  }
+
   if (ageForm) {
-    ageForm.addEventListener('submit', e => {
+    ageForm.addEventListener('submit', function(e) {
       e.preventDefault();
       ageError.textContent = '';
-      
+
       if (!birthdateIn.value) {
         ageError.textContent = 'Please enter your birthdate.';
         return;
       }
-      
-      const birthdate = new Date(birthdateIn.value);
-      const today     = new Date();
-      let age = today.getFullYear() - birthdate.getFullYear();
-      const m = today.getMonth() - birthdate.getMonth();
-      
-      if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
-        age--;
-      }
-      
-      if (age < 18) {
+
+      var result = window.AgeGate.verifyHomepage(birthdateIn.value);
+
+      if (result.reason === 'underage') {
         ageInputContainer.style.display = 'none';
-        underageBlock.style.display     = 'block';
-      } else {
-        // User is 18+, let them in and remember it
-        localStorage.setItem(AGE_GATE_PASSED_KEY, 'true');
-        ageModal.classList.remove('active');
-        if (mainNav) mainNav.style.display = 'flex';
-        if (mainContent) mainContent.style.display = 'block';
+        underageBlock.style.display = 'block';
+      } else if (result.success) {
+        ageGate.classList.add('hidden');
+        mainSite.style.display = 'block';
         document.body.style.overflow = '';
+        window.AgeGate.setVerified();
       }
     });
   }
 
   // ==========================================
-  // MOBILE NAV TOGGLE
+  // MOBILE NAV DRAWER (handled by components.js)
   // ==========================================
-  const mobileNavToggle = document.getElementById('mobile-nav-toggle');
-  
-  if (mobileNavToggle && mainNav) {
-    mobileNavToggle.addEventListener('click', () => {
-      mainNav.classList.toggle('mobile-open');
-      mobileNavToggle.classList.toggle('active');
-    });
 
-    // Close mobile nav when clicking a link
-    const navLinks = mainNav.querySelectorAll('a');
-    navLinks.forEach(link => {
-      link.addEventListener('click', () => {
-        if (window.innerWidth <= 768) {
-          mainNav.classList.remove('mobile-open');
-          mobileNavToggle.classList.remove('active');
-        }
-      });
-    });
+  // ==========================================
+  // GALLERY NSFW GATE (DOB verification)
+  // ==========================================
+  var galleryAgeGate = document.getElementById('gallery-age-gate');
+  var galleryAgeForm = document.getElementById('gallery-age-form');
+  var galleryBirthdate = document.getElementById('gallery-birthdate');
+  var galleryAgeError = document.getElementById('gallery-age-error');
 
-    // Close mobile nav when clicking outside
-    document.addEventListener('click', (e) => {
-      if (window.innerWidth <= 768 && 
-          mainNav.classList.contains('mobile-open') && 
-          !mainNav.contains(e.target) && 
-          !mobileNavToggle.contains(e.target)) {
-        mainNav.classList.remove('mobile-open');
-        mobileNavToggle.classList.remove('active');
+  if (galleryBirthdate) {
+    galleryBirthdate.max = new Date().toISOString().split('T')[0];
+  }
+
+  if (galleryAgeForm) {
+    galleryAgeForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      galleryAgeError.textContent = '';
+
+      if (!galleryBirthdate.value) {
+        galleryAgeError.textContent = 'Please enter your birthdate.';
+        return;
+      }
+
+      var result = window.AgeGate.verify(galleryBirthdate.value);
+
+      if (result.success) {
+        galleryAgeGate.style.display = 'none';
+      } else if (result.reason === 'underage') {
+        galleryAgeError.textContent = 'You must be 18 or older to view this content.';
+      } else if (result.reason === 'mismatch') {
+        window.AgeGate.redirectMismatch();
       }
     });
   }
 
   // ==========================================
-  // TEASER MODAL LOGIC
+  // TEASER MODAL (Lightbox)
   // ==========================================
   const teaserImages = [
     "https://i.ibb.co/8gB2XFxh/teaser001.gif",
@@ -155,18 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
     "https://i.ibb.co/yFpXf6pG/teaser004.png",
     "https://i.ibb.co/4ZQ57dLG/teaser005.png",
     "https://i.ibb.co/8Dx5khhJ/teaser006.png",
-    "https://i.ibb.co/j9QgVSzS/teaser007.jpg",
-    "https://i.ibb.co/yBmVHkP4/teaser002.gif"
+    "https://i.ibb.co/j9QgVSzS/teaser007.jpg"
   ];
-  
-  const teaserThumbs      = document.querySelectorAll('.teaser-thumb');
-  const teaserModal       = document.getElementById('teaser-modal');
-  const teaserModalImg    = document.getElementById('teaser-modal-img');
-  const teaserModalClose  = document.getElementById('teaser-modal-close');
-  const teaserArrowLeft   = document.getElementById('teaser-arrow-left');
-  const teaserArrowRight  = document.getElementById('teaser-arrow-right');
-  const mainSiteContainer = document.getElementById('main-site-container');
-  
+
+  const teaserThumbs = document.querySelectorAll('.teaser-thumb');
+  const teaserModal = document.getElementById('teaser-modal');
+  const teaserModalImg = document.getElementById('teaser-modal-img');
+  const teaserModalClose = document.getElementById('teaser-modal-close');
+  const teaserArrowLeft = document.getElementById('teaser-arrow-left');
+  const teaserArrowRight = document.getElementById('teaser-arrow-right');
+
   let currentTeaserIndex = 0;
 
   function openTeaserModal(index) {
@@ -174,14 +120,12 @@ document.addEventListener('DOMContentLoaded', () => {
     teaserModalImg.src = teaserImages[currentTeaserIndex];
     teaserModal.classList.add('active');
     document.body.style.overflow = 'hidden';
-    if (mainSiteContainer) mainSiteContainer.style.display = 'none';
   }
 
   function closeTeaserModal() {
     teaserModal.classList.remove('active');
     document.body.style.overflow = '';
     teaserModalImg.src = '';
-    if (mainSiteContainer) mainSiteContainer.style.display = 'block';
   }
 
   function showPrevTeaser() {
@@ -194,462 +138,386 @@ document.addEventListener('DOMContentLoaded', () => {
     teaserModalImg.src = teaserImages[currentTeaserIndex];
   }
 
-  // Click handlers
-  teaserThumbs.forEach((img, idx) => {
-    img.addEventListener('click', () => openTeaserModal(idx));
+  teaserThumbs.forEach(function(img, idx) {
+    img.addEventListener('click', function() { openTeaserModal(idx); });
   });
 
-  if (teaserModalClose) {
-    teaserModalClose.addEventListener('click', closeTeaserModal);
-  }
-
-  if (teaserArrowLeft) {
-    teaserArrowLeft.addEventListener('click', showPrevTeaser);
-  }
-
-  if (teaserArrowRight) {
-    teaserArrowRight.addEventListener('click', showNextTeaser);
-  }
+  if (teaserModalClose) teaserModalClose.addEventListener('click', closeTeaserModal);
+  if (teaserArrowLeft) teaserArrowLeft.addEventListener('click', showPrevTeaser);
+  if (teaserArrowRight) teaserArrowRight.addEventListener('click', showNextTeaser);
 
   if (teaserModal) {
-    teaserModal.addEventListener('click', e => {
-      if (e.target === teaserModal) {
-        closeTeaserModal();
-      }
+    teaserModal.addEventListener('click', function(e) {
+      if (e.target === teaserModal) closeTeaserModal();
     });
   }
 
-  // Keyboard navigation
-  document.addEventListener('keydown', e => {
-    if (!teaserModal || !teaserModal.classList.contains('active')) return;
-
-    switch(e.key) {
-      case 'Escape':
-        closeTeaserModal();
-        break;
-      case 'ArrowLeft':
-        e.preventDefault();
-        showPrevTeaser();
-        break;
-      case 'ArrowRight':
-        e.preventDefault();
-        showNextTeaser();
-        break;
-    }
-  });
-
-  // Touch swipe gestures for teaser modal
+  // Touch swipe for teaser modal
   let touchStartX = 0;
   let touchEndX = 0;
   const swipeThreshold = 75;
 
   if (teaserModal) {
-    teaserModal.addEventListener('touchstart', e => {
+    teaserModal.addEventListener('touchstart', function(e) {
       touchStartX = e.changedTouches[0].screenX;
     }, { passive: true });
 
-    teaserModal.addEventListener('touchend', e => {
+    teaserModal.addEventListener('touchend', function(e) {
       touchEndX = e.changedTouches[0].screenX;
-      handleSwipe();
+      const dist = touchEndX - touchStartX;
+      if (Math.abs(dist) < swipeThreshold) return;
+      if (dist > 0) {
+        showPrevTeaser();
+      } else {
+        showNextTeaser();
+      }
     }, { passive: true });
+
+    teaserModal.addEventListener('wheel', function(e) {
+      if (teaserModal.classList.contains('active')) e.preventDefault();
+    }, { passive: false });
+
+    teaserModal.addEventListener('touchmove', function(e) {
+      if (teaserModal.classList.contains('active')) e.preventDefault();
+    }, { passive: false });
   }
 
-  function handleSwipe() {
-    const swipeDistance = touchEndX - touchStartX;
-    
-    if (Math.abs(swipeDistance) < swipeThreshold) return;
-    
-    if (swipeDistance > 0) {
-      showPrevTeaser();
-    } else {
-      showNextTeaser();
+  // ==========================================
+  // CONTACT POPUP
+  // ==========================================
+  const contactOverlay = document.getElementById('contact-popup-overlay');
+  const contactClose = document.getElementById('contact-popup-close');
+  const heroDmBtn = document.getElementById('hero-dm-btn');
+  const aboutDmBtn = document.getElementById('about-dm-btn');
+
+  function openContactPopup() {
+    if (contactOverlay) {
+      contactOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      if (window.closeDrawer) window.closeDrawer();
     }
   }
 
-  // Prevent scroll when modal is open
-  if (teaserModal) {
-    teaserModal.addEventListener('wheel', e => {
-      if (teaserModal.classList.contains('active')) {
-        e.preventDefault();
-      }
-    }, { passive: false });
-
-    teaserModal.addEventListener('touchmove', e => {
-      if (teaserModal.classList.contains('active')) {
-        e.preventDefault();
-      }
-    }, { passive: false });
+  function closeContactPopup() {
+    if (contactOverlay) {
+      contactOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
   }
 
-  // ==========================================
-  // TEASER GALLERY AGE GATE OVERLAY
-  // ==========================================
-  const galleryAgeGate = document.getElementById('gallery-age-gate');
-  const galleryAgeConfirm = document.getElementById('gallery-age-confirm');
-  
-  if (galleryAgeGate && galleryAgeConfirm) {
-    galleryAgeConfirm.addEventListener('click', function() {
-      galleryAgeGate.style.display = 'none';
+  if (heroDmBtn) heroDmBtn.addEventListener('click', function(e) { e.preventDefault(); openContactPopup(); });
+  if (aboutDmBtn) aboutDmBtn.addEventListener('click', function(e) { e.preventDefault(); openContactPopup(); });
+  if (contactClose) contactClose.addEventListener('click', closeContactPopup);
+  if (contactOverlay) {
+    contactOverlay.addEventListener('click', function(e) {
+      if (e.target === this) closeContactPopup();
     });
   }
 
   // ==========================================
-  // ADOPT A BILL / TIP ME POP-UP LOGIC
+  // TIP ME POPUP
+  // ==========================================
+  const tipOverlay = document.getElementById('tip-popup-overlay');
+  const tipClose = document.getElementById('tip-popup-close');
+  const tipBtn = document.getElementById('tip-btn');
+
+  function openTipPopup() {
+    tipOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeTipPopup() {
+    tipOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  if (tipBtn) tipBtn.addEventListener('click', function(e) { e.preventDefault(); openTipPopup(); });
+  if (tipClose) tipClose.addEventListener('click', closeTipPopup);
+  if (tipOverlay) {
+    tipOverlay.addEventListener('click', function(e) {
+      if (e.target === this) closeTipPopup();
+    });
+  }
+
+  // Copy-to-clipboard for tip badges
+  document.querySelectorAll('.copy-badge').forEach(function(badge) {
+    badge.addEventListener('click', function() {
+      const copyText = this.getAttribute('data-copy');
+      const valueEl = this.querySelector('.copy-badge-value');
+      const originalText = valueEl.textContent;
+
+      navigator.clipboard.writeText(copyText).then(function() {
+        valueEl.textContent = 'Copied!';
+        badge.classList.add('copied');
+        setTimeout(function() {
+          valueEl.textContent = originalText;
+          badge.classList.remove('copied');
+        }, 1200);
+      });
+    });
+  });
+
+  // ==========================================
+  // ADOPT A BILL POPUP
   // ==========================================
   const billPopupData = {
     rent: {
       title: 'Adopt: Rent',
       desc: 'Help cover my share of rent. Thank you for helping keep a roof over my head!',
       links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1000427" },
-        { label: "Throne", url: "https://throne.com/nashgnomie/item/95d2dcb8-7e1b-4520-9449-bc43a1e48791" },
-        { label: "Revolut", url: "https://revolut.me/nashgnomie" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l6t6-unbtkc" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser" },
-        { label: "Chime", url: "$nashgnomie" },
-        { label: "Amazon Gift Card", url: "nashgnomie@gmail.com" },
-        { label: "Apple Pay", url: "nashgnomie@gmail.com" },
-        { label: "Zelle", url: "nashgnomie@gmail.com" }
-      ]
-    },
-    utilities: {
-      title: "Adopt: Utilities",
-      desc: "Support electricity, water, internet, and extras.",
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1000449" },
-        { label: "Throne", url: "https://throne.com/nashgnomie/item/70f5146b-7d9f-4003-9439-7b456f88658c" },
-        { label: "Revolut", url: "https://revolut.me/nashgnomie" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l6t6-unbtkc" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser" },
-        { label: "Chime", url: "$nashgnomie" },
-        { label: "Amazon Gift Card", url: "nashgnomie@gmail.com" },
-        { label: "Apple Pay", url: "nashgnomie@gmail.com" },
-        { label: "Zelle", url: "nashgnomie@gmail.com" }
+        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101964", type: "link" },
+        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l6t6-unbtkc", type: "link" },
+        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
+        { label: "Cashtag", value: "$pewpewser", type: "copy" },
+        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
       ]
     },
     pet: {
-      title: "Adopt: Pet Expenses",
-      desc: "Food and care for 2 cats & 2 geckos.",
+      title: 'Adopt: Pet Expenses',
+      desc: 'Food and care for 2 cats & 2 geckos.',
       links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1000453" },
-        { label: "Throne", url: "https://throne.com/nashgnomie/item/87ff0888-a476-490b-90ed-a36b0e050325" },
-        { label: "Revolut", url: "https://revolut.me/nashgnomie" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l74c-1npsse8" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser" },
-        { label: "Chime", url: "$nashgnomie" },
-        { label: "Amazon Gift Card", url: "nashgnomie@gmail.com" },
-        { label: "Apple Pay", url: "nashgnomie@gmail.com" },
-        { label: "Zelle", url: "nashgnomie@gmail.com" }
-      ]
-    },
-    groceries: {
-      title: "Adopt: Groceries",
-      desc: "Food and pantry for one person.",
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1000457" },
-        { label: "Throne", url: "https://throne.com/nashgnomie/item/e4083dc8-1802-427d-bee8-999625a13d94" },
-        { label: "Revolut", url: "https://revolut.me/nashgnomie" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l74u-1x6s1gj" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser" },
-        { label: "Chime", url: "$nashgnomie" },
-        { label: "Amazon Gift Card", url: "nashgnomie@gmail.com" },
-        { label: "Apple Pay", url: "nashgnomie@gmail.com" },
-        { label: "Zelle", url: "nashgnomie@gmail.com" }
-      ]
-    },
-    essentials: {
-      title: "Adopt: Essentials",
-      desc: "Toiletries, cleaning, and home supplies.",
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1000460" },
-        { label: "Throne", url: "https://throne.com/nashgnomie/item/6ec49a6c-1e04-4d19-bd65-addcd3c21bd5" },
-        { label: "Revolut", url: "https://revolut.me/nashgnomie" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l751-o7b7jq" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser" },
-        { label: "Chime", url: "$nashgnomie" },
-        { label: "Amazon Gift Card", url: "nashgnomie@gmail.com" },
-        { label: "Apple Pay", url: "nashgnomie@gmail.com" },
-        { label: "Zelle", url: "nashgnomie@gmail.com" }
+        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101963", type: "link" },
+        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l74c-1npsse8", type: "link" },
+        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
+        { label: "Cashtag", value: "$pewpewser", type: "copy" },
+        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
       ]
     },
     phone: {
-      title: "Adopt: Phone Bill",
-      desc: "Mobile phone service & data.",
+      title: 'Adopt: Phone Bill',
+      desc: 'Mobile phone service & data.',
       links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1000462" },
-        { label: "Throne", url: "https://throne.com/nashgnomie/item/d2e95052-22c6-4f48-9951-bae90f869c88" },
-        { label: "Revolut", url: "https://revolut.me/nashgnomie" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l75t-g6uwiw" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser" },
-        { label: "Chime", url: "$nashgnomie" },
-        { label: "Amazon Gift Card", url: "nashgnomie@gmail.com" },
-        { label: "Apple Pay", url: "nashgnomie@gmail.com" },
-        { label: "Zelle", url: "nashgnomie@gmail.com" }
+        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101959", type: "link" },
+        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l75t-g6uwiw", type: "link" },
+        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
+        { label: "Cashtag", value: "$pewpewser", type: "copy" },
+        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
+      ]
+    },
+    utilities: {
+      title: 'Adopt: Utilities',
+      desc: 'Electricity, water, internet, and extras.',
+      links: [
+        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101962", type: "link" },
+        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l6t6-unbtkc", type: "link" },
+        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
+        { label: "Cashtag", value: "$pewpewser", type: "copy" },
+        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
       ]
     },
     transportation: {
-      title: "Adopt: Transportation",
-      desc: "Bus pass & rideshare (e.g., Lyft).",
+      title: 'Adopt: Transportation',
+      desc: 'Bus pass & rideshare (e.g., Lyft).',
       links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1000464" },
-        { label: "Throne", url: "https://throne.com/nashgnomie/item/1076e82e-f3de-4f06-97ef-ec2702dfb8c3" },
-        { label: "Revolut", url: "https://revolut.me/nashgnomie" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l768-1gsp6rd" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser" },
-        { label: "Chime", url: "$nashgnomie" },
-        { label: "Amazon Gift Card", url: "nashgnomie@gmail.com" },
-        { label: "Apple Pay", url: "nashgnomie@gmail.com" },
-        { label: "Zelle", url: "nashgnomie@gmail.com" }
+        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101958", type: "link" },
+        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l768-1gsp6rd", type: "link" },
+        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
+        { label: "Cashtag", value: "$pewpewser", type: "copy" },
+        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
       ]
     },
-    tip: {
-      title: "💸 Tip Me",
-      desc: "Send me a tip! Every bit of support is appreciated. Choose your preferred payment method:",
+    essentials: {
+      title: 'Adopt: Essentials',
+      desc: 'Toiletries, cleaning, and home supplies.',
       links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie" },
-        { label: "Throne", url: "https://throne.com/nashgnomie" },
-        { label: "Revolut", url: "https://revolut.me/nashgnomie" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/nashgnomie" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser" },
-        { label: "Chime", url: "$nashgnomie" },
-        { label: "Amazon Gift Card", url: "nashgnomie@gmail.com" },
-        { label: "Apple Pay", url: "nashgnomie@gmail.com" },
-        { label: "Zelle", url: "nashgnomie@gmail.com" }
+        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101961", type: "link" },
+        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l751-o7b7jq", type: "link" },
+        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
+        { label: "Cashtag", value: "$pewpewser", type: "copy" },
+        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
+      ]
+    },
+    groceries: {
+      title: 'Adopt: Groceries',
+      desc: 'Food and pantry for one person.',
+      links: [
+        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101960", type: "link" },
+        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l74u-1x6s1gj", type: "link" },
+        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
+        { label: "Cashtag", value: "$pewpewser", type: "copy" },
+        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
+      ]
+    },
+    total: {
+      title: 'Adopt: All Bills',
+      desc: 'Cover everything at once. You are incredible!',
+      links: [
+        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101965", type: "link" },
+        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l6t6-unbtkc", type: "link" },
+        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
+        { label: "Cashtag", value: "$pewpewser", type: "copy" },
+        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
+        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
       ]
     }
   };
 
+  const billOverlay = document.getElementById('bill-popup-overlay');
+  const billPopupClose = document.getElementById('bill-popup-close');
+
   function showBillPopup(billKey) {
-    const overlay = document.getElementById('bill-popup-overlay');
-    const title = overlay.querySelector('.bill-popup-title');
-    const desc = overlay.querySelector('.bill-popup-desc');
-    const links = overlay.querySelector('.bill-popup-links');
     const data = billPopupData[billKey];
     if (!data) return;
 
+    var title = document.getElementById('bill-popup-title');
+    var desc = document.getElementById('bill-popup-desc');
+    var links = document.getElementById('bill-popup-links');
+
     title.textContent = data.title;
     desc.textContent = data.desc;
-    links.innerHTML = "";
-    
-    data.links.forEach(link => {
-      if (link.label === "Chime") {
-        const span = document.createElement('span');
-        span.className = "copy-cashtag";
-        span.textContent = link.url;
-        span.setAttribute('data-cashtag', link.url);
-        span.title = "Click to copy";
-        span.onclick = function() {
-          navigator.clipboard.writeText(link.url);
-          span.textContent = "Copied!";
-          span.classList.add('copied');
-          setTimeout(() => {
-            span.textContent = link.url;
-            span.classList.remove('copied');
-          }, 1200);
-        };
-        const div = document.createElement('div');
-        div.appendChild(document.createTextNode("Chime: "));
-        div.appendChild(span);
-        links.appendChild(div);
-      } else if (
-        link.label === "Amazon Gift Card" ||
-        link.label === "Apple Pay" ||
-        link.label === "Zelle"
-      ) {
-        const span = document.createElement('span');
-        span.className = "copy-cashtag copy-email";
-        span.textContent = link.url;
-        span.setAttribute('data-email', link.url);
-        span.title = "Click to copy";
-        span.onclick = function() {
-          navigator.clipboard.writeText(link.url);
-          span.textContent = "Copied!";
-          span.classList.add('copied');
-          setTimeout(() => {
-            span.textContent = link.url;
-            span.classList.remove('copied');
-          }, 1200);
-        };
-        const div = document.createElement('div');
-        div.appendChild(document.createTextNode(link.label + ": "));
-        div.appendChild(span);
-        links.appendChild(div);
-      } else {
-        const a = document.createElement('a');
-        a.href = link.url;
-        a.target = "_blank";
-        a.rel = "noopener";
-        a.textContent = link.label;
+    links.innerHTML = '';
+
+    data.links.forEach(function(item) {
+      if (item.type === 'link') {
+        var a = document.createElement('a');
+        a.href = item.url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.textContent = item.label;
         links.appendChild(a);
+      } else if (item.type === 'copy') {
+        var div = document.createElement('div');
+        div.className = 'copy-badge';
+        div.setAttribute('data-copy', item.value);
+
+        var labelSpan = document.createElement('span');
+        labelSpan.className = 'copy-badge-label';
+        labelSpan.textContent = item.label;
+
+        var valueSpan = document.createElement('span');
+        valueSpan.className = 'copy-badge-value';
+        valueSpan.textContent = item.value;
+
+        div.appendChild(labelSpan);
+        div.appendChild(valueSpan);
+
+        div.addEventListener('click', function() {
+          var copyVal = this.getAttribute('data-copy');
+          var valEl = this.querySelector('.copy-badge-value');
+          var origText = valEl.textContent;
+
+          navigator.clipboard.writeText(copyVal).then(function() {
+            valEl.textContent = 'Copied!';
+            div.classList.add('copied');
+            setTimeout(function() {
+              valEl.textContent = origText;
+              div.classList.remove('copied');
+            }, 1200);
+          });
+        });
+
+        links.appendChild(div);
       }
     });
 
-    overlay.classList.add('active');
+    billOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
   }
 
   function closeBillPopup() {
-    const overlay = document.getElementById('bill-popup-overlay');
-    if (overlay) {
-      overlay.classList.remove('active');
+    if (billOverlay) {
+      billOverlay.classList.remove('active');
       document.body.style.overflow = '';
     }
   }
 
-  // Bill table row click handlers
-  document.querySelectorAll('.bill-table tbody tr[data-bill]').forEach(row => {
-    row.style.cursor = "pointer";
+  // Auto-calculate bill total
+  function updateBillTotal() {
+    var total = 0;
+    document.querySelectorAll('#bill-table-body tr[data-amount]').forEach(function(row) {
+      total += parseInt(row.getAttribute('data-amount'), 10) || 0;
+    });
+    var totalEl = document.getElementById('bill-total');
+    if (totalEl) {
+      totalEl.textContent = '$' + total.toLocaleString();
+    }
+  }
+  updateBillTotal();
+
+  document.querySelectorAll('.bill-table tbody tr[data-bill]').forEach(function(row) {
     row.addEventListener('click', function() {
       showBillPopup(this.getAttribute('data-bill'));
     });
   });
 
-  // Tip Me button handler
-  const tipBtn = document.getElementById('tip-btn');
-  if (tipBtn) {
-    tipBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      showBillPopup('tip');
-    });
-  }
-
-  // Bill popup close button
-  const billPopupCloseBtn = document.querySelector('.bill-popup-close');
-  if (billPopupCloseBtn) {
-    billPopupCloseBtn.addEventListener('click', closeBillPopup);
-  }
-
-  // Bill popup overlay click-outside-to-close
-  const billPopupOverlay = document.getElementById('bill-popup-overlay');
-  if (billPopupOverlay) {
-    billPopupOverlay.addEventListener('click', function(e) {
+  if (billPopupClose) billPopupClose.addEventListener('click', closeBillPopup);
+  if (billOverlay) {
+    billOverlay.addEventListener('click', function(e) {
       if (e.target === this) closeBillPopup();
     });
   }
 
-  // Bill popup escape key
+  // ==========================================
+  // GLOBAL KEYBOARD HANDLERS
+  // ==========================================
   document.addEventListener('keydown', function(e) {
-    if (e.key === "Escape" && billPopupOverlay && billPopupOverlay.classList.contains('active')) {
-      closeBillPopup();
-    }
-  });
-
-  // ==========================================
-  // IBAN POPUP LOGIC
-  // ==========================================
-  const ibanBtn = document.getElementById('iban-btn');
-  const ibanPopupOverlay = document.getElementById('iban-popup-overlay');
-  const ibanPopupCloseBtn = document.getElementById('iban-popup-close');
-
-  function openIbanPopup() {
-    if (ibanPopupOverlay) {
-      // Close bill popup if open
-      if (billPopupOverlay) billPopupOverlay.classList.remove('active');
-      
-      ibanPopupOverlay.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    }
-  }
-
-  function closeIbanPopup() {
-    if (ibanPopupOverlay) {
-      ibanPopupOverlay.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  }
-
-  if (ibanBtn) {
-    ibanBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      openIbanPopup();
-    });
-  }
-
-  if (ibanPopupCloseBtn) {
-    ibanPopupCloseBtn.addEventListener('click', closeIbanPopup);
-  }
-
-  if (ibanPopupOverlay) {
-    ibanPopupOverlay.addEventListener('click', function(e) {
-      if (e.target === this) closeIbanPopup();
-    });
-  }
-
-  // IBAN copy functionality
-  document.querySelectorAll('.copy-text').forEach(span => {
-    span.style.cursor = 'pointer';
-    span.style.textDecoration = 'underline';
-    span.style.color = '#ff5fa2';
-    span.title = 'Click to copy';
-    
-    span.addEventListener('click', function() {
-      const textToCopy = this.getAttribute('data-copy');
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        const originalText = this.textContent;
-        this.textContent = '✓ Copied!';
-        setTimeout(() => {
-          this.textContent = originalText;
-        }, 1500);
-      });
-    });
-  });
-
-  // ==========================================
-  // CONTACT / DM POPUP LOGIC
-  // ==========================================
-  const contactBtn = document.getElementById('contact-btn');
-  const dmBtn = document.getElementById('dm-btn');
-  const contactPopupOverlay = document.getElementById('contact-popup-overlay');
-  const contactPopupCloseBtn = document.getElementById('contact-popup-close');
-
-  function openContactPopup() {
-    if (contactPopupOverlay) {
-      contactPopupOverlay.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    }
-  }
-
-  function closeContactPopup() {
-    if (contactPopupOverlay) {
-      contactPopupOverlay.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  }
-
-  if (contactBtn) {
-    contactBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      openContactPopup();
-    });
-  }
-
-  if (dmBtn) {
-    dmBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      openContactPopup();
-    });
-  }
-
-  if (contactPopupCloseBtn) {
-    contactPopupCloseBtn.addEventListener('click', closeContactPopup);
-  }
-
-  if (contactPopupOverlay) {
-    contactPopupOverlay.addEventListener('click', function(e) {
-      if (e.target === this) closeContactPopup();
-    });
-  }
-
-  // Escape key for all popups
-  document.addEventListener('keydown', function(e) {
-    if (e.key === "Escape") {
-      if (contactPopupOverlay && contactPopupOverlay.classList.contains('active')) {
+    if (e.key === 'Escape') {
+      // Close whatever modal is open
+      if (teaserModal && teaserModal.classList.contains('active')) {
+        closeTeaserModal();
+      } else if (billOverlay && billOverlay.classList.contains('active')) {
+        closeBillPopup();
+      } else if (contactOverlay && contactOverlay.classList.contains('active')) {
         closeContactPopup();
+      } else if (tipOverlay && tipOverlay.classList.contains('active')) {
+        closeTipPopup();
+      } else if (drawer && drawer.classList.contains('open')) {
+        closeDrawer();
       }
-      if (ibanPopupOverlay && ibanPopupOverlay.classList.contains('active')) {
-        closeIbanPopup();
+    }
+
+    // Arrow keys for teaser modal
+    if (teaserModal && teaserModal.classList.contains('active')) {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        showPrevTeaser();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        showNextTeaser();
       }
     }
   });
 
-}); // End of DOMContentLoaded
+  // ==========================================
+  // VIO BADGE TOOLTIP
+  // ==========================================
+  var vioTooltip = document.getElementById('vio-tooltip');
+  document.querySelectorAll('.vio-badge').forEach(function(badge) {
+    badge.addEventListener('click', function() {
+      if (vioTooltip) {
+        vioTooltip.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    });
+  });
+  if (vioTooltip) {
+    vioTooltip.addEventListener('click', function(e) {
+      if (e.target === this) {
+        vioTooltip.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && vioTooltip.classList.contains('active')) {
+        vioTooltip.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+}); // End DOMContentLoaded
