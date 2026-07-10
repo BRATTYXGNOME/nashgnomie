@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gallery | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <div class="section" style="max-width:700px;margin:0 auto;position:relative;">
+    <h1 class="section-title" style="font-size:28px;text-align:center;">18+ Teaser Gallery</h1>
+
+    <!-- AGE GATE FOR GALLERY PAGE -->
+    <div class="gallery-age-gate" id="gallery-page-gate">
+      <div>
+        <h3>18+ TEASER GALLERY</h3>
+        <p>You are about to view <strong>NOT SAFE FOR WORK (NSFW)</strong> content.<br />Please verify your birthdate to continue:</p>
+        <form id="gallery-page-form" autocomplete="off">
+          <input type="date" id="gallery-page-birthdate" name="birthdate" required />
+          <div id="gallery-page-error" class="age-error" aria-live="polite"></div>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2-card gallery grid -->
+    <div class="gallery-page-grid">
+      <div class="gallery-page-card"><img src="https://i.ibb.co/8gB2XFxh/teaser001.gif" alt="Teaser 1" class="gallery-page-thumb" /></div>
+      <div class="gallery-page-card"><img src="https://i.ibb.co/MkncchXh/teaser003.jpg" alt="Teaser 2" class="gallery-page-thumb" /></div>
+      <div class="gallery-page-card"><img src="https://i.ibb.co/yFpXf6pG/teaser004.png" alt="Teaser 3" class="gallery-page-thumb" /></div>
+      <div class="gallery-page-card"><img src="https://i.ibb.co/4ZQ57dLG/teaser005.png" alt="Teaser 4" class="gallery-page-thumb" /></div>
+      <div class="gallery-page-card"><img src="https://i.ibb.co/8Dx5khhJ/teaser006.png" alt="Teaser 5" class="gallery-page-thumb" /></div>
+      <div class="gallery-page-card"><img src="https://i.ibb.co/j9QgVSzS/teaser007.jpg" alt="Teaser 6" class="gallery-page-thumb" /></div>
+    </div>
+
+    <div style="text-align:center;margin-top:24px;">
+      <a href="https://t.me/+XbX3ZBx7takwMjY5" class="btn btn-outline" target="_blank" rel="noopener">More Teasers</a>
+    </div>
+  </div>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <!-- TEASER MODAL (Lightbox) -->
+  <div id="teaser-modal" class="teaser-modal">
+    <div class="teaser-modal-content">
+      <button id="teaser-modal-close" class="teaser-modal-close" aria-label="Close">&times;</button>
+      <div class="teaser-modal-img-container">
+        <img id="teaser-modal-img" src="" alt="Teaser" />
+        <div class="teaser-watermark-overlay"></div>
+      </div>
+      <button id="teaser-arrow-left" class="teaser-nav-btn teaser-nav-prev">&lt;</button>
+      <button id="teaser-arrow-right" class="teaser-nav-btn teaser-nav-next">&gt;</button>
+    </div>
+  </div>
+
+  <script src="components.js"></script>
+  <script>
+    // Gallery page age gate
+    var gate = document.getElementById('gallery-page-gate');
+    var form = document.getElementById('gallery-page-form');
+    var bd = document.getElementById('gallery-page-birthdate');
+    var err = document.getElementById('gallery-page-error');
+
+    if (bd) bd.max = new Date().toISOString().split('T')[0];
+
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        err.textContent = '';
+        if (!bd.value) { err.textContent = 'Please enter your birthdate.'; return; }
+        var result = window.AgeGate.verify(bd.value);
+        if (result.success) {
+          gate.style.display = 'none';
+        } else if (result.reason === 'underage') {
+          err.textContent = 'You must be 18 or older to view this content.';
+        } else if (result.reason === 'mismatch') {
+          window.AgeGate.redirectMismatch();
+        }
+      });
+    }
+
+    // Lightbox
+    var teaserImages = [
+      "https://i.ibb.co/8gB2XFxh/teaser001.gif",
+      "https://i.ibb.co/MkncchXh/teaser003.jpg",
+      "https://i.ibb.co/yFpXf6pG/teaser004.png",
+      "https://i.ibb.co/4ZQ57dLG/teaser005.png",
+      "https://i.ibb.co/8Dx5khhJ/teaser006.png",
+      "https://i.ibb.co/j9QgVSzS/teaser007.jpg"
+    ];
+
+    var modal = document.getElementById('teaser-modal');
+    var modalImg = document.getElementById('teaser-modal-img');
+    var modalClose = document.getElementById('teaser-modal-close');
+    var arrowL = document.getElementById('teaser-arrow-left');
+    var arrowR = document.getElementById('teaser-arrow-right');
+    var currentIdx = 0;
+
+    function openModal(i) { currentIdx = i; modalImg.src = teaserImages[i]; modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+    function closeModal() { modal.classList.remove('active'); document.body.style.overflow = ''; modalImg.src = ''; }
+    function prev() { currentIdx = (currentIdx - 1 + teaserImages.length) % teaserImages.length; modalImg.src = teaserImages[currentIdx]; }
+    function next() { currentIdx = (currentIdx + 1) % teaserImages.length; modalImg.src = teaserImages[currentIdx]; }
+
+    document.querySelectorAll('.gallery-page-thumb').forEach(function(img, i) { img.addEventListener('click', function() { openModal(i); }); });
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (arrowL) arrowL.addEventListener('click', prev);
+    if (arrowR) arrowR.addEventListener('click', next);
+    if (modal) modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+
+    document.addEventListener('keydown', function(e) {
+      if (!modal || !modal.classList.contains('active')) return;
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    });
+
+    // Touch swipe
+    var tx = 0;
+    if (modal) {
+      modal.addEventListener('touchstart', function(e) { tx = e.changedTouches[0].screenX; }, { passive: true });
+      modal.addEventListener('touchend', function(e) { var d = e.changedTouches[0].screenX - tx; if (Math.abs(d) > 75) { d > 0 ? prev() : next(); } }, { passive: true });
+    }
+  </script>
+</body>
+</html>
