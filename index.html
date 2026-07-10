@@ -3,71 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nash Gnomie | Adult Content Creator & GFE Specialist | West Coast USA</title>
-  
-  <!-- Full SEO Meta Tags -->
+  <title>NASH | Gnomie — Your New Favorite Online Crush</title>
   <meta name="description" content="Nash Gnomie - Professional adult content creator with 10+ years experience. Specializing in GFE (girlfriend experience) chats, custom content, findom services, and authentic connections. West Coast USA based." />
   <meta name="keywords" content="Nash Gnomie, adult content creator, GFE chat, girlfriend experience, findom, custom content, OnlyFans creator, adult entertainment, west coast creator" />
   <meta name="author" content="Nash Gnomie" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://nashgnomie.vip/" />
-  
-  <!-- Open Graph Meta Tags -->
-  <meta property="og:title" content="Nash Gnomie | Adult Content Creator & GFE Specialist" />
+  <meta property="og:title" content="NASH | Gnomie — Your New Favorite Online Crush" />
   <meta property="og:description" content="Professional adult content creator with 10+ years experience. GFE chats, custom content, and authentic connections." />
   <meta property="og:image" content="https://i.ibb.co/7Nj6352Q/pfp.jpg" />
   <meta property="og:url" content="https://nashgnomie.vip/" />
   <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Nash Gnomie" />
-  
-  <!-- Twitter Card Meta Tags -->
+  <meta property="og:site_name" content="NASH | Gnomie" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Nash Gnomie | Adult Content Creator & GFE Specialist" />
+  <meta name="twitter:title" content="NASH | Gnomie — Your New Favorite Online Crush" />
   <meta name="twitter:description" content="Professional adult content creator with 10+ years experience. GFE chats, custom content, and authentic connections." />
   <meta name="twitter:image" content="https://i.ibb.co/7Nj6352Q/pfp.jpg" />
-  
-  <!-- Geographic Meta Tags -->
-  <meta name="geo.region" content="US-CA" />
-  <meta name="geo.placename" content="West Coast, USA" />
-  <meta name="geo.position" content="37.7749;-122.4194" />
-  <meta name="ICBM" content="37.7749, -122.4194" />
-  
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Press+Start+2P&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="stars"></div>
 
-  <!-- SEO/GEO Hidden Heading -->
-  <h1 class="seo-hidden">Nash Gnomie - Adult Content Creator & GFE Specialist | West Coast USA | 10+ Years Experience in Adult Entertainment, Custom Content, Findom & Girlfriend Experience Services</h1>
-
-  <!-- AGE GATE -->
-  <div id="age-modal" class="modal-overlay active">
-    <div class="modal-content neon-text">
+  <!-- ==========================================
+       AGE GATE
+       ========================================== -->
+  <div id="age-gate" class="age-gate">
+    <div class="age-gate-content">
       <div id="age-input-container">
         <h2>18+ ONLY</h2>
-        <p class="age-prompt">
-          This site contains adult content.<br />
-          Please enter your birthdate to continue:
-        </p>
+        <div id="age-mismatch-warning" class="age-mismatch-warning" style="display:none;">
+          &#9888; Oops! Looks like you submitted different birthdates. Please make sure you enter your actual birthday correctly — it must match each time.
+        </div>
+        <p>This site contains adult content.<br />Please enter your birthdate to continue:</p>
         <form id="age-form" autocomplete="off">
           <label for="birthdate">Birthdate:</label>
           <input type="date" id="birthdate" name="birthdate" required />
-          <div id="age-error" aria-live="polite"></div>
-          <button type="submit" class="neon-btn">Enter</button>
+          <div id="age-error" class="age-error" aria-live="polite"></div>
+          <button type="submit" class="btn btn-primary">Enter</button>
         </form>
       </div>
-      <div id="underage-block" style="display:none; margin-top:24px; text-align:center;">
-        <p style="color:#ffb6d5; margin-bottom:12px;">
-          Sorry, you must be 18 or older to enter this site.
-        </p>
+      <div id="underage-block" class="underage-block" style="display:none;">
+        <p>Sorry, you must be 18 or older to enter this site.</p>
         <div class="video-container">
           <iframe
             id="underage-video"
-            width="560"
-            height="315"
             src="https://www.youtube.com/embed/FEDXbfnw7W0?autoplay=1&mute=1&playsinline=1"
-            frameborder="0"
             allow="autoplay; encrypted-media"
             allowfullscreen
           ></iframe>
@@ -76,254 +56,232 @@
     </div>
   </div>
 
-  <!-- MAIN SITE CONTAINER -->
-  <div id="main-site-container">
-    <!-- MOBILE NAV TOGGLE -->
-    <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle navigation">
-      <span class="hamburger-icon"></span>
-    </button>
+  <!-- ==========================================
+       MAIN SITE (hidden until age gate passes)
+       ========================================== -->
+  <div id="main-site" style="display:none;">
 
-    <!-- MAIN NAV (hidden until age-gate passes) -->
-    <nav class="main-nav" id="main-nav">
-      <a href="#home" class="active">Home</a>
-      <a href="#about">About</a>
-      <a href="#gallery">Gallery</a>
-      <a href="#adopt-bill">Adopt a Bill</a>
-      <a href="links.html" id="links-btn">Links</a>
-      <a href="#" id="contact-btn">Contact</a>
-    </nav>
-    <div class="nav-divider"></div>
+    <!-- NAV (injected by components.js) -->
+    <div id="nav-inject"></div>
 
-    <!-- MAIN CONTENT -->
-    <main>
-      <!-- ABOUT -->
-      <section id="about" class="bio bio-flex uniform-section">
-        <div class="bio-pic-col">
-          <img src="https://i.ibb.co/7Nj6352Q/pfp.jpg" alt="Miss Nash Profile" class="profile-pic" />
+    <!-- DEALS TICKER -->
+    <div class="ticker">
+      <div class="ticker-track" id="ticker-track">
+        <span class="ticker-content">&#9888;&#65039; UNDER CONSTRUCTION &#9888;&#65039;<span class="ticker-sep">&#12539;</span><a href="coming-soon.html">PANTY SHOP COMING SOON!</a><span class="ticker-sep">&#12539;</span><a href="https://onlyfans.com/brattyxgnome/c261">50% OFF OnlyFans</a> + more discounts after you subscribe! (NO PPV)<span class="ticker-sep">&#12539;</span><a href="coming-soon.html">50% OFF LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees)</a><span class="ticker-sep">&#12539;</span></span><span class="ticker-content">&#9888;&#65039; UNDER CONSTRUCTION &#9888;&#65039;<span class="ticker-sep">&#12539;</span><a href="coming-soon.html">PANTY SHOP COMING SOON!</a><span class="ticker-sep">&#12539;</span><a href="https://onlyfans.com/brattyxgnome/c261">50% OFF OnlyFans</a> + more discounts after you subscribe! (NO PPV)<span class="ticker-sep">&#12539;</span><a href="coming-soon.html">50% OFF LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees)</a><span class="ticker-sep">&#12539;</span></span>
+      </div>
+    </div>
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+      <img src="https://i.ibb.co/7Nj6352Q/pfp.jpg" alt="Miss Nash Profile" class="hero-pic" />
+      <div>
+        <h1>NASH | Gnomie</h1>
+        <p class="hero-tagline">Your new favorite online crush!</p>
+        <div class="btn-group">
+          <a href="#" class="btn btn-primary" id="hero-dm-btn">DM ME</a>
+          <a href="coming-soon.html" class="btn btn-outline">Browse menu</a>
         </div>
-        <div class="bio-text-col">
-          <h2 class="neon-text about-header">About Me</h2>
-          <div class="about-blurb">
-            <p>
-              Hi, I'm Miss Nash (or Gnomie)!<br />
-              Adult content creator, resource collector, and your new favorite online crush.<br />
-              <span class="about-highlight">10+ years</span> of online content experience.
-            </p>
-            <a href="https://creatorresourcehub.com" class="resource-hub-link" target="_blank" rel="noopener">🛠️ Creator Resource Hub</a>
-            <ul class="about-details">
-              <li>
-                <span class="about-label">Age:</span> 31
-                <span class="about-note">(b-day: 31 AUG '93)</span>
-              </li>
-              <li><span class="about-label">Location:</span> Internet – West Coast, USA</li>
-              <li>
-                <span class="about-label">Looking for:</span> Fans, Subscribers, deep connections, and
-                flirty fun!
-              </li>
-            </ul>
-            <button id="dm-btn" class="neon-btn">💬 DM Me</button>
-            <button id="tip-btn" class="neon-btn" data-bill="tip">💸 Tip Me</button>
+      </div>
+    </section>
+
+    <!-- ABOUT ME -->
+    <section class="section" id="about">
+      <h2 class="section-title">About me</h2>
+      <p class="about-blurb">
+        Heyy, I'm Miss Nash (or Gnomie)! Adult content creator, resource collector, and your new favorite online crush.
+        <span class="about-highlight">10+ years</span> of experience being bratty, spoiled, and irresistibly distracting.
+        Curious? DM me and find out what you've been missing!
+      </p>
+      <div class="btn-group" style="margin-bottom:16px;">
+        <a href="#" class="btn btn-primary" id="about-dm-btn">DM ME</a>
+        <a href="#" class="btn btn-outline" id="tip-btn">TIP ME</a>
+      </div>
+      <ul class="about-details">
+        <li><span class="about-label">Age:</span> 31 <span class="about-note">(b-day: 31 AUG '93)</span></li>
+        <li><span class="about-label">Location:</span> Internet &#8211; West Coast, USA</li>
+        <li><span class="about-label">Seeking:</span> Fans, Subscribers, FinSubs, deep connections, and flirty fun!</li>
+      </ul>
+      <a href="https://creatorresourcehub.com" class="btn btn-ghost" target="_blank" rel="noopener">18+ Creator Resource Hub</a>
+    </section>
+
+    <!-- TEASER GALLERY -->
+    <section class="gallery" id="gallery">
+      <div class="gallery-header">
+        <h2 class="section-title">Teaser Gallery</h2>
+      </div>
+      <div class="gallery-container">
+        <!-- NSFW Gate -->
+        <div class="gallery-age-gate" id="gallery-age-gate">
+          <div>
+            <h3>18+ TEASER GALLERY</h3>
+            <p>You are about to view <strong>NOT SAFE FOR WORK (NSFW)</strong> content.<br />Please verify your birthdate to continue:</p>
+            <form id="gallery-age-form" autocomplete="off">
+              <input type="date" id="gallery-birthdate" name="birthdate" required />
+              <div id="gallery-age-error" class="age-error" aria-live="polite"></div>
+              <button type="submit" class="btn btn-primary">Continue</button>
+            </form>
           </div>
         </div>
-      </section>
-
-      <!-- TEASER GALLERY -->
-      <section id="gallery" class="gallery uniform-section">
-        <!-- Teaser Gallery Age Gate Overlay (only covers the gallery) -->
-        <div id="gallery-age-gate" class="gallery-age-gate-overlay">
-          <div class="modal-content neon-text">
-            <h2>18+ TEASER GALLERY</h2>
-            <p class="age-prompt">
-              You are about to view <strong>NOT SAFE FOR WORK (NSFW)</strong> content. Would you like to
-              continue?
-            </p>
-            <button id="gallery-age-confirm" class="neon-btn">Yes, continue</button>
-          </div>
-        </div>
-        <h2 class="neon-text">Teaser Gallery</h2>
         <div class="gallery-scroll">
-          <div class="gallery-item">
-            <img src="https://i.ibb.co/8gB2XFxh/teaser001.gif" alt="Teaser 1" class="teaser-thumb" />
-          </div>
-          <div class="gallery-item">
-            <img src="https://i.ibb.co/MkncchXh/teaser003.jpg" alt="Teaser 2" class="teaser-thumb" />
-          </div>
-          <div class="gallery-item">
-            <img src="https://i.ibb.co/yFpXf6pG/teaser004.png" alt="Teaser 3" class="teaser-thumb" />
-          </div>
-          <div class="gallery-item">
-            <img src="https://i.ibb.co/4ZQ57dLG/teaser005.png" alt="Teaser 4" class="teaser-thumb" />
-          </div>
-          <div class="gallery-item">
-            <img src="https://i.ibb.co/8Dx5khhJ/teaser006.png" alt="Teaser 5" class="teaser-thumb" />
-          </div>
-          <div class="gallery-item">
-            <img src="https://i.ibb.co/j9QgVSzS/teaser007.jpg" alt="Teaser 6" class="teaser-thumb" />
-          </div>
-          <div class="gallery-item">
-            <img src="https://i.ibb.co/yBmVHkP4/teaser002.gif" alt="Teaser 7" class="teaser-thumb" />
-          </div>
+          <div class="gallery-item"><img src="https://i.ibb.co/8gB2XFxh/teaser001.gif" alt="Teaser 1" class="teaser-thumb" /><div class="teaser-overlay"></div></div>
+          <div class="gallery-item"><img src="https://i.ibb.co/MkncchXh/teaser003.jpg" alt="Teaser 2" class="teaser-thumb" /><div class="teaser-overlay"></div></div>
+          <div class="gallery-item"><img src="https://i.ibb.co/yFpXf6pG/teaser004.png" alt="Teaser 3" class="teaser-thumb" /><div class="teaser-overlay"></div></div>
+          <div class="gallery-item"><img src="https://i.ibb.co/4ZQ57dLG/teaser005.png" alt="Teaser 4" class="teaser-thumb" /><div class="teaser-overlay"></div></div>
+          <div class="gallery-item"><img src="https://i.ibb.co/8Dx5khhJ/teaser006.png" alt="Teaser 5" class="teaser-thumb" /><div class="teaser-overlay"></div></div>
+          <div class="gallery-item"><img src="https://i.ibb.co/j9QgVSzS/teaser007.jpg" alt="Teaser 6" class="teaser-thumb" /><div class="teaser-overlay"></div></div>
         </div>
-        <div class="gallery-btn-center">
-          <a href="https://t.me/+XbX3ZBx7takwMjY5" class="neon-btn" target="_blank">More Teasers</a>
-        </div>
-      </section>
-
-      <!-- ADOPT A BILL -->
-      <div id="adopt-bill" class="adopt-bill-container">
-        <h2>Adopt a Bill</h2>
-        <table class="bill-table">
-          <thead>
-            <tr>
-              <th>Bill Type</th>
-              <th>Description</th>
-              <th>Cost per Month</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr data-bill="rent">
-              <td>Rent</td>
-              <td>My share w/ Roommates</td>
-              <td>$700</td>
-            </tr>
-            <tr data-bill="utilities">
-              <td>Utilities</td>
-              <td>Electricity, water, internet, extras</td>
-              <td>$75</td>
-            </tr>
-            <tr data-bill="pet">
-              <td>Pet Expenses</td>
-              <td>2 cats & 2 geckos</td>
-              <td>$200</td>
-            </tr>
-            <tr data-bill="groceries">
-              <td>Groceries</td>
-              <td>Food and pantry for one person</td>
-              <td>$300</td>
-            </tr>
-            <tr data-bill="essentials">
-              <td>Essentials</td>
-              <td>Toiletries, cleaning, home supplies</td>
-              <td>$100</td>
-            </tr>
-            <tr data-bill="phone">
-              <td>Phone Bill</td>
-              <td>Mobile phone service & data</td>
-              <td>$150</td>
-            </tr>
-            <tr data-bill="transportation">
-              <td>Transportation</td>
-              <td>Bus pass & rideshare (e.g., Lyft)</td>
-              <td>$175</td>
-            </tr>
-            <tr>
-              <td><strong>Total</strong></td>
-              <td></td>
-              <td><strong>$1,700.00</strong></td>
-            </tr>
-          </tbody>
-        </table>
       </div>
+      <div class="gallery-cta">
+        <a href="https://t.me/+XbX3ZBx7takwMjY5" class="btn btn-outline" target="_blank" rel="noopener">More Teasers</a>
+      </div>
+    </section>
 
-      <!-- FAN REVIEWS SECTION -->
-      <section id="reviews" class="reviews-section uniform-section">
-        <div class="reviews-header">
-          <h2 class="neon-text">Fan Reviews</h2>
-          <div class="reviews-rating-badge">
-            <span class="reviews-stars" id="avg-stars"></span>
-            <span class="reviews-avg" id="avg-rating">Loading...</span>
-          </div>
+    <!-- ADOPT A BILL -->
+    <section class="bill-section" id="adopt">
+      <h2 class="section-title">Adopt a Bill</h2>
+      <table class="bill-table">
+        <thead>
+          <tr>
+            <th>Bill Type</th>
+            <th>Description</th>
+            <th>Cost / Month</th>
+          </tr>
+        </thead>
+        <tbody id="bill-table-body">
+          <tr data-bill="rent" data-amount="850">
+            <td>Rent</td>
+            <td>My share w/ Roommates</td>
+            <td>$850</td>
+          </tr>
+          <tr data-bill="pet" data-amount="200">
+            <td>Pet Expenses</td>
+            <td>2 cats &amp; 2 geckos</td>
+            <td>$200</td>
+          </tr>
+          <tr data-bill="phone" data-amount="150">
+            <td>Phone Bill</td>
+            <td>Mobile phone service &amp; data</td>
+            <td>$150</td>
+          </tr>
+          <tr data-bill="utilities" data-amount="100">
+            <td>Utilities</td>
+            <td>Electricity, water, internet, extras</td>
+            <td>$100</td>
+          </tr>
+          <tr data-bill="transportation" data-amount="150">
+            <td>Transportation</td>
+            <td>Bus pass &amp; rideshare (e.g., Lyft)</td>
+            <td>$150</td>
+          </tr>
+          <tr data-bill="essentials" data-amount="200">
+            <td>Essentials</td>
+            <td>Toiletries, cleaning, home supplies</td>
+            <td>$200</td>
+          </tr>
+          <tr data-bill="groceries" data-amount="350">
+            <td>Groceries</td>
+            <td>Food and pantry for one person</td>
+            <td>$350</td>
+          </tr>
+          <tr data-bill="total">
+            <td><strong>Total</strong></td>
+            <td></td>
+            <td><strong id="bill-total">$2,000</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="text-align:center;margin-top:20px;">
+        <a href="adopt-a-bill.html#reimbursement" class="btn btn-primary">&#128184; Reimbursement Opportunities</a>
+      </div>
+    </section>
+
+    <!-- FAN REVIEWS -->
+    <section class="reviews-section" id="reviews">
+      <div class="reviews-header">
+        <h2 class="section-title">Fan reviews</h2>
+        <div class="reviews-rating-badge">
+          <span class="reviews-stars" id="avg-stars"></span>
+          <span class="reviews-avg" id="avg-rating">Loading...</span>
         </div>
-        
-        <!-- Horizontal scrolling reviews carousel -->
-        <div class="reviews-scroll" id="reviews-scroll">
-          <!-- Loading skeleton -->
-          <div class="review-skeleton"></div>
-          <div class="review-skeleton"></div>
-          <div class="review-skeleton"></div>
-        </div>
+      </div>
+      <div class="reviews-scroll" id="reviews-scroll">
+        <div class="review-skeleton"></div>
+        <div class="review-skeleton"></div>
+        <div class="review-skeleton"></div>
+      </div>
+      <div class="reviews-cta">
+        <a href="https://fan.reviews/creator/adult-content-model/nash-gnomie-brattyxgnome" class="btn btn-primary" target="_blank" rel="noopener">&#9733; Leave a review</a>
+      </div>
+    </section>
 
-        <!-- CTA Button -->
-        <div class="reviews-cta">
-          <a href="https://fan.reviews/creator/adult-content-model/nash-gnomie-brattyxgnome" 
-             class="neon-btn" 
-             target="_blank" 
-             rel="noopener">
-            ⭐ Leave a Review
-          </a>
-        </div>
-      </section>
+    <!-- FOOTER (injected by components.js) -->
+    <div id="footer-inject"></div>
 
-    </main>
-  </div>
+  </div><!-- end #main-site -->
 
-  <!-- Bill/Tip Pop-up Modal -->
-  <div id="bill-popup-overlay" class="bill-popup-overlay">
-    <div class="bill-popup" id="bill-popup">
-      <button class="bill-popup-close" id="bill-popup-close" aria-label="Close">&times;</button>
-      <div class="bill-popup-title" id="bill-popup-title"></div>
-      <div class="bill-popup-desc" id="bill-popup-desc"></div>
-      <div class="bill-popup-links" id="bill-popup-links"></div>
-      <button id="iban-btn" class="neon-btn" style="width: 100%; margin-top: 12px; font-size: 0.95em; padding: 11px 20px; white-space: normal; line-height: 1.3;">🌍 International Bank Transfer (IBAN)</button>
+  <!-- ==========================================
+       MODALS / POPUPS
+       ========================================== -->
+
+  <!-- BILL POPUP -->
+  <div id="bill-popup-overlay" class="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" id="bill-popup-close" aria-label="Close">&times;</button>
+      <div class="modal-title" id="bill-popup-title"></div>
+      <div class="modal-desc" id="bill-popup-desc"></div>
+      <div class="modal-links" id="bill-popup-links"></div>
     </div>
   </div>
 
-  <!-- IBAN Info Modal -->
-  <div id="iban-popup-overlay" class="bill-popup-overlay">
-    <div class="bill-popup" id="iban-popup">
-      <button class="bill-popup-close" id="iban-popup-close" aria-label="Close">&times;</button>
-      <div class="bill-popup-title">🌍 International IBAN Transfer</div>
-      <div class="bill-popup-desc">Copy the details below for international bank transfers:</div>
-      <div class="bill-popup-links">
-        <div><strong>Beneficiary:</strong> <span class="copy-text" data-copy="Stichting Custodian Yoursafe">Stichting Custodian Yoursafe</span></div>
-        <div><strong>Address:</strong> <span class="copy-text" data-copy="Danzigerkade 23D, 1013 AP Amsterdam, Netherlands">Danzigerkade 23D, 1013 AP Amsterdam, Netherlands</span></div>
-        <div><strong>BIC:</strong> <span class="copy-text" data-copy="RABONL2U">RABONL2U</span></div>
-        <div><strong>Bank Name:</strong> <span class="copy-text" data-copy="Rabobank, Croeselaan 18, 3521 CB Utrecht, Netherlands">Rabobank, Croeselaan 18, 3521 CB Utrecht, Netherlands</span></div>
-        <div><strong>Account Number:</strong> <span class="copy-text" data-copy="NL18 RABO 0323 9242 47">NL18 RABO 0323 9242 47</span></div>
-        <div><strong>IBAN:</strong> <span class="copy-text" data-copy="NL81 YOUR 0318 9114 69">NL81 YOUR 0318 9114 69</span></div>
-      </div>
-    </div>
-  </div>
+  <!-- CONTACT POPUP (injected by components.js) -->
+  <div id="contact-popup-inject"></div>
 
-  <!-- Contact Pop-up Modal -->
-  <div id="contact-popup-overlay" class="bill-popup-overlay">
-    <div class="bill-popup" id="contact-popup">
-      <button class="bill-popup-close" id="contact-popup-close" aria-label="Close">&times;</button>
-      <div class="bill-popup-title">💬 Contact Me</div>
-      <div class="bill-popup-desc">Choose your preferred way to reach me!</div>
-      <div class="bill-popup-links">
-        <a href="https://t.me/nashgnomie" target="_blank" rel="noopener">💬 Telegram DM</a>
-        <a href="https://www.loyalfans.com/BrattyGnomie?ref=EsDvOGi-2BVwTKmTpvB-2FcuG-2BwZDrhfpPSPcEVnVrP3OyU" target="_blank" rel="noopener">🖤 LoyalFans</a>
-        <a href="https://www.sextpanther.com/brattyxgnome" target="_blank" rel="noopener">💋 SextPanther</a>
-        <a href="https://flirtback.com/BRATTYXGNOME" target="_blank" rel="noopener">💜 FlirtBack</a>
+  <!-- TIP ME POPUP -->
+  <div id="tip-popup-overlay" class="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" id="tip-popup-close" aria-label="Close">&times;</button>
+      <div class="modal-title">Tip Me</div>
+      <div class="modal-desc">Show your appreciation! Tap to copy.</div>
+      <div class="modal-links">
+        <a href="https://youpay.me/nashgnomie" target="_blank" rel="noopener">YouPay.me</a>
+        <a href="https://cash.app/$pewpewser" target="_blank" rel="noopener">Cash App</a>
+        <a href="https://revolut.me/nashgnomie" target="_blank" rel="noopener">Revolut</a>
+        <div class="copy-badge" data-copy="$pewpewser">
+          <span class="copy-badge-label">Cashtag</span>
+          <span class="copy-badge-value">$pewpewser</span>
+        </div>
+        <div class="copy-badge" data-copy="nashgnomie@gmail.com">
+          <span class="copy-badge-label">Amazon Gift Card</span>
+          <span class="copy-badge-value">nashgnomie@gmail.com</span>
+        </div>
+        <div class="copy-badge" data-copy="nashgnomie@gmail.com">
+          <span class="copy-badge-label">Apple Pay</span>
+          <span class="copy-badge-value">nashgnomie@gmail.com</span>
+        </div>
+        <div class="copy-badge" data-copy="nashgnomie@gmail.com">
+          <span class="copy-badge-label">Zelle</span>
+          <span class="copy-badge-value">nashgnomie@gmail.com</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- TEASER MODAL -->
-  <div id="teaser-modal" class="teaser-modal-overlay">
+  <!-- TEASER MODAL (Lightbox) -->
+  <div id="teaser-modal" class="teaser-modal">
     <div class="teaser-modal-content">
-      <span id="teaser-modal-close" class="teaser-close-x">&times;</span>
+      <button id="teaser-modal-close" class="teaser-modal-close" aria-label="Close">&times;</button>
       <div class="teaser-modal-img-container">
-        <img id="teaser-modal-img" src="" alt="Large Teaser" />
+        <img id="teaser-modal-img" src="" alt="Teaser" />
         <div class="teaser-watermark-overlay"></div>
       </div>
-      <div class="teaser-navigation">
-        <button id="teaser-arrow-left" class="teaser-nav-btn teaser-nav-prev">&lt;</button>
-        <button id="teaser-arrow-right" class="teaser-nav-btn teaser-nav-next">&gt;</button>
-      </div>
+      <button id="teaser-arrow-left" class="teaser-nav-btn teaser-nav-prev">&lt;</button>
+      <button id="teaser-arrow-right" class="teaser-nav-btn teaser-nav-next">&gt;</button>
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="thankyou-footer">
-    © 2025 NASH | GNOMIE | <span class="neon-text">18+ ONLY</span>
-  </footer>
-
-  <!-- Main JavaScript -->
+  <!-- SCRIPTS -->
+  <script src="components.js"></script>
   <script src="main.js"></script>
-  
-  <!-- Reviews JavaScript -->
   <script src="reviews.js"></script>
 
 </body>
