@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>404 | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .error-page { display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 160px);text-align:center;padding:40px var(--pad-mobile); }
+    .error-code { font-family:var(--font-display);font-size:72px;color:var(--accent);line-height:1;margin-bottom:8px;text-shadow:0 0 50px rgba(255,95,162,0.25); }
+    .error-title { font-family:var(--font-display);font-size:26px;color:var(--accent);margin-bottom:16px;line-height:1.2; }
+    .error-message { font-size:15px;line-height:1.7;color:var(--text-body);margin-bottom:28px;max-width:400px; }
+    @media(max-width:400px) { .error-code{font-size:56px;} .error-title{font-size:22px;} }
+  </style>
+</head>
+<body>
+  <div id="nav-inject"></div>
+  <div class="error-page">
+    <div class="error-code">404</div>
+    <h1 class="error-title">Lost in the enchanted forest</h1>
+    <p class="error-message">You've stumbled upon something that doesn't appear to exist! Let's get you back on the path.</p>
+    <div class="btn-group">
+      <a href="index.html" class="btn btn-primary">Back to home</a>
+      <a href="#" class="btn btn-outline" onclick="history.back(); return false;">Go back</a>
+    </div>
+  </div>
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+  <script src="components.js"></script>
+</body>
+</html>

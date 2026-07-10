@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Adopt a Bill | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <div class="section" style="max-width:900px;margin:0 auto;">
+    <h1 class="section-title" style="font-size:28px;margin-bottom:4px;">Adopt a Bill</h1>
+    <p style="font-size:13px;color:var(--text-body);margin-bottom:20px;">Help me cover my monthly expenses. Tap any bill to see payment options.</p>
+    <table class="bill-table">
+      <thead><tr><th>Bill Type</th><th>Description</th><th>Cost / Month</th></tr></thead>
+      <tbody id="bill-table-body">
+        <tr data-bill="rent" data-amount="850"><td>Rent</td><td>My share w/ Roommates</td><td>$850</td></tr>
+        <tr data-bill="pet" data-amount="200"><td>Pet Expenses</td><td>2 cats &amp; 2 geckos</td><td>$200</td></tr>
+        <tr data-bill="phone" data-amount="150"><td>Phone Bill</td><td>Mobile phone service &amp; data</td><td>$150</td></tr>
+        <tr data-bill="utilities" data-amount="100"><td>Utilities</td><td>Electricity, water, internet, extras</td><td>$100</td></tr>
+        <tr data-bill="transportation" data-amount="150"><td>Transportation</td><td>Bus pass &amp; rideshare (e.g., Lyft)</td><td>$150</td></tr>
+        <tr data-bill="essentials" data-amount="200"><td>Essentials</td><td>Toiletries, cleaning, home supplies</td><td>$200</td></tr>
+        <tr data-bill="groceries" data-amount="350"><td>Groceries</td><td>Food and pantry for one person</td><td>$350</td></tr>
+        <tr data-bill="total"><td><strong>Total</strong></td><td></td><td><strong id="bill-total">$2,000</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- REIMBURSEMENT OPPORTUNITIES -->
+  <div class="section" id="reimbursement" style="max-width:900px;margin:0 auto;">
+    <h2 class="section-title">&#128184; Reimbursement Opportunities</h2>
+    <p style="font-size:13px;color:var(--text-body);margin-bottom:16px;">I've already purchased these items — help reimburse me!</p>
+
+    <!-- Sort -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn btn-ghost sort-btn active" data-sort="default" style="font-size:11px;padding:6px 12px;">Default</button>
+      <button class="btn btn-ghost sort-btn" data-sort="high" style="font-size:11px;padding:6px 12px;">Price: High → Low</button>
+      <button class="btn btn-ghost sort-btn" data-sort="low" style="font-size:11px;padding:6px 12px;">Price: Low → High</button>
+      <button class="btn btn-ghost sort-btn" data-sort="vio" style="font-size:11px;padding:6px 12px;">★ VIO Only</button>
+    </div>
+
+    <div class="reimburse-grid" id="reimburse-grid">
+      <div class="reimburse-card" data-price="66" data-vio="false" data-reimburse="ro1">
+        <img src="https://i.ibb.co/GvpV9Lbz/RO001.png" alt="Reimbursement 1" />
+        <div class="reimburse-card-body">
+          <div class="reimburse-card-amount">$66 <span class="reimburse-usd">USD</span></div>
+          <p class="reimburse-card-desc">Snacks, necessities, etc. Stuff I needed &amp; shouldn't have to buy for myself.</p>
+          <button class="btn btn-primary reimburse-btn" data-reimburse="ro1" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
+        </div>
+      </div>
+
+      <div class="reimburse-card" data-price="113" data-vio="true" data-reimburse="ro2">
+        <img src="https://i.ibb.co/20G6x7VQ/RO002.png" alt="Reimbursement 2" />
+        <div class="reimburse-card-body">
+          <div class="reimburse-card-header-row">
+            <span class="reimburse-card-amount">$113 <span class="reimburse-usd">USD</span></span>
+            <div class="reimburse-card-vio-col">
+              <span class="vio-badge" data-vio-btn>&#9733; Very Important Order</span>
+              <span class="vio-learn-more" data-vio-btn>learn more</span>
+            </div>
+          </div>
+          <p class="reimburse-card-desc">Vacuum sealer for shipping used panties. Light bulbs to keep my 2 leopard geckos alive. Earbuds, hair products, chord holders, etc!</p>
+          <button class="btn btn-primary reimburse-btn" data-reimburse="ro2" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
+        </div>
+      </div>
+
+      <div class="reimburse-card" data-price="60" data-vio="false" data-reimburse="ro3">
+        <img src="https://i.ibb.co/mV4SSHJy/RO003.png" alt="Reimbursement 3" />
+        <div class="reimburse-card-body">
+          <div class="reimburse-card-amount">$60 <span class="reimburse-usd">USD</span></div>
+          <p class="reimburse-card-desc">Cat food, bandages, snacks &amp; henna! Stocking the pantry &amp; keeping me entertained!</p>
+          <button class="btn btn-primary reimburse-btn" data-reimburse="ro3" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
+        </div>
+      </div>
+
+      <div class="reimburse-card" data-price="365" data-vio="true" data-reimburse="ro4">
+        <img src="https://i.ibb.co/LDpXY27k/RO004.png" alt="Reimbursement 4" />
+        <div class="reimburse-card-body">
+          <div class="reimburse-card-header-row">
+            <span class="reimburse-card-amount">$365 <span class="reimburse-usd">USD</span></span>
+            <div class="reimburse-card-vio-col">
+              <span class="vio-badge" data-vio-btn>&#9733; Very Important Order</span>
+              <span class="vio-learn-more" data-vio-btn>learn more</span>
+            </div>
+          </div>
+          <p class="reimburse-card-desc">A mini pc &amp; mount to act as a server for bigger projects I'm working on. + a DVD burner/disc drive to be able to burn DVDs for my Nana!</p>
+          <button class="btn btn-primary reimburse-btn" data-reimburse="ro4" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
+        </div>
+      </div>
+
+      <div class="reimburse-card" data-price="80" data-vio="false" data-reimburse="ro5">
+        <img src="https://i.ibb.co/hFSwxW72/RO005.png" alt="Reimbursement 5" />
+        <div class="reimburse-card-body">
+          <div class="reimburse-card-amount">$80 <span class="reimburse-usd">USD</span></div>
+          <p class="reimburse-card-desc">Fangoria magazine subscription for the year. It's a horror magazine.</p>
+          <button class="btn btn-primary reimburse-btn" data-reimburse="ro5" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
+        </div>
+      </div>
+
+      <div class="reimburse-card" data-price="50" data-vio="false" data-reimburse="ro6">
+        <img src="https://i.ibb.co/S8GzKCM/RO006.png" alt="Reimbursement 6" />
+        <div class="reimburse-card-body">
+          <div class="reimburse-card-amount">$50 <span class="reimburse-usd">USD</span></div>
+          <p class="reimburse-card-desc">Limited edition signed vinyl record — PROF's "Good Time Boy" — I don't have a way to listen at this time (need a new record player) so a reimbursement of this would help me justify the purchase.</p>
+          <button class="btn btn-primary reimburse-btn" data-reimburse="ro6" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <!-- VIO TOOLTIP -->
+  <div id="vio-tooltip" class="vio-tooltip">
+    <div class="vio-tooltip-content">
+      <strong>&#9733; Very Important Order (VIO)</strong><br /><br />
+      To show my appreciation for reimbursing me for <strong>essential items</strong> that contribute to my business, my pets, or my life in serious ways — whoever reimburses me for this will get extra attention!<br /><br />
+      You will need to contact me via Telegram &amp; send me a screenshot of your payment. Attention/content may not be given until the money is secured in my account. Any pending payments may delay services.
+    </div>
+  </div>
+
+  <!-- BILL POPUP -->
+  <div id="bill-popup-overlay" class="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" id="bill-popup-close" aria-label="Close">&times;</button>
+      <div class="modal-title" id="bill-popup-title"></div>
+      <div class="modal-desc" id="bill-popup-desc"></div>
+      <div class="modal-links" id="bill-popup-links"></div>
+    </div>
+  </div>
+
+  <!-- REIMBURSE POPUP -->
+  <div id="reimburse-popup-overlay" class="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" id="reimburse-popup-close" aria-label="Close">&times;</button>
+      <div class="modal-title" id="reimburse-popup-title"></div>
+      <div class="modal-desc" id="reimburse-popup-desc"></div>
+      <div class="modal-links" id="reimburse-popup-links"></div>
+    </div>
+  </div>
+
+  <script src="components.js"></script>
+  <script src="main.js"></script>
+  <script>
+    // Reimbursement popup data
+    var reimburseData = {
+      ro1: { title: 'Reimburse: Snacks & Necessities', desc: '$66 USD', youpay: 'https://youpay.me/NashGnomie/request/25844' },
+      ro2: { title: 'Reimburse: Vacuum Sealer, Gecko Bulbs & More', desc: '$113 USD — ★ Very Important Order', youpay: 'https://youpay.me/NashGnomie/request/25845' },
+      ro3: { title: 'Reimburse: Cat Food, Bandages & Snacks', desc: '$60 USD', youpay: 'https://youpay.me/NashGnomie/request/25846' },
+      ro4: { title: 'Reimburse: Mini PC & DVD Burner', desc: '$365 USD — ★ Very Important Order', youpay: 'https://youpay.me/NashGnomie/request/25847' },
+      ro5: { title: 'Reimburse: Fangoria Subscription', desc: '$80 USD', youpay: 'https://youpay.me/NashGnomie/request/25848' },
+      ro6: { title: 'Reimburse: PROF Signed Vinyl', desc: '$50 USD', youpay: 'https://youpay.me/NashGnomie/request/25849' }
+    };
+
+    var reimburseOverlay = document.getElementById('reimburse-popup-overlay');
+    var reimburseClose = document.getElementById('reimburse-popup-close');
+
+    function showReimbursePopup(key) {
+      var d = reimburseData[key];
+      if (!d) return;
+      document.getElementById('reimburse-popup-title').textContent = d.title;
+      document.getElementById('reimburse-popup-desc').textContent = d.desc;
+      var links = document.getElementById('reimburse-popup-links');
+      links.innerHTML = '';
+
+      // YouPay
+      var a1 = document.createElement('a'); a1.href = d.youpay; a1.target = '_blank'; a1.rel = 'noopener'; a1.textContent = 'YouPay'; links.appendChild(a1);
+      // Cash App
+      var a2 = document.createElement('a'); a2.href = 'https://cash.app/$pewpewser'; a2.target = '_blank'; a2.rel = 'noopener'; a2.textContent = 'Cash App'; links.appendChild(a2);
+      // Cashtag copy
+      var cb1 = document.createElement('div'); cb1.className = 'copy-badge'; cb1.setAttribute('data-copy','$pewpewser');
+      cb1.innerHTML = '<span class="copy-badge-label">Cashtag</span><span class="copy-badge-value">$pewpewser</span>'; links.appendChild(cb1);
+      // Amazon copy
+      var cb2 = document.createElement('div'); cb2.className = 'copy-badge'; cb2.setAttribute('data-copy','nashgnomie@gmail.com');
+      cb2.innerHTML = '<span class="copy-badge-label">Amazon Gift Card</span><span class="copy-badge-value">nashgnomie@gmail.com</span>'; links.appendChild(cb2);
+      // Apple Pay copy
+      var cb3 = document.createElement('div'); cb3.className = 'copy-badge'; cb3.setAttribute('data-copy','nashgnomie@gmail.com');
+      cb3.innerHTML = '<span class="copy-badge-label">Apple Pay</span><span class="copy-badge-value">nashgnomie@gmail.com</span>'; links.appendChild(cb3);
+      // Zelle copy
+      var cb4 = document.createElement('div'); cb4.className = 'copy-badge'; cb4.setAttribute('data-copy','nashgnomie@gmail.com');
+      cb4.innerHTML = '<span class="copy-badge-label">Zelle</span><span class="copy-badge-value">nashgnomie@gmail.com</span>'; links.appendChild(cb4);
+
+      // Wire copy badges
+      links.querySelectorAll('.copy-badge').forEach(function(badge) {
+        badge.addEventListener('click', function() {
+          var val = this.getAttribute('data-copy');
+          var el = this.querySelector('.copy-badge-value');
+          var orig = el.textContent;
+          navigator.clipboard.writeText(val).then(function() {
+            el.textContent = 'Copied!'; badge.classList.add('copied');
+            setTimeout(function() { el.textContent = orig; badge.classList.remove('copied'); }, 1200);
+          });
+        });
+      });
+
+      reimburseOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeReimbursePopup() { reimburseOverlay.classList.remove('active'); document.body.style.overflow = ''; }
+    if (reimburseClose) reimburseClose.addEventListener('click', closeReimbursePopup);
+    if (reimburseOverlay) reimburseOverlay.addEventListener('click', function(e) { if (e.target === this) closeReimbursePopup(); });
+
+    document.querySelectorAll('.reimburse-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { showReimbursePopup(this.getAttribute('data-reimburse')); });
+    });
+
+    // VIO tooltip
+    var vioTooltip = document.getElementById('vio-tooltip');
+    document.querySelectorAll('[data-vio-btn]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        if (vioTooltip) { vioTooltip.classList.add('active'); document.body.style.overflow = 'hidden'; }
+      });
+    });
+    if (vioTooltip) {
+      vioTooltip.addEventListener('click', function(e) { if (e.target === this) { this.classList.remove('active'); document.body.style.overflow = ''; } });
+    }
+
+    // Sort
+    var grid = document.getElementById('reimburse-grid');
+    var cards = Array.from(grid.querySelectorAll('.reimburse-card'));
+    var originalOrder = cards.slice();
+
+    document.querySelectorAll('.sort-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        var sort = this.getAttribute('data-sort');
+        var sorted;
+        if (sort === 'high') {
+          sorted = cards.slice().sort(function(a, b) { return parseInt(b.dataset.price) - parseInt(a.dataset.price); });
+        } else if (sort === 'low') {
+          sorted = cards.slice().sort(function(a, b) { return parseInt(a.dataset.price) - parseInt(b.dataset.price); });
+        } else if (sort === 'vio') {
+          sorted = cards.filter(function(c) { return c.dataset.vio === 'true'; }).sort(function(a, b) { return parseInt(b.dataset.price) - parseInt(a.dataset.price); });
+        } else {
+          sorted = originalOrder;
+        }
+        grid.innerHTML = '';
+        sorted.forEach(function(card) { grid.appendChild(card); });
+      });
+    });
+
+    // Escape closes reimburse popup
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        if (reimburseOverlay && reimburseOverlay.classList.contains('active')) closeReimbursePopup();
+        if (vioTooltip && vioTooltip.classList.contains('active')) { vioTooltip.classList.remove('active'); document.body.style.overflow = ''; }
+      }
+    });
+  </script>
+</body>
+</html>
