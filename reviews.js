@@ -24,8 +24,8 @@
   // RENDER PINK STARS FROM RATING
   // ==========================================
   function renderStars(rating) {
-    const fullStar = 'â˜…';
-    const emptyStar = 'â˜†';
+    const fullStar = '&#9733;';
+    const emptyStar = '&#9734;';
     const maxStars = 10;
     
     // Round to nearest 0.5
@@ -106,7 +106,7 @@
   ${reviewTitle ? `<h3 class="review-title">${reviewTitle}</h3>` : ''}
   <p class="review-body">${reviewText}</p>
   <div class="review-footer">
-    ${permalink ? `<a class="review-link" href="${permalink}" target="_blank" rel="noopener">View on Fan.Reviews â†’</a>` : ''}
+    ${permalink ? `<a class="review-link" href="${permalink}" target="_blank" rel="noopener">View on Fan.Reviews &#8594;</a>` : ''}
   </div>
 `;
     
@@ -125,7 +125,7 @@
     if (!reviews || reviews.length === 0) {
       reviewsScroll.innerHTML = `
         <div class="reviews-empty">
-          <div class="reviews-empty-icon">â­</div>
+          <div class="reviews-empty-icon">&#11088;</div>
           <p>No reviews yet. Be the first to leave one!</p>
         </div>
       `;
