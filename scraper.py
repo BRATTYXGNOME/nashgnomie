@@ -1,6 +1,7 @@
-import json, os, time, hashlib
+import json, os, time, hashlib, re
 from dataclasses import dataclass, asdict
 from typing import List, Dict, Any, Optional, Set
+from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
 import yaml
@@ -15,6 +16,7 @@ class Review:
     review_text: str
     time_text: Optional[str]
     permalink: Optional[str]
+    scraped_date: Optional[str] = None
 
 class ReviewScraper:
     def __init__(self, cfg: Dict[str, Any]):
@@ -38,6 +40,69 @@ class ReviewScraper:
 
     def _sleep(self):
         time.sleep(self.sleep_ms / 1000.0)
+
+    def _parse_relative_date(self, text: str) -> Optional[str]:
+        """Convert '2h ago', '5d ago', '1w ago', '3mo ago' etc. to ISO date string."""
+        if not text:
+            return None
+        text = text.strip().lower()
+        m = re.match(r'(\d+)\s*(h|hr|hour|d|day|w|wk|week|mo|month|y|yr|year)s?\s*ago', text)
+        if not m:
+            # Try "edited" suffix e.g. "5d ago(edited)"
+            m = re.match(r'(\d+)\s*(h|hr|hour|d|day|w|wk|week|mo|month|y|yr|year)s?\s*ago', text.split('(')[0].strip())
+        if not m:
+            return datetime.utcnow().isoformat()
+        num = int(m.group(1))
+        unit = m.group(2)
+        now = datetime.utcnow()
+        if unit in ('h', 'hr', 'hour'):
+            dt = now - timedelta(hours=num)
+        elif unit in ('d', 'day'):
+            dt = now - timedelta(days=num)
+        elif unit in ('w', 'wk', 'week'):
+            dt = now - timedelta(weeks=num)
+        elif unit in ('mo', 'month'):
+            dt = now - timedelta(days=num * 30)
+        elif unit in ('y', 'yr', 'year'):
+            dt = now - timedelta(days=num * 365)
+        else:
+            dt = now
+        return dt.isoformat()
+
+    def _calc_relative_time(self, iso_date: str) -> str:
+        """Convert ISO date string back to relative time like '2d ago'."""
+        try:
+            dt = datetime.fromisoformat(iso_date)
+        except Exception:
+            return ""
+        now = datetime.utcnow()
+        diff = now - dt
+        seconds = int(diff.total_seconds())
+        if seconds < 3600:
+            mins = max(1, seconds // 60)
+            return f"{mins}m ago"
+        elif seconds < 86400:
+            hours = seconds // 3600
+            return f"{hours}h ago"
+        elif seconds < 604800:
+            days = seconds // 86400
+            return f"{days}d ago"
+        elif seconds < 2592000:
+            weeks = seconds // 604800
+            return f"{weeks}w ago"
+        elif seconds < 31536000:
+            months = seconds // 2592000
+            return f"{months}mo ago" if months > 0 else "1mo ago"
+        else:
+            years = seconds // 31536000
+            return f"{years}y ago"
+
+    def _recalculate_dates(self, reviews: List[Review]) -> List[Review]:
+        """Recalculate all relative dates from stored absolute dates."""
+        for r in reviews:
+            if r.scraped_date:
+                r.time_text = self._calc_relative_time(r.scraped_date)
+        return reviews
 
     def _hash_for_dedupe(self, r: Review) -> str:
         parts = []
@@ -114,7 +179,8 @@ class ReviewScraper:
                 break
 
         permalink = self._extract_perma(li, page_url)
-        return Review(username, avatar_url, rating, title, review_text, time_text, permalink)
+        scraped_date = self._parse_relative_date(time_text)
+        return Review(username, avatar_url, rating, title, review_text, time_text, permalink, scraped_date)
 
     def _discover_pages(self, html: str, page_url: str) -> List[str]:
         soup = BeautifulSoup(html, "html.parser")
@@ -155,6 +221,8 @@ class ReviewScraper:
             if i < len(page_urls):
                 self._sleep()
 
+        # Recalculate relative dates for ALL reviews from absolute dates
+        collected = self._recalculate_dates(collected)
         self._save(collected, list(known))
         return {"count": len(collected), "path": self.json_path}
 
