@@ -164,18 +164,39 @@
         '<div class="modal-title">Contact Me</div>' +
         '<div class="modal-desc">Choose your preferred way to reach me!</div>' +
         '<div class="modal-links">' +
-          '<a href="https://t.me/nashgnomie" class="contact-featured" target="_blank" rel="noopener">' +
+          '<a href="https://t.me/nashgnomie" class="contact-featured contact-age-link" target="_blank" rel="noopener">' +
             'Telegram DM' +
             '<span class="contact-featured-sub">&#9733; Preferred method</span>' +
           '</a>' +
           '<p class="contact-dm-note"><em>Free to DM but users will be expected to spend money for my time.</em></p>' +
-          '<a href="https://www.sextpanther.com/brattyxgnome" target="_blank" rel="noopener">SextPanther</a>' +
-          '<a href="https://www.loyalfans.com/BrattyGnomie?ref=EsDvOGi-2BVwTKmTpvB-2FcuG-2BwZDrhfpPSPcEVnVrP3OyU" target="_blank" rel="noopener">LoyalFans</a>' +
-          '<a href="https://fans.ly/brattyxgnome/t2" target="_blank" rel="noopener">Fansly</a>' +
+          '<a href="https://www.sextpanther.com/brattyxgnome" class="contact-age-link" target="_blank" rel="noopener">SextPanther</a>' +
+          '<a href="https://www.loyalfans.com/BrattyGnomie?ref=EsDvOGi-2BVwTKmTpvB-2FcuG-2BwZDrhfpPSPcEVnVrP3OyU" class="contact-age-link" target="_blank" rel="noopener">LoyalFans</a>' +
+          '<a href="https://fans.ly/brattyxgnome/t2" class="contact-age-link" target="_blank" rel="noopener">Fansly</a>' +
         '</div>' +
         '<div class="contact-notice">' +
           '<strong>More money = more motivation.</strong> My time goes where the money flows.' +
         '</div>' +
+      '</div>';
+    return div;
+  }
+
+  // ==========================================
+  // SHARED AGE VERIFICATION MODAL (for contact popup + any page)
+  // ==========================================
+  function buildAgeVerifyModal() {
+    var div = document.createElement('div');
+    div.id = 'shared-age-overlay';
+    div.className = 'modal-overlay';
+    div.innerHTML =
+      '<div class="modal">' +
+        '<button class="modal-close" id="shared-age-close" aria-label="Close">&times;</button>' +
+        '<div class="modal-title">Age Verification Required</div>' +
+        '<div class="modal-desc">This link contains adult content (18+). Please verify your birthdate:</div>' +
+        '<form id="shared-age-form" autocomplete="off" style="display:flex;flex-direction:column;align-items:center;gap:8px;">' +
+          '<input type="date" id="shared-age-bd" name="birthdate" required style="width:100%;max-width:240px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--accent-border);border-radius:var(--radius);color:var(--text-light);font-size:14px;font-family:var(--font-body);" />' +
+          '<div id="shared-age-error" class="age-error" aria-live="polite"></div>' +
+          '<button type="submit" class="btn btn-primary" style="width:100%;max-width:240px;">Continue</button>' +
+        '</form>' +
       '</div>';
     return div;
   }
@@ -323,7 +344,65 @@
       contactTarget.parentNode.replaceChild(buildContactPopup(), contactTarget);
     }
 
+    // Shared age verification modal
+    document.body.appendChild(buildAgeVerifyModal());
+
     initDrawer();
     initContactPopup();
+    initSharedAgeVerify();
   });
+
+  // ==========================================
+  // SHARED AGE VERIFICATION LOGIC
+  // ==========================================
+  function initSharedAgeVerify() {
+    var overlay = document.getElementById('shared-age-overlay');
+    var form = document.getElementById('shared-age-form');
+    var bd = document.getElementById('shared-age-bd');
+    var err = document.getElementById('shared-age-error');
+    var closeBtn = document.getElementById('shared-age-close');
+    var pendingUrl = null;
+
+    if (bd) bd.max = new Date().toISOString().split('T')[0];
+
+    // Intercept contact popup age links
+    document.addEventListener('click', function(e) {
+      var link = e.target.closest('.contact-age-link');
+      if (!link) return;
+      e.preventDefault();
+      pendingUrl = link.href;
+      if (err) err.textContent = '';
+      if (bd) bd.value = '';
+      if (overlay) { overlay.classList.add('active'); document.body.style.overflow = 'hidden'; }
+    });
+
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        err.textContent = '';
+        if (!bd.value) { err.textContent = 'Please enter your birthdate.'; return; }
+        var result = window.AgeGate.verify(bd.value);
+        if (result.success) {
+          overlay.classList.remove('active');
+          document.body.style.overflow = '';
+          if (pendingUrl) window.open(pendingUrl, '_blank', 'noopener');
+          pendingUrl = null;
+        } else if (result.reason === 'underage') {
+          err.textContent = 'You must be 18 or older to access this content.';
+        } else if (result.reason === 'mismatch') {
+          window.AgeGate.redirectMismatch();
+        }
+      });
+    }
+
+    function closeSharedAge() {
+      if (overlay) { overlay.classList.remove('active'); document.body.style.overflow = ''; }
+      pendingUrl = null;
+    }
+    if (closeBtn) closeBtn.addEventListener('click', closeSharedAge);
+    if (overlay) overlay.addEventListener('click', function(e) { if (e.target === this) closeSharedAge(); });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && overlay && overlay.classList.contains('active')) closeSharedAge();
+    });
+  }
 })();
