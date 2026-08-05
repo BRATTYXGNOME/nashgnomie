@@ -36,9 +36,9 @@
     <!-- Sort -->
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
       <button class="btn btn-ghost sort-btn active" data-sort="default" style="font-size:11px;padding:6px 12px;">Default</button>
-      <button class="btn btn-ghost sort-btn" data-sort="high" style="font-size:11px;padding:6px 12px;">Price: High → Low</button>
-      <button class="btn btn-ghost sort-btn" data-sort="low" style="font-size:11px;padding:6px 12px;">Price: Low → High</button>
-      <button class="btn btn-ghost sort-btn" data-sort="vio" style="font-size:11px;padding:6px 12px;">★ VIO Only</button>
+      <button class="btn btn-ghost sort-btn" data-sort="high" style="font-size:11px;padding:6px 12px;">Price: High &#8594; Low</button>
+      <button class="btn btn-ghost sort-btn" data-sort="low" style="font-size:11px;padding:6px 12px;">Price: Low &#8594; High</button>
+      <button class="btn btn-ghost sort-btn" data-sort="vio" style="font-size:11px;padding:6px 12px;">&#9733; VIO Only</button>
     </div>
 
     <div class="reimburse-grid" id="reimburse-grid">
@@ -131,6 +131,42 @@
           <button class="btn btn-primary reimburse-btn" data-reimburse="ro8" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
         </div>
       </div>
+
+      <div class="reimburse-card" data-price="133" data-vio="false" data-reimburse="ro9">
+        <img src="https://i.ibb.co/wZ3yxb1v/RO009.png" alt="Reimbursement 9" />
+        <div class="reimburse-card-body">
+          <div class="reimburse-card-amount">$133 <span class="reimburse-usd">USD</span></div>
+          <p class="reimburse-card-desc">Comfy AF tees from my Local Boogeyman obsession: the Devil's Rejects 21st anniversary shirt, an Otis Driftwood shirt &amp; a Ghostface shirt. Cozy &amp; spooky, exactly my vibe.</p>
+          <button class="btn btn-primary reimburse-btn" data-reimburse="ro9" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
+        </div>
+      </div>
+
+      <div class="reimburse-card" data-price="130" data-vio="false" data-reimburse="ro10">
+        <img src="https://i.ibb.co/pj2g5wYV/RO010.png" alt="Reimbursement 10" />
+        <div class="reimburse-card-body">
+          <div class="reimburse-card-amount">$130 <span class="reimburse-usd">USD</span></div>
+          <p class="reimburse-card-desc">Comfy, supportive nighties, a cute swim top &amp; a cute tank top!</p>
+          <button class="btn btn-primary reimburse-btn" data-reimburse="ro10" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
+        </div>
+      </div>
+
+      <div class="reimburse-card" data-price="107" data-vio="false" data-reimburse="ro11">
+        <img src="https://i.ibb.co/KxnnpWYw/RO011.png" alt="Reimbursement 11" />
+        <div class="reimburse-card-body">
+          <div class="reimburse-card-amount">$107 <span class="reimburse-usd">USD</span></div>
+          <p class="reimburse-card-desc">Cleaning supplies, spray bottles &amp; hair treatment products. Keeping my space &amp; my hair in good shape!</p>
+          <button class="btn btn-primary reimburse-btn" data-reimburse="ro11" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
+        </div>
+      </div>
+
+      <div class="reimburse-card" data-price="195" data-vio="false" data-reimburse="ro12">
+        <img src="https://i.ibb.co/60Cjx5y6/RO012.png" alt="Reimbursement 12" />
+        <div class="reimburse-card-body">
+          <div class="reimburse-card-amount">$195 <span class="reimburse-usd">USD</span></div>
+          <p class="reimburse-card-desc">A strapless bra (40H &mdash; one cup smaller than I actually need since 40I is nearly impossible to find) plus a haul of summer clothes: lots of cute tank tops &amp; some shorts!</p>
+          <button class="btn btn-primary reimburse-btn" data-reimburse="ro12" style="width:100%;font-size:12px;padding:9px;margin-top:auto;">&#128184; REIMBURSE ME!</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -178,7 +214,11 @@
       ro5: { title: 'Reimburse: Fangoria Subscription', desc: '$80 USD', youpay: 'https://youpay.me/NashGnomie/request/25848' },
       ro6: { title: 'Reimburse: PROF Signed Vinyl', desc: '$50 USD', youpay: 'https://youpay.me/NashGnomie/request/25849' },
       ro7: { title: 'Reimburse: Hair Products & Lightener', desc: '$119 USD', youpay: 'https://youpay.me/NashGnomie/request/26462' },
-      ro8: { title: 'Reimburse: Shelf & Drawers', desc: '$123 USD — ★ Very Important Order', youpay: 'https://youpay.me/NashGnomie/request/26461' }
+      ro8: { title: 'Reimburse: Shelf & Drawers', desc: '$123 USD — ★ Very Important Order', youpay: 'https://youpay.me/NashGnomie/request/26461' },
+      ro9: { title: 'Reimburse: Local Boogeyman Horror Tees', desc: '$133 USD', youpay: 'https://youpay.me/NashGnomie/request/27793' },
+      ro10: { title: 'Reimburse: Nighties, Swim & Tank Tops', desc: '$130 USD', youpay: 'https://youpay.me/NashGnomie/request/27796' },
+      ro11: { title: 'Reimburse: Cleaning & Hair Treatment', desc: '$107 USD', youpay: 'https://youpay.me/NashGnomie/request/27795' },
+      ro12: { title: 'Reimburse: Strapless Bra & Summer Haul', desc: '$195 USD', youpay: 'https://youpay.me/NashGnomie/request/27797' }
     };
 
     var reimburseOverlay = document.getElementById('reimburse-popup-overlay');
