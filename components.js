@@ -93,7 +93,13 @@
         '<a href="#" id="contact-btn">Contact</a>' +
         '<a href="links.html">Links</a>' +
         '<a href="gallery.html">Gallery</a>' +
-        '<a href="adopt-a-bill.html">Adopt a Bill</a>' +
+        '<div class="nav-dropdown">' +
+          '<a href="#" class="nav-dropdown-toggle">Expenses &#9662;</a>' +
+          '<div class="nav-dropdown-menu">' +
+            '<a href="adopt-a-bill.html">Adopt a Bill</a>' +
+            '<a href="adopt-a-bill.html#reimbursement">Reimburse Me</a>' +
+          '</div>' +
+        '</div>' +
         '<div class="nav-dropdown">' +
           '<a href="#" class="nav-dropdown-toggle">Services &#9662;</a>' +
           '<div class="nav-dropdown-menu">' +
@@ -101,7 +107,6 @@
             '<a href="coming-soon.html">Shop</a>' +
             '<a href="coming-soon.html">Girlfriend Experience</a>' +
             '<a href="coming-soon.html">Domme Experience</a>' +
-            '<a href="adopt-a-bill.html#reimbursement">Reimbursement Opportunities</a>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -128,14 +133,17 @@
       '<a href="#" id="drawer-contact-btn">Contact</a>' +
       '<a href="links.html">Links</a>' +
       '<a href="gallery.html">Gallery</a>' +
-      '<a href="adopt-a-bill.html">Adopt a Bill</a>' +
+      '<a href="#" class="drawer-services-toggle" id="drawer-expenses-toggle">Expenses &#9662;</a>' +
+      '<div class="drawer-services-sub" id="drawer-expenses-sub">' +
+        '<a href="adopt-a-bill.html">Adopt a Bill</a>' +
+        '<a href="adopt-a-bill.html#reimbursement">Reimburse Me</a>' +
+      '</div>' +
       '<a href="#" class="drawer-services-toggle" id="drawer-services-toggle">Services &#9662;</a>' +
       '<div class="drawer-services-sub" id="drawer-services-sub">' +
         '<a href="coming-soon.html">Menu</a>' +
         '<a href="coming-soon.html">Shop</a>' +
         '<a href="coming-soon.html">Girlfriend Experience</a>' +
         '<a href="coming-soon.html">Domme Experience</a>' +
-        '<a href="adopt-a-bill.html#reimbursement">Reimbursement Opportunities</a>' +
       '</div>';
 
     return { overlay: overlay, drawer: drawer };
@@ -258,6 +266,16 @@
     document.querySelectorAll('.drawer-close-link').forEach(function(link) {
       link.addEventListener('click', closeDrawer);
     });
+
+    var expensesToggle = document.getElementById('drawer-expenses-toggle');
+    var expensesSub = document.getElementById('drawer-expenses-sub');
+    if (expensesToggle && expensesSub) {
+      expensesToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        expensesSub.classList.toggle('open');
+        expensesToggle.innerHTML = expensesSub.classList.contains('open') ? 'Expenses &#9652;' : 'Expenses &#9662;';
+      });
+    }
 
     var servicesToggle = document.getElementById('drawer-services-toggle');
     var servicesSub = document.getElementById('drawer-services-sub');
