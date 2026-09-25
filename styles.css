@@ -15,6 +15,8 @@
   --bg-card: #1a1a1f;
   --bg-card-hover: #22202a;
   --accent: #ff5fa2;
+  /* Repeating text watermark, drawn in code (no image file) */
+  --wm-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='120'%3E%3Cg font-family='Arial,Helvetica,sans-serif' font-size='20' font-weight='700' letter-spacing='1.5' fill='white' stroke='black' stroke-width='2' stroke-opacity='.45' paint-order='stroke'%3E%3Ctext x='6' y='38'%3Enashgnomie.vip%3C/text%3E%3Ctext x='186' y='98'%3Enashgnomie.vip%3C/text%3E%3C/g%3E%3C/svg%3E");
   --accent-dim: rgba(255, 95, 162, 0.4);
   --accent-subtle: rgba(255, 95, 162, 0.1);
   --accent-border: rgba(255, 95, 162, 0.15);
@@ -1037,6 +1039,8 @@ button {
   position: relative;
   overflow: hidden;
   border-radius: 12px;
+  width: fit-content;
+  margin: 0 auto;
 }
 
 .teaser-modal-img-container img {
@@ -1059,7 +1063,7 @@ button {
   line-height: 1;
 }
 
-/* Animated text watermark on teaser modal */
+/* Repeating text watermark on teaser modal */
 .teaser-watermark-overlay {
   position: absolute;
   top: 0;
@@ -1075,64 +1079,45 @@ button {
 }
 
 .teaser-watermark-overlay::before {
-  content: "nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip nashgnomie.vip";
+  content: "";
   position: absolute;
   top: 50%; left: 50%;
-  width: 150%;
-  height: 150%;
-  font-size: 1.1vw;
-  color: var(--accent);
-  opacity: 0.22;
-  transform: translate(-50%, -50%) rotate(-18deg);
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 2.4em;
-  letter-spacing: 0.3em;
-  text-align: center;
+  width: 250%;
+  height: 250%;
+  transform: translate(-50%, -50%) rotate(-25deg);
+  background-image: var(--wm-tile);
+  background-repeat: repeat;
+  background-size: 300px auto;
+  opacity: 0.4;
   pointer-events: none;
-  user-select: none;
-  display: block;
-  animation: teaser-watermark-fade 3s linear infinite, teaser-watermark-scroll 12s linear infinite;
-  will-change: opacity, transform;
+  animation: wm-drift 20s linear infinite;
 }
 
-@keyframes teaser-watermark-fade {
-  0%, 100% { opacity: 0.18; }
-  50% { opacity: 0.30; }
+@keyframes wm-drift {
+  from { background-position: 0 0; }
+  to { background-position: 300px 100px; }
 }
 
-@keyframes teaser-watermark-scroll {
-  0% { transform: translate(-50%, -50%) rotate(-18deg); }
-  100% { transform: translate(-50%, -55%) rotate(18deg); }
+@keyframes wm-drift-sm {
+  from { background-position: 0 0; }
+  to { background-position: 180px 60px; }
 }
 
-/* Animated watermark.png overlay on gallery thumbnails */
+/* Repeating text watermark on gallery thumbnails */
 .gallery-item::after {
   content: "";
   position: absolute;
   top: 50%; left: 50%;
-  width: 120%;
-  height: 120%;
-  transform: translate(-50%, -50%) rotate(-15deg);
+  width: 250%;
+  height: 250%;
+  transform: translate(-50%, -50%) rotate(-25deg);
   pointer-events: none;
-  background-image: url('https://i.ibb.co/QFYcGsJc/watermark.png');
-  background-repeat: no-repeat;
-  background-size: 70%;
-  background-position: center;
-  opacity: 0.22;
+  background-image: var(--wm-tile);
+  background-repeat: repeat;
+  background-size: 180px auto;
+  opacity: 0.4;
   z-index: 1;
-  animation: gallery-watermark-fade 3.5s linear infinite, gallery-watermark-rotate 8s linear infinite;
-  will-change: opacity, transform;
-}
-
-@keyframes gallery-watermark-fade {
-  0%, 100% { opacity: 0.18; }
-  50% { opacity: 0.32; }
-}
-
-@keyframes gallery-watermark-rotate {
-  0% { transform: translate(-50%, -50%) rotate(-15deg); }
-  100% { transform: translate(-50%, -50%) rotate(15deg); }
+  animation: wm-drift-sm 20s linear infinite;
 }
 
 .teaser-nav-btn {
@@ -1564,18 +1549,16 @@ button {
   content: "";
   position: absolute;
   top: 50%; left: 50%;
-  width: 120%;
-  height: 120%;
-  transform: translate(-50%, -50%) rotate(-15deg);
+  width: 250%;
+  height: 250%;
+  transform: translate(-50%, -50%) rotate(-25deg);
   pointer-events: none;
-  background-image: url('https://i.ibb.co/QFYcGsJc/watermark.png');
-  background-repeat: no-repeat;
-  background-size: 70%;
-  background-position: center;
-  opacity: 0.22;
+  background-image: var(--wm-tile);
+  background-repeat: repeat;
+  background-size: 180px auto;
+  opacity: 0.4;
   z-index: 1;
-  animation: gallery-watermark-fade 3.5s linear infinite, gallery-watermark-rotate 8s linear infinite;
-  will-change: opacity, transform;
+  animation: wm-drift-sm 20s linear infinite;
 }
 
 @media (max-width: 500px) {
