@@ -77,7 +77,7 @@
           gate.style.display = 'none';
           gate.parentElement.classList.remove('gallery-lock');
         } else {
-          err.textContent = window.AgeGate.message(result);
+          window.AgeGate.handleFailure(result, err);
         }
       });
     }

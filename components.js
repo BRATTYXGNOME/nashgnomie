@@ -114,6 +114,56 @@
   };
 
   // ==========================================
+  // UNCENSORED TELEGRAM OFFER (rotating sale, per visitor)
+  // From a visitor's first visit: 7 days at the sale price, then 7 days at
+  // full price, repeating. The start time is saved in their browser, so a
+  // private window or cleared site data starts a fresh sale week.
+  // ==========================================
+  var DAY_MS = 24 * 60 * 60 * 1000;
+
+  window.UncensoredOffer = {
+    START_KEY: 'nashgnomie_tg_offer_start',
+    CYCLE_DAYS: 7,
+    SCREENING_ROOM: 'https://t.me/+jhttLu-S1U5iZTBh',
+    SALE: {
+      price: 175,
+      youpay: 'https://youpay.me/NashGnomie/gift/1402556',
+      throne: 'https://throne.com/nashgnomie/item/72599ca6-f056-4b94-834d-94f281151507'
+    },
+    FULL: {
+      price: 350,
+      youpay: 'https://youpay.me/NashGnomie/gift/1402574',
+      throne: 'https://throne.com/nashgnomie/item/ab4e485a-6914-4346-b5c5-92152e9fa44b'
+    },
+
+    startTime: function() {
+      var now = Date.now();
+      try {
+        var saved = parseInt(localStorage.getItem(this.START_KEY), 10);
+        if (saved && saved <= now) return saved;
+        localStorage.setItem(this.START_KEY, String(now));
+      } catch (e) { /* storage blocked: treat this visit as day 1 */ }
+      return now;
+    },
+
+    // { onSale, price, links, msLeft } where msLeft counts down to the next switch
+    current: function() {
+      var cycle = this.CYCLE_DAYS * DAY_MS;
+      var elapsed = Date.now() - this.startTime();
+      var onSale = Math.floor(elapsed / cycle) % 2 === 0;
+      var plan = onSale ? this.SALE : this.FULL;
+      return { onSale: onSale, price: plan.price, plan: plan, msLeft: cycle - (elapsed % cycle) };
+    },
+
+    formatLeft: function(ms) {
+      var s = Math.max(0, Math.floor(ms / 1000));
+      var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+      function pad(n) { return (n < 10 ? '0' : '') + n; }
+      return (d ? d + 'd ' : '') + pad(h) + 'h ' + pad(m) + 'm ' + pad(sec) + 's';
+    }
+  };
+
+  // ==========================================
   // AGE GATE SYSTEM (shared across all pages)
   // ==========================================
   window.AgeGate = {
@@ -175,17 +225,26 @@
       return this.verify(dob);
     },
 
-    MISMATCH_MSG: "That doesn't match the birthdate you entered before. Please enter your real birthday.",
     UNDERAGE_MSG: 'You must be 18 or older to access this content.',
 
-    message: function(result) {
-      if (!result || result.success) return '';
-      return result.reason === 'mismatch' ? this.MISMATCH_MSG : this.UNDERAGE_MSG;
+    // Call after a failed verify(): a mismatch never locks anyone out (typos
+    // happen), it starts them over at the homepage's first birthdate screen.
+    // Under 18 just shows the message in errorEl.
+    handleFailure: function(result, errorEl) {
+      if (!result || result.success) return;
+      if (result.reason === 'mismatch') {
+        this.redirectMismatch();
+      } else if (errorEl) {
+        errorEl.textContent = this.UNDERAGE_MSG;
+      }
     },
 
-    // Old behavior sent people to the homepage and wiped the saved date.
-    // Now a mismatch is simply refused, so this does nothing destructive.
-    redirectMismatch: function() {}
+    // Forget the saved date and go back to the homepage gate with a warning
+    redirectMismatch: function() {
+      this.clearDOB();
+      this.clearSession();
+      window.location.href = 'index.html?warning=dob_mismatch';
+    }
   };
 
   // ==========================================
@@ -316,6 +375,123 @@
         '</form>' +
       '</div>';
     return div;
+  }
+
+  // ==========================================
+  // UNCENSORED TELEGRAM POPUP
+  // Opened (after the 18+ check) by anything with data-age-action="uncensored"
+  // ==========================================
+  function buildUncensoredPopup() {
+    var div = document.createElement('div');
+    div.id = 'uncensored-overlay';
+    div.className = 'modal-overlay';
+    div.innerHTML =
+      '<div class="modal uncensored-modal" role="dialog" aria-modal="true" aria-labelledby="uncensored-title">' +
+        '<button class="modal-close" id="uncensored-close" aria-label="Close">&times;</button>' +
+        '<div class="uncensored-kicker">&#128520; Uncensored Telegram</div>' +
+        '<div class="modal-title" id="uncensored-title">Lifetime Access</div>' +
+        '<div class="uncensored-price" id="uncensored-price"></div>' +
+        '<div class="uncensored-timer" id="uncensored-timer"></div>' +
+        '<ul class="uncensored-perks">' +
+          '<li><strong>Pay once, keep forever</strong> &middot; no monthly fees</li>' +
+          '<li><strong>New content first</strong> &middot; plus exclusives</li>' +
+          '<li><strong>Fastest line to me</strong> &middot; members get replies first</li>' +
+          '<li><strong>Spoil me when YOU want</strong> &middot; $15 minimum</li>' +
+        '</ul>' +
+        '<div class="uncensored-tagline">Better than my OnlyFans!</div>' +
+        '<div class="uncensored-steps">' +
+          '<button type="button" class="uncensored-step" id="uncensored-pay-toggle" aria-expanded="false">' +
+            '<span class="uncensored-step-num">1</span>' +
+            '<span class="uncensored-step-text"><strong>Pay now</strong><small>Optional &middot; or chat with me first</small></span>' +
+            '<span class="uncensored-step-arrow" aria-hidden="true">&#9662;</span>' +
+          '</button>' +
+          '<div class="uncensored-pay" id="uncensored-pay" hidden>' +
+            '<p class="uncensored-note">&#10022; After you pay, join the &ldquo;Screening Room&rdquo; to verify payment!</p>' +
+            '<div class="modal-links" id="uncensored-pay-links"></div>' +
+          '</div>' +
+          '<a class="uncensored-step uncensored-step-main" id="uncensored-join" target="_blank" rel="noopener">' +
+            '<span class="uncensored-step-num">2</span>' +
+            '<span class="uncensored-step-text"><strong>Join the screening room</strong><small>Everyone starts here &#12539; Answer the welcome questions immediately!</small></span>' +
+            '<span class="uncensored-step-arrow" aria-hidden="true">&#8599;</span>' +
+          '</a>' +
+        '</div>' +
+        '<p class="uncensored-fine">You must be 18 or older to purchase access to this content; 21 preferred. Lifetime access is for one Telegram account. Lose access &amp; you may be required to pay the full price to regain access. Honorable discounts may be given to individuals who have spent more than the access fee over time.</p>' +
+      '</div>';
+    return div;
+  }
+
+  function initUncensoredPopup() {
+    var overlay = document.getElementById('uncensored-overlay');
+    if (!overlay) return;
+    var priceEl = document.getElementById('uncensored-price');
+    var timerEl = document.getElementById('uncensored-timer');
+    var payToggle = document.getElementById('uncensored-pay-toggle');
+    var payBox = document.getElementById('uncensored-pay');
+    var payLinks = document.getElementById('uncensored-pay-links');
+    var tick = null, shownOnSale = null;
+
+    document.getElementById('uncensored-join').href = window.UncensoredOffer.SCREENING_ROOM;
+
+    function refresh() {
+      var o = window.UncensoredOffer.current();
+      if (o.onSale) {
+        priceEl.innerHTML = '<s class="uncensored-was">$' + window.UncensoredOffer.FULL.price + '</s>' +
+          '<span class="uncensored-now">$' + o.price + '</span>' +
+          '<span class="uncensored-off">50% OFF</span>';
+        timerEl.innerHTML = '&#9203; Deal ends in <strong>' + window.UncensoredOffer.formatLeft(o.msLeft) + '</strong>';
+      } else {
+        priceEl.innerHTML = '<span class="uncensored-now">$' + o.price + '</span><span class="uncensored-usd">USD</span>';
+        timerEl.innerHTML = '&#9203; 50% off returns in <strong>' + window.UncensoredOffer.formatLeft(o.msLeft) + '</strong>';
+      }
+      timerEl.classList.toggle('is-sale', o.onSale);
+      // Re-draw payment links only when the price changes (keeps "Copied!" states)
+      if (shownOnSale !== o.onSale && window.PaymentOptions) {
+        window.PaymentOptions.render(payLinks, { youpay: o.plan.youpay, throne: o.plan.throne });
+        shownOnSale = o.onSale;
+      }
+    }
+
+    function open() {
+      refresh();
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      if (window.closeDrawer) window.closeDrawer();
+      clearInterval(tick);
+      tick = setInterval(refresh, 1000);
+    }
+
+    function close() {
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+      clearInterval(tick);
+    }
+
+    payToggle.addEventListener('click', function() {
+      var opening = payBox.hidden;
+      payBox.hidden = !opening;
+      payToggle.setAttribute('aria-expanded', String(opening));
+      payToggle.classList.toggle('open', opening);
+    });
+    document.getElementById('uncensored-close').addEventListener('click', close);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && overlay.classList.contains('active')) close();
+    });
+
+    window.openUncensoredPopup = open;
+  }
+
+  // Ticker/menu links that open the offer say "50% OFF" only during the
+  // visitor's sale week, so they never advertise a price that isn't running.
+  function updateUncensoredLinks() {
+    var links = document.querySelectorAll('[data-age-action="uncensored"][data-offer-text]');
+    if (!links.length) return;
+    var onSale = window.UncensoredOffer.current().onSale;
+    links.forEach(function(a) {
+      a.textContent = onSale
+        ? '50% OFF LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees)'
+        : 'LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees) • 50% off returns soon!';
+    });
   }
 
   // ==========================================
@@ -477,8 +653,13 @@
     // Shared age verification modal
     document.body.appendChild(buildAgeVerifyModal());
 
+    // Uncensored Telegram offer popup
+    document.body.appendChild(buildUncensoredPopup());
+
     initDrawer();
     initContactPopup();
+    initUncensoredPopup();
+    updateUncensoredLinks();
     initSharedAgeVerify();
   });
 
@@ -515,8 +696,9 @@
         desc.innerHTML = isDm ? DM_TEXT : DEFAULT_TEXT;
         desc.classList.toggle('modal-desc-center', !isDm);
       }
-      if (el.getAttribute('data-age-action') === 'contact') {
-        pending = { action: 'contact' };
+      var action = el.getAttribute('data-age-action');
+      if (action === 'contact' || action === 'uncensored') {
+        pending = { action: action };
       } else {
         pending = { url: el.href, newTab: el.target === '_blank' || el.hostname !== location.hostname };
       }
@@ -533,7 +715,7 @@
         if (!bd.value) { err.textContent = 'Please enter your birthdate.'; return; }
         var result = window.AgeGate.verify(bd.value);
         if (!result.success) {
-          err.textContent = window.AgeGate.message(result);
+          window.AgeGate.handleFailure(result, err);
           return;
         }
         var next = pending;
@@ -543,6 +725,8 @@
         if (!next) return;
         if (next.action === 'contact') {
           if (window.openContactPopup) window.openContactPopup(true);
+        } else if (next.action === 'uncensored') {
+          if (window.openUncensoredPopup) window.openUncensoredPopup();
         } else if (next.newTab) {
           window.open(next.url, '_blank', 'noopener');
         } else {

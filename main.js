@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
       var result = window.AgeGate.verify(birthdateIn.value);
 
       if (result.reason === 'mismatch') {
-        ageError.textContent = window.AgeGate.message(result);
+        window.AgeGate.redirectMismatch();
       } else if (result.reason === 'underage') {
         ageInputContainer.style.display = 'none';
         underageBlock.style.display = 'block';
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         galleryAgeGate.style.display = 'none';
         galleryAgeGate.parentElement.classList.add('unlocked');
       } else {
-        galleryAgeError.textContent = window.AgeGate.message(result);
+        window.AgeGate.handleFailure(result, galleryAgeError);
       }
     });
   }
