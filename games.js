@@ -619,7 +619,11 @@
             await GamesAPI.setPin(pin);
             state.wallet = await GamesAPI.setName(nameInput.value, anon.checked);
             state.view = 'ready'; render(); emit(state.wallet);
-          } catch (x) { err.textContent = x.message; }
+          } catch (x) {
+            // Wallet was removed for sitting unfinished too long: start over
+            if (x.data && /Set up your wallet/.test(x.message)) { state.wallet = null; state.view = 'agree'; render(); emit(null); return; }
+            err.textContent = x.message;
+          }
         });
         container.appendChild(pform);
         return;

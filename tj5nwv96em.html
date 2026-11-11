@@ -137,7 +137,7 @@
         <section class="card"><div class="tiles" id="ov-tiles"></div></section>
         <section class="card">
           <h2>Loaded per day</h2>
-          <div class="legend"><span><i style="background:var(--accent)"></i>YouPay</span><span><i style="background:var(--accent2)"></i>Throne</span></div>
+          <div class="legend"><span><i style="background:var(--accent2)"></i>Throne</span></div>
           <div class="chart" id="chart-loads"></div><div class="chart-axis" id="axis-loads"></div>
         </section>
         <section class="card">
@@ -249,7 +249,7 @@
       var BOARD = { sweet: 'Sweet', spicy: 'Spicy', savage: 'Savage' };
       var STATUS = { credited: 'credited', needs_review: 'needs you', gift: 'kept as gift', refunded: 'refunded', chargeback: 'chargeback' };
       var EVENTS = {
-        wallet_created: 'Wallet created', pin_set: 'PIN set', name_set: 'Name set', signin_ok: 'Signed in on a device',
+        wallet_created: 'Wallet created', wallet_expired: 'Unfinished wallet removed', notice_received: 'Payment notice arrived', notice_error: 'Payment notice check failed', pin_set: 'PIN set', name_set: 'Name set', signin_ok: 'Signed in on a device',
         signin_failed: 'Failed sign-in', signin_locked: 'Wallet locked (wrong PINs)',
         load_credited: 'Load credited', load_needs_review: 'Load needs you', load_duplicate: 'Duplicate notice ignored',
         notice_rejected: 'Fake or broken payment notice rejected', throne_gift: 'Throne gift (not a load)', youpay_notice: 'YouPay notice (raw)',
@@ -408,7 +408,6 @@
           { label: 'Locked or banned', value: num((w.locked_now || 0) + (w.banned || 0)), sub: num(w.locked_now || 0) + ' locked · ' + num(w.banned || 0) + ' banned' }
         ]);
         bars($('chart-loads'), $('axis-loads'), s.series, [
-          { key: 'youpay', name: 'YouPay', color: 'var(--accent)', fmt: money },
           { key: 'throne', name: 'Throne', color: 'var(--accent2)', fmt: money }
         ]);
         bars($('chart-spent'), $('axis-spent'), s.series, [{ key: 'spent', name: 'Spent', color: 'var(--accent)', fmt: money }]);
@@ -422,7 +421,6 @@
         // Money tab
         var yp = L.youpay.credited || {}, th = L.throne.credited || {};
         tiles($('money-tiles'), [
-          { label: 'YouPay loaded', value: money(yp.cents || 0), sub: num(yp.n || 0) + ' loads' },
           { label: 'Throne loaded', value: money(th.cents || 0), sub: num(th.n || 0) + ' loads · fans paid ' + money(th.paid || 0) },
           { label: 'Waiting on you', value: money(review.cents), sub: num(review.n) + ' payments', alert: review.n > 0 },
           { label: 'Kept as gifts', value: money(gift.cents), sub: num(gift.n) + ' payments' },

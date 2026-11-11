@@ -86,6 +86,39 @@ async function ensureSchema(db) {
   schemaReady = true;
 }
 
+// ---------- unfinished wallets ----------
+// A wallet that never got a PIN (and never had money or games) is removed
+// 30 minutes after it was made. If that visitor comes back, their wallet box
+// starts over from the beginning. Runs at most once every 5 minutes.
+const UNFINISHED_MS = 30 * 60 * 1000;
+let lastCleanup = 0;
+async function cleanUnfinished(env, request) {
+  const now = Date.now();
+  if (now - lastCleanup < 5 * 60 * 1000) return;
+  lastCleanup = now;
+  try {
+    const db = env.DB;
+    const old = (await db.prepare(
+      `SELECT id, display_code FROM wallets w
+       WHERE w.pin_hash IS NULL AND w.created_at < ? AND w.balance_cents = 0 AND w.total_loaded_cents = 0
+         AND NOT EXISTS (SELECT 1 FROM drops d WHERE d.wallet_id = w.id)
+         AND NOT EXISTS (SELECT 1 FROM duels u WHERE u.wallet_id = w.id)
+         AND NOT EXISTS (SELECT 1 FROM loads l WHERE l.wallet_id = w.id)
+       LIMIT 50`
+    ).bind(now - UNFINISHED_MS).all()).results;
+    for (const w of old) {
+      await db.batch([
+        db.prepare('DELETE FROM sessions WHERE wallet_id = ?').bind(w.id),
+        db.prepare('DELETE FROM wallet_totp WHERE wallet_id = ?').bind(w.id),
+        db.prepare('DELETE FROM reigns WHERE wallet_id = ?').bind(w.id),
+        db.prepare('UPDATE admin_log SET wallet_id = NULL WHERE wallet_id = ?').bind(w.id),
+        db.prepare('DELETE FROM wallets WHERE id = ? AND pin_hash IS NULL').bind(w.id)
+      ]);
+      await logEvent(env, request, 'wallet_expired', null, w.display_code + ' (no PIN after 30 minutes)');
+    }
+  } catch (e) { console.error('cleanup failed', e); }
+}
+
 // ---------- wallets ----------
 const WALLET_SELECT = `SELECT w.*,
   (SELECT held_cents FROM duels d WHERE d.wallet_id = w.id AND d.status = 'active') AS held_cents,
@@ -499,7 +532,14 @@ async function logNote(db, action, walletId, detail) {
 routes['POST webhooks/throne'] = async (env, request) => {
   const raw = await request.text();
   if (raw.length > 100000) return json({ error: 'too big' }, 413);
-  if (!(await verifyThrone(request, raw, env.THRONE_TEST_PUBLIC_KEY))) {
+  // Record every arrival before any checks, so Backstage shows whether Throne got through
+  const h = request.headers;
+  await logEvent(env, request, 'notice_received', null, 'Throne · ' + raw.length + ' bytes · timestamp ' + (h.get('x-signature-timestamp') || 'missing') +
+    ' · signature ' + ((h.get('x-signature-ed25519') || '').length || 'missing') + ' chars · ' + (h.get('user-agent') || 'no user agent').slice(0, 60));
+  let genuine = false;
+  try { genuine = await verifyThrone(request, raw, env.THRONE_TEST_PUBLIC_KEY); }
+  catch (e) { await logEvent(env, request, 'notice_error', null, 'Throne signature check crashed: ' + (e && e.message)); return json({ error: 'check failed' }, 500); }
+  if (!genuine) {
     await logEvent(env, request, 'notice_rejected', null, 'Throne notice failed the signature check (fake, altered or too old)');
     return json({ error: 'bad signature' }, 401);
   }
@@ -1022,6 +1062,7 @@ export async function onRequest(context) {
   if (!env.DB) return json({ error: 'The games are being set up. Please check back soon.' }, 503);
   try {
     await ensureSchema(env.DB);
+    await cleanUnfinished(env, request);
     return await handler(env, request, url);
   } catch (e) {
     if (e instanceof Oops) return json(Object.assign({ error: e.message }, e.extra || {}), e.status);
