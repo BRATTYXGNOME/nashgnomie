@@ -11,8 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
   var ageForm = document.getElementById('age-form');
   var birthdateIn = document.getElementById('birthdate');
   var ageError = document.getElementById('age-error');
-  var ageInputContainer = document.getElementById('age-input-container');
-  var underageBlock = document.getElementById('underage-block');
   var mainSite = document.getElementById('main-site');
   var mismatchWarning = document.getElementById('age-mismatch-warning');
 
@@ -42,13 +40,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // Under 18 on the homepage gate always means a trip to the kids' show
+      // (and a 6-hour timeout), even if a different date was saved before.
+      if (window.AgeGate.calculateAge(birthdateIn.value) < 18) {
+        window.AgeGate.sendAway();
+        return;
+      }
+
       var result = window.AgeGate.verify(birthdateIn.value);
 
       if (result.reason === 'mismatch') {
         window.AgeGate.redirectMismatch();
-      } else if (result.reason === 'underage') {
-        ageInputContainer.style.display = 'none';
-        underageBlock.style.display = 'block';
       } else if (result.success) {
         ageGate.classList.add('hidden');
         mainSite.style.display = 'block';

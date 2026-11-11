@@ -7,6 +7,25 @@
 (function() {
 
   // ==========================================
+  // UNDER-18 TIMEOUT
+  // An under-18 birthdate on the homepage gate sends the visitor to too-young.html (a kids'
+  // show video) and keeps sending them there from every page for 7 minutes. After that
+  // they get a fresh birthdate screen (in case it was an of-age typo).
+  // ==========================================
+  var KIDS_URL = 'too-young.html'; // embeds the Zoboomafoo video
+  var UNDERAGE_KEY = 'nashgnomie_underage_until';
+  var UNDERAGE_MINUTES = 7;
+
+  try {
+    var lockedUntil = parseInt(localStorage.getItem(UNDERAGE_KEY), 10);
+    if (lockedUntil && Date.now() < lockedUntil) {
+      window.location.replace(KIDS_URL);
+      return; // stop building the page
+    }
+    if (lockedUntil) localStorage.removeItem(UNDERAGE_KEY); // timeout over
+  } catch (e) { /* storage blocked: nothing to enforce */ }
+
+  // ==========================================
   // NASH'S BIRTHDAY / LIVE AGE
   // Any element with data-nash-age shows the current age, worked out from
   // the birthdate below using West Coast (Pacific) time. No manual updates.
@@ -98,7 +117,11 @@
       }
 
       link('YouPay', opts.youpay || self.YOUPAY_DEFAULT, 'Fees added at checkout · I get listed price');
-      link('Throne', opts.throne || self.THRONE_DEFAULT, 'Price includes fees · I get listed price');
+      // Throne is for gifts only (tips, bills, wishlist). Pass { throne: false }
+      // anywhere someone is paying for content or access.
+      if (opts.throne !== false) {
+        link('Throne', opts.throne || self.THRONE_DEFAULT, 'Price includes fees · I get listed price');
+      }
 
       var divider = document.createElement('div');
       divider.className = 'pay-divider';
@@ -239,6 +262,15 @@
       }
     },
 
+    // Homepage gate only: under 18 -> off to the kids' show, locked out for
+    // 7 minutes. The birthdate is forgotten so they start fresh afterwards.
+    sendAway: function() {
+      try { localStorage.setItem(UNDERAGE_KEY, String(Date.now() + UNDERAGE_MINUTES * 60 * 1000)); } catch (e) {}
+      this.clearDOB();
+      this.clearSession();
+      window.location.replace(KIDS_URL);
+    },
+
     // Forget the saved date and go back to the homepage gate with a warning
     redirectMismatch: function() {
       this.clearDOB();
@@ -271,7 +303,7 @@
         '<div class="nav-dropdown">' +
           '<a href="#" class="nav-dropdown-toggle">Services &#9662;</a>' +
           '<div class="nav-dropdown-menu">' +
-            '<a href="coming-soon.html">Menu</a>' +
+            '<a href="menu.html">Menu</a>' +
             '<a href="coming-soon.html">Shop</a>' +
             '<a href="coming-soon.html">Girlfriend Experience</a>' +
             '<a href="coming-soon.html">Domme Experience</a>' +
@@ -308,7 +340,7 @@
       '</div>' +
       '<a href="#" class="drawer-services-toggle" id="drawer-services-toggle">Services &#9662;</a>' +
       '<div class="drawer-services-sub" id="drawer-services-sub">' +
-        '<a href="coming-soon.html">Menu</a>' +
+        '<a href="menu.html">Menu</a>' +
         '<a href="coming-soon.html">Shop</a>' +
         '<a href="coming-soon.html">Girlfriend Experience</a>' +
         '<a href="coming-soon.html">Domme Experience</a>' +
@@ -446,7 +478,8 @@
       timerEl.classList.toggle('is-sale', o.onSale);
       // Re-draw payment links only when the price changes (keeps "Copied!" states)
       if (shownOnSale !== o.onSale && window.PaymentOptions) {
-        window.PaymentOptions.render(payLinks, { youpay: o.plan.youpay, throne: o.plan.throne });
+        // Throne is gifts-only, so it's left out of paying for channel access
+        window.PaymentOptions.render(payLinks, { youpay: o.plan.youpay, throne: false });
         shownOnSale = o.onSale;
       }
     }

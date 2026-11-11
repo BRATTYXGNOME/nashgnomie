@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Too Young! | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Where under-18 visitors land (see UNDER-18 TIMEOUT in components.js).
+       Deliberately does NOT load components.js, so there's no nav, no gates
+       and no redirect loop. */
+    .too-young {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px var(--pad-mobile);
+    }
+
+    .too-young-card {
+      width: 100%;
+      max-width: 640px;
+      text-align: center;
+    }
+
+    .too-young-title {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 34px;
+      color: var(--accent);
+      margin-bottom: 12px;
+      text-wrap: balance;
+    }
+
+    /* One short line per thought, wrapped evenly on small screens */
+    .too-young-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-body);
+      margin: 0 auto 20px;
+      max-width: 480px;
+    }
+
+    .too-young-text span {
+      text-wrap: balance;
+    }
+
+    .too-young-aside {
+      margin-top: 4px;
+      font-size: 13px;
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .too-young-text strong {
+      color: var(--text-light);
+    }
+
+    .too-young-video {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      border: 1px solid var(--accent-border);
+      background: #000;
+      margin-bottom: 14px;
+    }
+
+    .too-young-video iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .too-young-sound {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .too-young-sound a {
+      color: var(--accent);
+    }
+
+    .too-young-timer {
+      display: inline-block;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--accent-border);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .too-young-timer a {
+      color: var(--accent);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <main class="too-young">
+    <div class="too-young-card">
+      <h1 class="too-young-title">You fucked around &amp; found out &#128579;</h1>
+      <p class="too-young-text">
+        <span>This site is <strong>18+ only</strong>, so you&rsquo;re in timeout.</span>
+        <span>Too young, or just testing me? Either way&hellip;</span>
+        <span>sit back &amp; enjoy some Zoboomafoo&nbsp;&#128018;</span>
+        <span class="too-young-aside">It&rsquo;s educational, type shit.</span>
+      </p>
+
+      <!-- Autoplays muted (browsers don't allow autoplay with sound) -->
+      <div class="too-young-video">
+        <iframe
+          src="https://www.youtube-nocookie.com/embed/6wzeW8oay8E?autoplay=1&mute=1&playsinline=1&rel=0"
+          title="Zoboomafoo"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowfullscreen
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
+      </div>
+      <p class="too-young-sound">&#128264; Tap the video to turn the sound on &middot;
+        <a href="https://www.youtube.com/watch?v=6wzeW8oay8E" target="_blank" rel="noopener">watch on YouTube</a>
+      </p>
+
+      <div class="too-young-timer" id="too-young-timer"></div>
+    </div>
+  </main>
+
+  <script>
+    // Live countdown for the 7-minute timeout (set by components.js).
+    // No way back to the site until it hits 0:00.
+    (function() {
+      var el = document.getElementById('too-young-timer');
+      function until() {
+        try { return parseInt(localStorage.getItem('nashgnomie_underage_until'), 10) || 0; } catch (e) { return 0; }
+      }
+      function tick() {
+        var left = until() - Date.now();
+        if (left <= 0) {
+          el.innerHTML = 'Timeout&rsquo;s over. Behave this time &#128527; <a href="index.html">Back to the site</a>';
+          return;
+        }
+        var s = Math.ceil(left / 1000), m = Math.floor(s / 60), sec = s % 60;
+        el.innerHTML = '&#9203; Timeout ends in <strong>' + m + ':' + (sec < 10 ? '0' : '') + sec + '</strong>';
+        setTimeout(tick, 1000);
+      }
+      tick();
+    })();
+  </script>
+</body>
+</html>

@@ -565,7 +565,8 @@ button {
 /* 18+ gate (homepage gallery + Gallery page): a compact card that hugs the
    form with even padding. The teasers stay hidden until it's unlocked. */
 #gallery .gallery-age-gate,
-#gallery-page-gate {
+#gallery-page-gate,
+#menu-gate {
   position: relative;
   inset: auto;
   width: fit-content;
@@ -577,7 +578,8 @@ button {
   border-radius: var(--radius-card);
 }
 
-#gallery-page-gate {
+#gallery-page-gate,
+#menu-gate {
   max-width: 100%;
 }
 
@@ -1283,23 +1285,6 @@ button {
   font-size: 12px;
   margin-bottom: 10px;
   min-height: 18px;
-}
-
-.age-gate .underage-block {
-  color: var(--text-body);
-  margin-top: 24px;
-}
-
-.age-gate .underage-block .video-container {
-  margin-top: 16px;
-}
-
-.age-gate .underage-block .video-container iframe {
-  width: 100%;
-  max-width: 400px;
-  aspect-ratio: 16/9;
-  border: none;
-  border-radius: var(--radius);
 }
 
 /* --- Teaser Modal --- */
@@ -2279,4 +2264,272 @@ button {
   font-size: 10.5px;
   line-height: 1.5;
   color: var(--text-muted);
+}
+
+/* --- Menu page --- */
+.menu-page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.menu-heading {
+  font-size: 30px;
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.menu-lock .menu-content {
+  display: none;
+}
+
+/* "Before you send money" box: centered title, rules as an even centered block */
+.menu-intro {
+  text-align: center;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-card);
+  padding: 22px 20px;
+  margin-bottom: 16px;
+}
+
+.menu-intro-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.menu-rules {
+  list-style: none;
+  text-align: left;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.menu-rules li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-body);
+}
+
+.menu-rules li::before {
+  content: '\2726';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.menu-rules strong {
+  color: var(--text-light);
+}
+
+.menu-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.menu-card {
+  background: var(--bg-card);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-card);
+  padding: 18px 18px 8px;
+  margin-bottom: 14px;
+}
+
+.menu-card-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.menu-card-sub {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.menu-list {
+  list-style: none;
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid rgba(255, 95, 162, 0.08);
+}
+
+.menu-row:first-child {
+  border-top: none;
+}
+
+.menu-item {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-light);
+}
+
+.menu-item small {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.menu-price {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.menu-price small {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.menu-price s {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+
+/* Small pill button inside a row (e.g. Telegram "See deal") */
+.menu-preview {
+  flex-shrink: 0;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--accent-dim);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.menu-preview:hover {
+  background: var(--accent-subtle);
+}
+
+/* ✦ note along the bottom of a card */
+.menu-card-foot {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 10px 0 8px;
+  border-top: 1px solid rgba(255, 95, 162, 0.08);
+}
+
+.menu-card-foot-only {
+  border-top: none;
+  padding-top: 2px;
+  font-size: 13px;
+  color: var(--text-body);
+}
+
+.menu-card-foot a {
+  color: var(--accent);
+}
+
+/* Agreement checkboxes before payment options */
+.pay-agree {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.pay-agree label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-body);
+  cursor: pointer;
+}
+
+.pay-agree input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.pay-agree label:has(input:checked) span {
+  color: var(--text-light);
+}
+
+.pay-agree .modal-desc {
+  margin-bottom: 4px;
+}
+
+.pay-agree-date {
+  flex-direction: column;
+  gap: 6px !important;
+  margin-bottom: 4px;
+}
+
+.pay-agree-date span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.pay-agree-date input[type="date"] {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius);
+  color: var(--text-light);
+  font-size: 14px;
+  font-family: var(--font-body);
+}
+
+.pay-agree-date input[type="date"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.pay-agree .age-error:empty {
+  display: none;
+}
+
+.pay-agree-btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* Phones: every rule is headline on top, detail below, so they all match */
+@media (max-width: 480px) {
+  .menu-rules strong {
+    display: block;
+  }
+
+  .menu-rules .sep {
+    display: none;
+  }
 }
