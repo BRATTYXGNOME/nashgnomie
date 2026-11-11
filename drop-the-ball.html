@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Drop the Ball | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261111y" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <main class="section drain-page games-lock">
+    <a class="games-back" href="games.html">&larr; All Games</a>
+    <h1 class="section-title games-heading">Drop the Ball</h1>
+
+    <div class="gallery-age-gate" id="games-gate">
+      <div>
+        <h3>18+ GAMES</h3>
+        <p>This contains adult content (18+).<br />Please confirm your birthdate:</p>
+        <form id="games-gate-form" autocomplete="off">
+          <input type="date" id="games-gate-birthdate" name="birthdate" required />
+          <div id="games-gate-error" class="age-error" aria-live="polite"></div>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="games-content">
+      <section id="wallet-root"></section>
+
+      <section class="drain-game">
+        <!-- Board size: unlocks with wallet balance -->
+        <div class="drain-boards" id="drain-boards" role="group" aria-label="Board"></div>
+
+        <!-- The board -->
+        <div class="drain-stage" id="drain-stage">
+          <canvas id="drain-canvas" aria-label="Drop the Ball board"></canvas>
+          <div class="drain-result" id="drain-result" aria-live="polite"></div>
+        </div>
+        <p class="drain-chance" id="drain-chance"></p>
+
+        <!-- Aim -->
+        <div class="drain-aim">
+          <span>Left</span>
+          <input type="range" id="drain-aim" min="-6" max="6" step="1" value="0" aria-label="Aim" />
+          <span>Right</span>
+        </div>
+
+        <button type="button" class="btn btn-primary drain-drop" id="drain-drop">Drop</button>
+        <p class="drain-status" id="drain-status" aria-live="polite"></p>
+
+        <ul class="drain-how">
+          <li><strong>Every drop counts</strong> the second you let go.</li>
+          <li><strong>You can&rsquo;t lose more</strong> than what&rsquo;s in your wallet.</li>
+          <li><strong>Aim changes your chances.</strong> Slide left or right before you drop.</li>
+        </ul>
+
+        <!-- A little info, no numbers -->
+        <details class="drain-likely-box">
+          <summary>How likely is each slot?</summary>
+          <ul class="drain-likely" id="drain-likely"></ul>
+          <p class="drain-likely-note">Changes with your aim.</p>
+        </details>
+      </section>
+
+      <section class="lb-card">
+        <h2 class="lb-title">Drop the Ball Leaderboard</h2>
+        <p class="lb-sub">This game only &middot; <a href="games.html">See the overall board</a></p>
+        <div id="lb-game"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <script src="components.js?v=20261111y"></script>
+  <script src="games.js?v=20261111y"></script>
+  <script src="drop-the-ball.js?v=20261111y"></script>
+</body>
+</html>

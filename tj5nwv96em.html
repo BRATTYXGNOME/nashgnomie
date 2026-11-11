@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Backstage</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg: #0d0d0f; --card: #1a1a1f; --card2: #141418; --accent: #ff5fa2; --accent2: #b98cff; --border: rgba(255, 95, 162, 0.18); --light: #f0e6ef; --body: #c0b0bf; --muted: #88808a; --good: #6fdc9a; --bad: #ff5f6f; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--body); font: 14px/1.5 'Inter', sans-serif; }
+    main { max-width: 1040px; margin: 0 auto; padding: 22px 16px 60px; }
+    h1 { font: 400 32px 'Bokor', serif; color: var(--accent); text-align: center; margin: 0 0 16px; }
+    h2 { font-size: 15px; color: var(--light); margin: 0 0 10px; }
+    h3 { font-size: 13px; color: var(--light); margin: 14px 0 8px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+    input, select { background: var(--bg); color: var(--light); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; min-width: 0; }
+    button { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font: 600 13px 'Inter', sans-serif; cursor: pointer; }
+    button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--border); }
+    button.small { padding: 4px 10px; font-size: 12px; }
+    button.danger { color: var(--bad); border-color: rgba(255, 95, 111, 0.35); }
+    button:disabled { opacity: 0.5; cursor: default; }
+    a { color: var(--accent); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .row input { flex: 1 1 140px; }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 14px; }
+    .tabs button { background: var(--card); color: var(--body); border: 1px solid var(--border); }
+    .tabs button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tabs .badge { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: #fff; color: var(--accent); font-size: 11px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    .tile { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+    .tile b { display: block; font-size: 19px; color: var(--light); line-height: 1.3; }
+    .tile span { font-size: 11px; color: var(--muted); }
+    .tile small { display: block; font-size: 11px; color: var(--body); margin-top: 2px; }
+    .tile.alert b { color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+    td.num, th.num { text-align: right; white-space: nowrap; }
+    tr.click { cursor: pointer; }
+    tr.click:hover td { background: rgba(255, 95, 162, 0.05); }
+    .table-wrap { overflow-x: auto; }
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.06); color: var(--body); white-space: nowrap; }
+    .tag.credited, .tag.win, .tag.active { background: rgba(111, 220, 154, 0.12); color: var(--good); }
+    .tag.needs_review, .tag.tie { background: rgba(255, 95, 162, 0.15); color: var(--accent); }
+    .tag.refunded, .tag.chargeback, .tag.lose, .tag.banned { background: rgba(255, 95, 111, 0.15); color: var(--bad); }
+    .review { border: 1px solid var(--accent); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+    .review p { margin: 0 0 8px; }
+    .msg { color: var(--light); word-break: break-word; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .error { color: var(--bad); min-height: 18px; font-size: 13px; margin-top: 6px; }
+    .ok { color: var(--good); }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0 0 12px; }
+    dt { color: var(--muted); }
+    dd { margin: 0; color: var(--light); word-break: break-word; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .chart { display: flex; align-items: flex-end; gap: 2px; height: 130px; padding-top: 6px; border-bottom: 1px solid var(--border); }
+    .chart .col { flex: 1; display: flex; flex-direction: column-reverse; min-width: 3px; height: 100%; position: relative; }
+    .chart .col i { display: block; width: 100%; border-radius: 2px 2px 0 0; }
+    .chart .col:hover { background: rgba(255,255,255,0.04); }
+    .chart-axis { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); margin-top: 4px; }
+    .legend { display: flex; gap: 12px; font-size: 11.5px; color: var(--muted); margin-bottom: 4px; }
+    .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+    .tip { position: fixed; pointer-events: none; background: #000; color: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12px; z-index: 9; white-space: nowrap; }
+    .fair { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; align-items: end; height: 120px; border-bottom: 1px solid var(--border); }
+    .fair div { position: relative; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+    .fair .act { width: 70%; background: var(--accent); border-radius: 2px 2px 0 0; }
+    .fair .exp { position: absolute; left: 6%; right: 6%; border-top: 2px dashed var(--accent2); }
+    .fair-labels { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; font-size: 10px; color: var(--muted); text-align: center; margin-top: 3px; }
+    .login { max-width: 380px; margin: 40px auto; }
+    .login input { width: 100%; margin-bottom: 8px; }
+    .login button { width: 100%; }
+    #qr { background: #fff; padding: 10px; border-radius: 8px; width: max-content; margin: 10px auto; }
+    .secret { font-family: ui-monospace, monospace; letter-spacing: 0.08em; color: var(--light); word-break: break-all; text-align: center; font-size: 13px; }
+    details summary { cursor: pointer; }
+    code { white-space: pre-wrap; word-break: break-all; font-size: 11px; color: var(--body); }
+    .more { margin-top: 10px; text-align: center; }
+    @media (max-width: 700px) { .split { grid-template-columns: 1fr; } }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Backstage</h1>
+
+    <!-- Sign in -->
+    <section class="card login" id="login" hidden>
+      <form id="login-form">
+        <h2>Sign in</h2>
+        <input type="password" id="pw" autocomplete="current-password" placeholder="Password" required />
+        <input type="text" id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code from your authenticator app" />
+        <button type="submit">Sign in</button>
+        <div class="error" id="login-error"></div>
+      </form>
+      <form id="setup-form" hidden>
+        <h2>Connect your authenticator app</h2>
+        <p class="muted">Open Google Authenticator, tap <strong>+</strong>, then <strong>Scan a QR code</strong>. Or choose &ldquo;Enter a setup key&rdquo; and type the key under the code.</p>
+        <div id="qr"></div>
+        <p class="secret" id="secret"></p>
+        <input type="text" id="setup-otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Type the 6-digit code it shows" required />
+        <button type="submit">Confirm &amp; sign in</button>
+        <div class="error" id="setup-error"></div>
+      </form>
+      <p class="muted" id="not-ready" hidden>Backstage isn&rsquo;t switched on yet. Set the password in Cloudflare first.</p>
+      <div id="locked" hidden><h2 style="text-align:center;margin:0">Backstage is locked.</h2></div>
+    </section>
+
+    <div id="app" hidden>
+      <div class="topbar">
+        <span id="updated"></span>
+        <span class="row">
+          <select id="days"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last year</option></select>
+          <button type="button" class="ghost small" id="refresh">Refresh</button>
+          <button type="button" class="ghost small" id="logout">Sign out</button>
+          <button type="button" class="ghost small" id="signout-all">Sign out everywhere</button>
+          <button type="button" class="ghost small danger" id="lockdown">Lock Backstage</button>
+        </span>
+      </div>
+      <nav class="tabs" id="tabs">
+        <button type="button" data-tab="overview" class="on">Overview</button>
+        <button type="button" data-tab="money">Money</button>
+        <button type="button" data-tab="games">Games</button>
+        <button type="button" data-tab="wallets">Wallets</button>
+        <button type="button" data-tab="activity">Activity</button>
+      </nav>
+
+      <!-- OVERVIEW -->
+      <div data-panel="overview">
+        <section class="card" id="review-card" hidden>
+          <h2>Loads that need you</h2>
+          <p class="muted">These payments came in but the wallet code or amount wasn&rsquo;t clear. Credit them to the right wallet, or keep them as a gift.</p>
+          <div id="review"></div>
+        </section>
+        <section class="card"><div class="tiles" id="ov-tiles"></div></section>
+        <section class="card">
+          <h2>Loaded per day</h2>
+          <div class="legend"><span><i style="background:var(--accent)"></i>YouPay</span><span><i style="background:var(--accent2)"></i>Throne</span></div>
+          <div class="chart" id="chart-loads"></div><div class="chart-axis" id="axis-loads"></div>
+        </section>
+        <section class="card">
+          <h2>Spent in games per day</h2>
+          <div class="chart" id="chart-spent"></div><div class="chart-axis" id="axis-spent"></div>
+        </section>
+        <div class="split">
+          <section class="card"><h2>Top loaders</h2><div class="table-wrap"><table id="top-loaded"></table></div></section>
+          <section class="card"><h2>Top spenders</h2><div class="table-wrap"><table id="top-spent"></table></div></section>
+        </div>
+      </div>
+
+      <!-- MONEY -->
+      <div data-panel="money" hidden>
+        <section class="card"><div class="tiles" id="money-tiles"></div></section>
+        <section class="card">
+          <h2>By platform and status</h2>
+          <div class="table-wrap"><table id="money-breakdown"></table></div>
+        </section>
+        <section class="card">
+          <div class="row" style="justify-content:space-between;margin-bottom:8px">
+            <h2 style="margin:0">Every load</h2>
+            <span class="row">
+              <select id="f-platform"><option value="">All platforms</option><option value="youpay">YouPay</option><option value="throne">Throne</option></select>
+              <select id="f-status"><option value="">All statuses</option><option value="credited">Credited</option><option value="needs_review">Needs you</option><option value="gift">Kept as gift</option><option value="refunded">Refunded</option><option value="chargeback">Chargeback</option></select>
+              <button type="button" class="ghost small" id="loads-csv">Download CSV</button>
+            </span>
+          </div>
+          <div class="table-wrap"><table id="loads"></table></div>
+          <div class="more"><button type="button" class="ghost small" id="loads-more">Load more</button></div>
+        </section>
+      </div>
+
+      <!-- GAMES -->
+      <div data-panel="games" hidden>
+        <section class="card">
+          <h2>Drop the Ball</h2>
+          <div class="tiles" id="drop-tiles"></div>
+          <h3>By board</h3>
+          <div class="table-wrap"><table id="drop-boards"></table></div>
+          <h3>Fairness check</h3>
+          <p class="muted">Where balls really landed (pink bars) against where the odds say they should, given how players aimed (dashed line). With lots of drops the two should line up closely.</p>
+          <div class="row"><select id="fair-board"><option value="sweet">Sweet</option><option value="spicy">Spicy</option><option value="savage">Savage</option></select><span class="muted" id="fair-n"></span></div>
+          <div class="fair" id="fair"></div><div class="fair-labels" id="fair-labels"></div>
+        </section>
+        <section class="card">
+          <h2>Dice Duel</h2>
+          <div class="tiles" id="duel-tiles"></div>
+          <h3>By amount</h3>
+          <div class="table-wrap"><table id="duel-amounts"></table></div>
+        </section>
+        <section class="card">
+          <div class="row" style="justify-content:space-between;margin-bottom:8px">
+            <h2 style="margin:0">Leaderboards (with amounts, only you see these)</h2>
+            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Wins against Gnomie</option></select>
+          </div>
+          <div class="table-wrap"><table id="lb"></table></div>
+        </section>
+        <div class="split">
+          <section class="card"><h2>Latest drops</h2><div class="table-wrap"><table id="drops"></table></div><div class="more"><button type="button" class="ghost small" id="drops-more">Load more</button></div></section>
+          <section class="card"><h2>Latest duels</h2><div class="table-wrap"><table id="duels"></table></div><div class="more"><button type="button" class="ghost small" id="duels-more">Load more</button></div></section>
+        </div>
+      </div>
+
+      <!-- WALLETS -->
+      <div data-panel="wallets" hidden>
+        <section class="card">
+          <div class="row" style="margin-bottom:8px">
+            <input type="search" id="w-q" placeholder="Search by code or name" />
+            <select id="w-sort"><option value="newest">Newest</option><option value="balance">Biggest balance</option><option value="loaded">Most loaded</option><option value="spent">Most spent</option><option value="name">Name</option></select>
+            <select id="w-status"><option value="">Everyone</option><option value="active">Active</option><option value="banned">Banned</option></select>
+            <button type="button" class="ghost small" id="wallets-csv">Download CSV</button>
+          </div>
+          <div class="table-wrap"><table id="wallets"></table></div>
+        </section>
+        <section class="card" id="wallet-card" hidden><div id="wallet"></div></section>
+      </div>
+
+      <!-- ACTIVITY -->
+      <div data-panel="activity" hidden>
+        <section class="card"><h2>Event counts</h2><div class="table-wrap"><table id="event-counts"></table></div></section>
+        <section class="card">
+          <div class="row" style="justify-content:space-between;margin-bottom:8px">
+            <h2 style="margin:0">Everything that happened</h2>
+            <select id="f-action"><option value="">All events</option></select>
+          </div>
+          <div class="table-wrap"><table id="events"></table></div>
+          <div class="more"><button type="button" class="ghost small" id="events-more">Load more</button></div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div class="tip" id="tip" hidden></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    (function() {
+      'use strict';
+      var $ = function(id) { return document.getElementById(id); };
+      function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+      function money(c) { var n = c < 0; c = Math.abs(c || 0); return (n ? '−$' : '$') + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+      function num(n) { return (n || 0).toLocaleString('en-US'); }
+      function pct(a, b) { return b ? (a / b * 100).toFixed(1) + '%' : '—'; }
+      function when(ms) { return ms ? new Date(ms).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''; }
+      function day(ms) { return new Date(ms).toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: 'UTC' }); }
+      function cents(v) { var n = parseFloat(String(v).replace(/[$,\s]/g, '')); return isFinite(n) ? Math.round(n * 100) : NaN; }
+      function who(r) { return r.display_code ? esc(r.name || ('Anonymous #' + r.anon_number)) : '<span class="muted">—</span>'; }
+      function plat(p) { return p === 'youpay' ? 'YouPay' : p === 'throne' ? 'Throne' : esc(p); }
+      var BOARD = { sweet: 'Sweet', spicy: 'Spicy', savage: 'Savage' };
+      var STATUS = { credited: 'credited', needs_review: 'needs you', gift: 'kept as gift', refunded: 'refunded', chargeback: 'chargeback' };
+      var EVENTS = {
+        wallet_created: 'Wallet created', pin_set: 'PIN set', name_set: 'Name set', signin_ok: 'Signed in on a device',
+        signin_failed: 'Failed sign-in', signin_locked: 'Wallet locked (wrong PINs)',
+        load_credited: 'Load credited', load_needs_review: 'Load needs you', load_duplicate: 'Duplicate notice ignored',
+        notice_rejected: 'Fake or broken payment notice rejected', throne_gift: 'Throne gift (not a load)', youpay_notice: 'YouPay notice (raw)',
+        youpay_refunded: 'YouPay refund taken back', youpay_chargeback: 'YouPay chargeback taken back',
+        youpay_refunded_unmatched: 'YouPay refund (no matching load)', youpay_chargeback_unmatched: 'YouPay chargeback (no matching load)',
+        backstage_signin: 'You signed in to Backstage', backstage_failed: 'Failed Backstage sign-in', backstage_locked: 'Backstage locked',
+        backstage_2fa_setup: '2FA connected', backstage_bad_password: 'Wrong Backstage password',
+        backstage_manual_load: 'You added a load', backstage_balance_fix: 'You fixed a balance', backstage_load_credited: 'You credited a held load',
+        backstage_kept_as_gift: 'You kept a load as a gift', backstage_pin_reset: 'You set a new PIN', backstage_rename: 'You renamed a wallet',
+        backstage_unlock: 'You unlocked a wallet', backstage_signout_all: 'You signed a wallet out everywhere',
+        backstage_ban: 'You banned a wallet', backstage_unban: 'You unbanned a wallet',
+        backstage_signout_everywhere: 'You signed out of Backstage everywhere', backstage_lockdown: 'Backstage locked', backstage_locked_attempt: 'Sign-in tried while locked',
+        wallet_2fa_on: 'Fan turned on 2FA', wallet_2fa_off: 'Fan turned off 2FA', backstage_2fa_off: 'You turned off a fan’s 2FA'
+      };
+      function eventName(a) { return EVENTS[a] || a.replace(/_/g, ' '); }
+
+      async function api(method, path, body) {
+        var res = await fetch('/api/' + path, {
+          method: method, credentials: 'same-origin',
+          headers: body ? { 'content-type': 'application/json' } : {},
+          body: body ? JSON.stringify(body) : undefined
+        });
+        var data = {}; try { data = await res.json(); } catch (e) {}
+        if (res.status === 423) { showLocked(); throw new Error('Backstage is locked.'); }
+        if (res.status === 401 && path.indexOf('hq/log') !== 0 && path !== 'hq/setup-2fa') { showLogin(); throw new Error('Please sign in.'); }
+        if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+        return data;
+      }
+
+      // ---------- sign in ----------
+      function showLogin() { $('app').hidden = true; $('login').hidden = false; $('login-form').hidden = false; $('setup-form').hidden = true; }
+      function showLocked() { $('app').hidden = true; $('login').hidden = false; $('login-form').hidden = true; $('setup-form').hidden = true; $('locked').hidden = false; }
+      var pwKeep = '';
+      $('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        $('login-error').textContent = '';
+        try {
+          var r = await api('POST', 'hq/login', { password: $('pw').value, code: $('otp').value });
+          if (r.setup) {
+            pwKeep = $('pw').value;
+            $('login-form').hidden = true; $('setup-form').hidden = false;
+            $('qr').innerHTML = '';
+            if (window.QRCode) new QRCode($('qr'), { text: r.otpauth, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+            else $('qr').hidden = true;
+            $('secret').textContent = r.secret.match(/.{1,4}/g).join(' ');
+            $('setup-otp').focus();
+            return;
+          }
+          start();
+        } catch (x) { $('login-error').textContent = x.message; }
+      });
+      $('setup-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        $('setup-error').textContent = '';
+        try { await api('POST', 'hq/setup-2fa', { password: pwKeep, code: $('setup-otp').value }); pwKeep = ''; start(); }
+        catch (x) { $('setup-error').textContent = x.message; }
+      });
+      $('logout').addEventListener('click', async function() { await api('POST', 'hq/logout', {}); location.reload(); });
+      $('signout-all').addEventListener('click', async function() {
+        if (!confirm('Sign out of Backstage on every device, including this one?\n\nYou can sign straight back in with your password and app code.')) return;
+        try { await api('POST', 'hq/signout-everywhere', {}); } catch (x) {}
+        location.reload();
+      });
+      $('lockdown').addEventListener('click', async function() {
+        if (!confirm('Lock Backstage?\n\nEveryone is signed out and NO ONE can sign in, not even with the right password and code. The games, wallets and payments keep working.\n\nTo unlock: Cloudflare \u2192 D1 \u2192 nashgnomie-games \u2192 Console, then run:\nDELETE FROM backstage WHERE key = \'lockdown\'')) return;
+        if (!confirm('Are you sure? This can only be undone in Cloudflare.')) return;
+        try { await api('POST', 'hq/lockdown', {}); } catch (x) {}
+        location.reload();
+      });
+
+      // ---------- tabs ----------
+      var tab = 'overview';
+      $('tabs').addEventListener('click', function(e) {
+        var b = e.target.closest('button[data-tab]'); if (!b) return;
+        tab = b.dataset.tab;
+        document.querySelectorAll('#tabs button').forEach(function(x) { x.classList.toggle('on', x === b); });
+        document.querySelectorAll('[data-panel]').forEach(function(p) { p.hidden = p.dataset.panel !== tab; });
+        if (tab === 'money' && !loaded.loads) loadLoads(true);
+        if (tab === 'games' && !loaded.games) { loadDrops(true); loadDuels(true); loadBoard(); loaded.games = true; }
+        if (tab === 'wallets' && !loaded.wallets) { loadWallets(); loaded.wallets = true; }
+        if (tab === 'activity' && !loaded.events) loadEvents(true);
+      });
+      var loaded = {};
+
+      // ---------- charts ----------
+      var tip = $('tip');
+      function bars(el, axisEl, series, parts) {
+        var max = Math.max(1, ...series.map(function(s) { return parts.reduce(function(t, p) { return t + s[p.key]; }, 0); }));
+        el.innerHTML = series.map(function(s, i) {
+          var total = parts.reduce(function(t, p) { return t + s[p.key]; }, 0);
+          var label = day(s.day) + ': ' + parts.map(function(p) { return (parts.length > 1 ? p.name + ' ' : '') + p.fmt(s[p.key]); }).join(' · ');
+          return '<div class="col" data-tip="' + esc(label) + '">' + parts.map(function(p) {
+            return '<i style="height:' + (s[p.key] / max * 100) + '%;background:' + p.color + '"></i>';
+          }).join('') + '</div>';
+        }).join('');
+        axisEl.innerHTML = '<span>' + day(series[0].day) + '</span><span>' + day(series[series.length - 1].day) + '</span>';
+      }
+      document.addEventListener('mousemove', function(e) {
+        var c = e.target.closest && e.target.closest('[data-tip]');
+        if (!c) { tip.hidden = true; return; }
+        tip.hidden = false; tip.textContent = c.dataset.tip;
+        tip.style.left = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
+      });
+
+      function tiles(el, list) {
+        el.innerHTML = list.map(function(t) {
+          return '<div class="tile' + (t.alert ? ' alert' : '') + '"><span>' + t.label + '</span><b>' + t.value + '</b>' + (t.sub ? '<small>' + t.sub + '</small>' : '') + '</div>';
+        }).join('');
+      }
+      function table(el, head, rows, empty) {
+        el.innerHTML = '<tr>' + head.map(function(h) { return '<th' + (h.num ? ' class="num"' : '') + '>' + h.t + '</th>'; }).join('') + '</tr>' +
+          (rows.length ? rows.join('') : '<tr><td colspan="' + head.length + '" class="muted">' + (empty || 'Nothing yet.') + '</td></tr>');
+      }
+      function csv(name, rows) {
+        if (!rows.length) return;
+        var keys = Object.keys(rows[0]);
+        var text = [keys.join(',')].concat(rows.map(function(r) {
+          return keys.map(function(k) { var v = r[k] == null ? '' : String(r[k]); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(',');
+        })).join('\n');
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
+        a.download = name + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click(); setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+      }
+
+      // ---------- stats ----------
+      var stats = null;
+      async function loadStats() {
+        stats = await api('GET', 'hq/stats?days=' + $('days').value);
+        var s = stats, w = s.wallets, m = s.money;
+        $('updated').textContent = 'Updated ' + when(s.generatedAt);
+        var L = { youpay: {}, throne: {} }, review = { n: 0, cents: 0 }, credited = { n: 0, cents: 0, today: 0, d7: 0, d30: 0, paid: 0 }, back = { n: 0, cents: 0 }, gift = { n: 0, cents: 0 };
+        s.loads.forEach(function(r) {
+          L[r.platform] = L[r.platform] || {}; L[r.platform][r.status] = r;
+          if (r.status === 'credited') { credited.n += r.n; credited.cents += r.cents; credited.today += r.cents_today; credited.d7 += r.cents_7d; credited.d30 += r.cents_30d; }
+          if (r.status === 'needs_review') { review.n += r.n; review.cents += r.cents; }
+          if (r.status === 'refunded' || r.status === 'chargeback') { back.n += r.n; back.cents += r.cents; }
+          if (r.status === 'gift') { gift.n += r.n; gift.cents += r.cents; }
+        });
+        var badge = document.querySelector('#tabs [data-tab=overview] .badge');
+        if (badge) badge.remove();
+        if (review.n) $('tabs').querySelector('[data-tab=overview]').insertAdjacentHTML('beforeend', '<span class="badge">' + review.n + '</span>');
+
+        tiles($('ov-tiles'), [
+          { label: 'Need you', value: num(review.n), sub: review.n ? 'payments waiting' : 'all clear', alert: review.n > 0 },
+          { label: 'Loaded today', value: money(credited.today) },
+          { label: 'Loaded, 7 days', value: money(credited.d7) },
+          { label: 'Loaded, 30 days', value: money(credited.d30) },
+          { label: 'Loaded, all time', value: money(m.loaded), sub: num(credited.n) + ' loads' },
+          { label: 'Spent in games', value: money(m.spent), sub: 'all time' },
+          { label: 'Sitting in wallets', value: money(m.balances) },
+          { label: 'Set aside in duels', value: money(m.held) },
+          { label: 'Wallets', value: num(w.total), sub: num(w.new_7d || 0) + ' new this week' },
+          { label: 'Active this week', value: num(m.active_7d), sub: 'played or loaded' },
+          { label: 'Wallets with money', value: num(w.with_balance) },
+          { label: 'Locked or banned', value: num((w.locked_now || 0) + (w.banned || 0)), sub: num(w.locked_now || 0) + ' locked · ' + num(w.banned || 0) + ' banned' }
+        ]);
+        bars($('chart-loads'), $('axis-loads'), s.series, [
+          { key: 'youpay', name: 'YouPay', color: 'var(--accent)', fmt: money },
+          { key: 'throne', name: 'Throne', color: 'var(--accent2)', fmt: money }
+        ]);
+        bars($('chart-spent'), $('axis-spent'), s.series, [{ key: 'spent', name: 'Spent', color: 'var(--accent)', fmt: money }]);
+        table($('top-loaded'), [{ t: 'Wallet' }, { t: 'Loaded', num: 1 }], s.topLoaded.map(function(r, i) {
+          return '<tr class="click" data-code="' + esc(r.code) + '"><td>' + (i + 1) + '. ' + esc(r.name) + '</td><td class="num">' + money(r.cents) + '</td></tr>';
+        }));
+        table($('top-spent'), [{ t: 'Wallet' }, { t: 'Spent', num: 1 }], s.topSpent.map(function(r, i) {
+          return '<tr class="click" data-code="' + esc(r.code) + '"><td>' + (i + 1) + '. ' + esc(r.name) + '</td><td class="num">' + money(r.cents) + '</td></tr>';
+        }));
+
+        // Money tab
+        var yp = L.youpay.credited || {}, th = L.throne.credited || {};
+        tiles($('money-tiles'), [
+          { label: 'YouPay loaded', value: money(yp.cents || 0), sub: num(yp.n || 0) + ' loads' },
+          { label: 'Throne loaded', value: money(th.cents || 0), sub: num(th.n || 0) + ' loads · fans paid ' + money(th.paid || 0) },
+          { label: 'Waiting on you', value: money(review.cents), sub: num(review.n) + ' payments', alert: review.n > 0 },
+          { label: 'Kept as gifts', value: money(gift.cents), sub: num(gift.n) + ' payments' },
+          { label: 'Refunds & chargebacks', value: money(back.cents), sub: num(back.n) + ' taken back' },
+          { label: 'Average load', value: credited.n ? money(m.loaded / credited.n) : '—' }
+        ]);
+        table($('money-breakdown'), [{ t: 'Platform' }, { t: 'Status' }, { t: 'Count', num: 1 }, { t: 'Amount', num: 1 }, { t: 'Today', num: 1 }, { t: '7 days', num: 1 }, { t: '30 days', num: 1 }],
+          s.loads.map(function(r) {
+            return '<tr><td>' + plat(r.platform) + '</td><td><span class="tag ' + esc(r.status) + '">' + esc(STATUS[r.status] || r.status) + '</span></td><td class="num">' + num(r.n) + '</td><td class="num">' + money(r.cents) +
+              '</td><td class="num">' + money(r.cents_today) + '</td><td class="num">' + money(r.cents_7d) + '</td><td class="num">' + money(r.cents_30d) + '</td></tr>';
+          }), 'No loads yet.');
+
+        // Games tab
+        var dt = s.drop.totals;
+        tiles($('drop-tiles'), [
+          { label: 'Balls dropped', value: num(dt.n), sub: num(dt.n_7d) + ' this week' },
+          { label: 'Taken', value: money(dt.cents), sub: money(dt.cents_7d) + ' this week' },
+          { label: 'Average per ball', value: dt.n ? money(dt.cents / dt.n) : '—' },
+          { label: 'Players', value: num(dt.players) }
+        ]);
+        table($('drop-boards'), [{ t: 'Board' }, { t: 'Balls', num: 1 }, { t: 'Taken', num: 1 }, { t: 'Avg per ball', num: 1 }, { t: 'Players', num: 1 }],
+          s.drop.boards.map(function(b) {
+            return '<tr><td>' + esc(BOARD[b.board] || b.board) + '</td><td class="num">' + num(b.n) + '</td><td class="num">' + money(b.cents) + '</td><td class="num">' + money(b.cents / b.n) + '</td><td class="num">' + num(b.players) + '</td></tr>';
+          }), 'No balls dropped yet.');
+        drawFair();
+        var du = s.duel.totals, played = (du.wins || 0) + (du.ties || 0) + (du.losses || 0);
+        tiles($('duel-tiles'), [
+          { label: 'Games finished', value: num(played), sub: num(du.n_7d) + ' this week' },
+          { label: 'Playing right now', value: num(du.active) },
+          { label: 'Paid', value: money(du.cents), sub: money(du.cents_7d) + ' this week' },
+          { label: 'Players won', value: pct(du.wins, played), sub: num(du.wins) + ' games' },
+          { label: 'Ties', value: pct(du.ties, played), sub: num(du.ties) + ' games' },
+          { label: 'Gnomie won', value: pct(du.losses, played), sub: num(du.losses) + ' games' },
+          { label: 'Average score', value: played ? Math.round(du.avg_you) + ' vs ' + Math.round(du.avg_gnomie) : '—', sub: 'player vs Gnomie' },
+          { label: 'Players', value: num(du.players) }
+        ]);
+        table($('duel-amounts'), [{ t: 'Played for' }, { t: 'Games', num: 1 }, { t: 'Won', num: 1 }, { t: 'Tied', num: 1 }, { t: 'Lost', num: 1 }, { t: 'Paid', num: 1 }],
+          s.duel.byAmount.map(function(r) {
+            return '<tr><td>' + money(r.amount_cents) + '</td><td class="num">' + num(r.n) + '</td><td class="num">' + pct(r.wins, r.n) + '</td><td class="num">' + pct(r.ties, r.n) + '</td><td class="num">' + pct(r.losses, r.n) + '</td><td class="num">' + money(r.cents) + '</td></tr>';
+          }), 'No duels finished yet.');
+
+        // Activity tab: counts + filter list
+        var evs = s.events.slice().sort(function(a, b) { return b.n - a.n; });
+        table($('event-counts'), [{ t: 'Event' }, { t: 'Today', num: 1 }, { t: '7 days', num: 1 }, { t: 'All time', num: 1 }],
+          evs.map(function(e) { return '<tr><td>' + esc(eventName(e.action)) + '</td><td class="num">' + num(e.n_today) + '</td><td class="num">' + num(e.n_7d) + '</td><td class="num">' + num(e.n) + '</td></tr>'; }));
+        var sel = $('f-action'), cur = sel.value;
+        sel.innerHTML = '<option value="">All events</option>' + evs.map(function(e) { return '<option value="' + esc(e.action) + '">' + esc(eventName(e.action)) + '</option>'; }).join('');
+        sel.value = cur;
+
+        await loadReview();
+      }
+
+      function drawFair() {
+        if (!stats) return;
+        var f = stats.drop.fairness[$('fair-board').value];
+        var labels = [];
+        for (var k = 0; k < 13; k++) labels.push('<span>' + (k === 6 ? 'mid' : Math.abs(k - 6)) + '</span>');
+        $('fair-labels').innerHTML = labels.join('');
+        if (!f || !f.n) { $('fair').innerHTML = ''; $('fair-n').textContent = 'No balls on this board yet.'; return; }
+        var max = Math.max.apply(null, f.actual.concat(f.expected));
+        $('fair-n').textContent = num(f.n) + ' balls';
+        $('fair').innerHTML = f.actual.map(function(a, k) {
+          var e = f.expected[k];
+          return '<div data-tip="' + esc((k === 6 ? 'Middle' : Math.abs(k - 6) + ' from middle') + ': landed ' + num(a) + ' · expected about ' + num(Math.round(e))) + '">' +
+            '<span class="act" style="height:' + (a / max * 100) + '%"></span><span class="exp" style="bottom:' + (e / max * 100) + '%"></span></div>';
+        }).join('');
+      }
+      $('fair-board').addEventListener('change', drawFair);
+
+      // ---------- loads needing review ----------
+      async function loadReview() {
+        var rows = (await api('GET', 'hq/loads?status=needs_review&limit=50')).rows;
+        $('review-card').hidden = !rows.length;
+        $('review').innerHTML = rows.map(function(l) {
+          return '<div class="review" data-id="' + l.id + '">' +
+            '<p><strong>' + plat(l.platform) + '</strong> · ' + esc(when(l.created_at)) + (l.gifter ? ' · from ' + esc(l.gifter) : '') + (l.item_name ? ' · ' + esc(l.item_name) : '') +
+              (l.amount_cents ? ' · ' + money(l.amount_cents) : '') + (l.paid_cents ? ' (paid ' + money(l.paid_cents) + ')' : '') + '</p>' +
+            '<p class="msg">' + (l.message ? '&ldquo;' + esc(l.message) + '&rdquo;' : '<span class="muted">No message</span>') + '</p>' +
+            '<div class="row"><input type="text" class="r-code" placeholder="Wallet code" spellcheck="false" value="' + esc(l.display_code || '') + '" />' +
+              '<input type="text" class="r-amt" placeholder="Amount ($)" inputmode="decimal" value="' + (l.amount_cents ? (l.amount_cents / 100).toFixed(2) : '') + '" />' +
+              '<button type="button" class="r-credit">Credit</button><button type="button" class="ghost r-gift">Keep as gift</button></div>' +
+            '<div class="error"></div></div>';
+        }).join('');
+        $('review').querySelectorAll('.review').forEach(function(box) {
+          var id = +box.dataset.id, err = box.querySelector('.error');
+          box.querySelector('.r-credit').addEventListener('click', async function() {
+            var c = cents(box.querySelector('.r-amt').value);
+            if (!confirm('Credit ' + money(c) + ' to ' + box.querySelector('.r-code').value + '?')) return;
+            try { await api('POST', 'hq/assign-load', { loadId: id, code: box.querySelector('.r-code').value, cents: c }); refresh(); }
+            catch (x) { err.textContent = x.message; }
+          });
+          box.querySelector('.r-gift').addEventListener('click', async function() {
+            if (!confirm('Keep this payment as a gift? It won’t be added to any wallet.')) return;
+            try { await api('POST', 'hq/dismiss-load', { loadId: id }); refresh(); }
+            catch (x) { err.textContent = x.message; }
+          });
+        });
+      }
+
+      // ---------- paged lists ----------
+      function pager(name, path, el, filters, head, rowFn) {
+        var rows = [], last = null;
+        async function load(reset) {
+          if (reset) { rows = []; last = null; }
+          var q = filters().filter(function(f) { return f[1]; }).map(function(f) { return f[0] + '=' + encodeURIComponent(f[1]); });
+          if (last) q.push('before=' + last);
+          var got = (await api('GET', path + '?limit=100' + (q.length ? '&' + q.join('&') : ''))).rows;
+          rows = rows.concat(got);
+          if (got.length) last = got[got.length - 1].id;
+          $(name + '-more').hidden = got.length < 100;
+          table($(el), head, rows.map(rowFn));
+          loaded[name] = true;
+        }
+        $(name + '-more').addEventListener('click', function() { load(false); });
+        return { load: load, rows: function() { return rows; } };
+      }
+
+      var loads = pager('loads', 'hq/loads', 'loads', function() { return [['platform', $('f-platform').value], ['status', $('f-status').value]]; },
+        [{ t: 'When' }, { t: 'From' }, { t: 'Wallet' }, { t: 'Amount', num: 1 }, { t: 'Status' }, { t: 'Message' }],
+        function(l) {
+          return '<tr' + (l.display_code ? ' class="click" data-code="' + esc(l.display_code) + '"' : '') + '><td>' + esc(when(l.created_at)) + '</td><td>' + plat(l.platform) + (l.gifter ? '<br><span class="muted">' + esc(l.gifter) + '</span>' : '') + '</td>' +
+            '<td>' + who(l) + '</td><td class="num">' + money(l.amount_cents) + (l.paid_cents ? '<br><span class="muted">paid ' + money(l.paid_cents) + '</span>' : '') + '</td>' +
+            '<td><span class="tag ' + esc(l.status) + '">' + esc(STATUS[l.status] || l.status) + '</span></td><td class="muted">' + esc((l.message || '').slice(0, 80)) + '</td></tr>';
+        });
+      function loadLoads(r) { return loads.load(r); }
+      $('f-platform').addEventListener('change', function() { loadLoads(true); });
+      $('f-status').addEventListener('change', function() { loadLoads(true); });
+      $('loads-csv').addEventListener('click', function() {
+        csv('loads', loads.rows().map(function(l) {
+          return { id: l.id, date: new Date(l.created_at).toISOString(), platform: l.platform, status: l.status, amount: (l.amount_cents / 100).toFixed(2),
+                   paid: l.paid_cents != null ? (l.paid_cents / 100).toFixed(2) : '', currency: l.currency || '', wallet: l.display_code || '',
+                   name: l.display_code ? (l.name || 'Anonymous #' + l.anon_number) : '', from: l.gifter || '', message: l.message || '', item: l.item_name || '', notice_id: l.external_id };
+        }));
+      });
+
+      var drops = pager('drops', 'hq/drops', 'drops', function() { return []; },
+        [{ t: 'When' }, { t: 'Wallet' }, { t: 'Board' }, { t: 'Slot' }, { t: 'Took', num: 1 }],
+        function(d) {
+          return '<tr class="click" data-code="' + esc(d.display_code) + '"><td>' + esc(when(d.created_at)) + '</td><td>' + who(d) + '</td><td>' + esc(BOARD[d.board] || d.board) + '</td><td>' +
+            (d.slot === 6 ? 'middle' : Math.abs(d.slot - 6) + ' out') + '<span class="muted"> (aim ' + d.aim + ')</span></td><td class="num">' + money(d.amount_cents) + '</td></tr>';
+        });
+      function loadDrops(r) { return drops.load(r); }
+      var duels = pager('duels', 'hq/duels', 'duels', function() { return []; },
+        [{ t: 'When' }, { t: 'Wallet' }, { t: 'For', num: 1 }, { t: 'Score' }, { t: 'Result' }, { t: 'Paid', num: 1 }],
+        function(d) {
+          return '<tr class="click" data-code="' + esc(d.display_code) + '"><td>' + esc(when(d.finished_at || d.created_at)) + '</td><td>' + who(d) + '</td><td class="num">' + money(d.amount_cents) + '</td><td>' +
+            (d.status === 'done' ? d.you_score + ' vs ' + d.gnomie_score : '') + '</td><td><span class="tag ' + esc(d.outcome || d.status) + '">' + esc(d.outcome === 'win' ? 'they won' : d.outcome === 'lose' ? 'Gnomie won' : d.outcome || 'playing') + '</span></td>' +
+            '<td class="num">' + (d.paid_cents != null ? money(d.paid_cents) : '<span class="muted">' + money(d.held_cents) + ' set aside</span>') + '</td></tr>';
+        });
+      function loadDuels(r) { return duels.load(r); }
+
+      var events = pager('events', 'hq/events', 'events', function() { return [['action', $('f-action').value]]; },
+        [{ t: 'When' }, { t: 'What' }, { t: 'Wallet' }, { t: 'Details' }],
+        function(n) {
+          var detail = n.action === 'youpay_notice' ? '<details><summary class="muted">Show notice</summary><code>' + esc(n.detail) + '</code></details>' : esc(n.detail);
+          return '<tr' + (n.display_code ? ' class="click" data-code="' + esc(n.display_code) + '"' : '') + '><td>' + esc(when(n.created_at)) + '</td><td>' + esc(eventName(n.action)) + '</td><td>' + who(n) + '</td><td>' + detail + '</td></tr>';
+        });
+      function loadEvents(r) { return events.load(r); }
+      $('f-action').addEventListener('change', function() { loadEvents(true); });
+
+      // ---------- leaderboards with amounts ----------
+      async function loadBoard() {
+        var key = $('lb-board').value, rows = (await api('GET', 'hq/leaderboard?board=' + key)).rows;
+        table($('lb'), [{ t: '#' }, { t: 'Wallet' }, { t: key === 'dice-duel-wins' ? 'Wins' : 'Spent', num: 1 }, { t: 'Holding spot since' }],
+          rows.map(function(r) {
+            return '<tr class="click" data-code="' + esc(r.code) + '"><td>' + r.rank + '</td><td>' + esc(r.name) + '<br><span class="muted">' + esc(r.code) + '</span></td><td class="num">' +
+              (key === 'dice-duel-wins' ? num(r.score) : money(r.score)) + '</td><td class="muted">' + (r.reignStart ? esc(when(r.reignStart)) : '') + '</td></tr>';
+          }), 'No one on this board yet.');
+      }
+      $('lb-board').addEventListener('change', loadBoard);
+
+      // ---------- wallets ----------
+      var walletRows = [], searchTimer;
+      async function loadWallets() {
+        var q = [['q', $('w-q').value], ['sort', $('w-sort').value], ['status', $('w-status').value]].filter(function(f) { return f[1]; })
+          .map(function(f) { return f[0] + '=' + encodeURIComponent(f[1]); }).join('&');
+        walletRows = (await api('GET', 'hq/wallets?limit=200&' + q)).rows;
+        table($('wallets'), [{ t: 'Wallet' }, { t: 'Balance', num: 1 }, { t: 'Loaded', num: 1 }, { t: 'Spent', num: 1 }, { t: 'Status' }, { t: 'Joined' }],
+          walletRows.map(function(w) {
+            return '<tr class="click" data-code="' + esc(w.code) + '"><td>' + esc(w.name) + '<br><span class="muted">' + esc(w.code) + '</span></td><td class="num">' + money(w.balanceCents) +
+              (w.heldCents ? '<br><span class="muted">+ ' + money(w.heldCents) + ' in duel</span>' : '') + '</td><td class="num">' + money(w.loadedCents) + '</td><td class="num">' + money(w.spentCents) + '</td>' +
+              '<td><span class="tag ' + esc(w.status) + '">' + esc(w.status) + '</span>' + (w.locked ? ' <span class="tag banned">locked</span>' : '') + (w.hasPin ? '' : ' <span class="tag">no PIN</span>') + '</td>' +
+              '<td class="muted">' + esc(when(w.createdAt)) + '</td></tr>';
+          }), 'No wallets found.');
+      }
+      $('w-q').addEventListener('input', function() { clearTimeout(searchTimer); searchTimer = setTimeout(loadWallets, 300); });
+      $('w-sort').addEventListener('change', loadWallets);
+      $('w-status').addEventListener('change', loadWallets);
+      $('wallets-csv').addEventListener('click', function() {
+        csv('wallets', walletRows.map(function(w) {
+          return { code: w.code, name: w.name, balance: (w.balanceCents / 100).toFixed(2), set_aside: (w.heldCents / 100).toFixed(2), loaded: (w.loadedCents / 100).toFixed(2),
+                   spent: (w.spentCents / 100).toFixed(2), wins_vs_gnomie: w.duelWins, status: w.status, has_pin: w.hasPin, joined: new Date(w.createdAt).toISOString() };
+        }));
+      });
+
+      // Clicking any row with a wallet opens that wallet
+      document.addEventListener('click', function(e) {
+        var r = e.target.closest('tr.click[data-code]');
+        if (!r || e.target.closest('details')) return;
+        document.querySelector('#tabs [data-tab=wallets]').click();
+        showWallet(r.dataset.code);
+      });
+
+      async function showWallet(code) {
+        var d = await api('GET', 'hq/wallet?code=' + encodeURIComponent(code));
+        var w = d.wallet;
+        var game = {}; d.perGame.forEach(function(g) { game[g.game] = g; });
+        $('wallet-card').hidden = false;
+        $('wallet').innerHTML =
+          '<div class="row" style="justify-content:space-between"><h2 style="margin:0">' + esc(w.name) + '</h2><button type="button" class="ghost small" id="w-close">Close</button></div>' +
+          '<div class="split" style="margin-top:12px">' +
+            '<div><dl>' +
+              '<dt>Code</dt><dd>' + esc(w.code) + '</dd>' +
+              '<dt>Balance</dt><dd>' + money(w.balanceCents) + (w.heldCents ? ' <span class="muted">+ ' + money(w.heldCents) + ' set aside in a duel</span>' : '') + '</dd>' +
+              '<dt>Loaded</dt><dd>' + money(w.loadedCents) + '</dd>' +
+              '<dt>Spent in games</dt><dd>' + money(w.spentCents) + '</dd>' +
+              '<dt>Drop the Ball</dt><dd>' + num(game['drop-the-ball'] ? game['drop-the-ball'].n : 0) + ' balls · ' + money(game['drop-the-ball'] ? game['drop-the-ball'].cents : 0) + '</dd>' +
+              '<dt>Dice Duel</dt><dd>' + num(game['dice-duel'] ? game['dice-duel'].n : 0) + ' games · ' + money(game['dice-duel'] ? game['dice-duel'].cents : 0) + ' · ' + num(w.duelWins) + ' wins</dd>' +
+              '<dt>Status</dt><dd><span class="tag ' + esc(w.status) + '">' + esc(w.status) + '</span>' + (w.locked ? ' <span class="tag banned">locked until ' + esc(when(w.lockedUntil)) + '</span>' : '') + '</dd>' +
+              '<dt>PIN</dt><dd>' + (w.hasPin ? w.pinLength + ' digits' : 'not set') + (w.failedPins ? ' · ' + w.failedPins + ' wrong tries' : '') + '</dd>' +
+              '<dt>Authenticator app</dt><dd>' + (w.twoFactor ? 'On' : 'Off') + '</dd>' +
+              '<dt>Signed-in devices</dt><dd>' + num(d.devices) + (d.lastSignIn ? ' · latest ' + esc(when(d.lastSignIn)) : '') + '</dd>' +
+              '<dt>Joined</dt><dd>' + esc(when(w.createdAt)) + '</dd>' +
+            '</dl></div>' +
+            '<div>' +
+              '<h3 style="margin-top:0">Change balance</h3>' +
+              '<div class="row"><input type="text" id="adj-amt" placeholder="e.g. 10 or -5" inputmode="decimal" />' +
+                '<select id="adj-kind"><option value="load">Count as a load</option><option value="fix">Fix only</option></select></div>' +
+              '<div class="row" style="margin-top:8px"><input type="text" id="adj-note" placeholder="Note (optional)" /><button type="button" id="adj-go">Apply</button></div>' +
+              '<h3>Leaderboard name</h3>' +
+              '<div class="row"><input type="text" id="ren-name" maxlength="24" placeholder="New name" /><button type="button" id="ren-go">Rename</button><button type="button" class="ghost" id="ren-anon">Make anonymous</button></div>' +
+              '<h3>Set a new PIN</h3>' +
+              '<div class="row"><input type="text" id="pin-new" placeholder="4 or 6 digits" inputmode="numeric" maxlength="6" /><button type="button" id="pin-go">Set PIN</button></div>' +
+              '<div class="row" style="margin-top:14px">' +
+                (w.locked ? '<button type="button" class="ghost" id="unlock-go">Unlock</button>' : '') +
+                (w.twoFactor ? '<button type="button" class="ghost" id="tf-go">Turn off their 2FA</button>' : '') +
+                '<button type="button" class="ghost" id="out-go">Sign out everywhere</button>' +
+                '<button type="button" class="ghost" id="ban-go">' + (w.status === 'banned' ? 'Unban' : 'Ban') + '</button></div>' +
+              '<div class="error" id="tool-error"></div>' +
+            '</div>' +
+          '</div>' +
+          '<h3>Loads</h3><div class="table-wrap"><table id="wl-loads"></table></div>' +
+          '<div class="split"><div><h3>Drops</h3><div class="table-wrap"><table id="wl-drops"></table></div></div>' +
+          '<div><h3>Duels</h3><div class="table-wrap"><table id="wl-duels"></table></div></div></div>' +
+          '<h3>Activity</h3><div class="table-wrap"><table id="wl-events"></table></div>';
+
+        table($('wl-loads'), [{ t: 'When' }, { t: 'From' }, { t: 'Amount', num: 1 }, { t: 'Status' }, { t: 'Message' }], d.loads.map(function(l) {
+          return '<tr><td>' + esc(when(l.created_at)) + '</td><td>' + plat(l.platform) + (l.gifter ? '<br><span class="muted">' + esc(l.gifter) + '</span>' : '') + '</td><td class="num">' + money(l.amount_cents) + '</td><td><span class="tag ' + esc(l.status) + '">' + esc(STATUS[l.status] || l.status) + '</span></td><td class="muted">' + esc((l.message || '').slice(0, 80)) + '</td></tr>';
+        }), 'No loads.');
+        table($('wl-drops'), [{ t: 'When' }, { t: 'Board' }, { t: 'Took', num: 1 }], d.drops.map(function(x) {
+          return '<tr><td>' + esc(when(x.created_at)) + '</td><td>' + esc(BOARD[x.board] || x.board) + '</td><td class="num">' + money(x.amount_cents) + '</td></tr>';
+        }), 'No drops.');
+        table($('wl-duels'), [{ t: 'When' }, { t: 'Result' }, { t: 'Paid', num: 1 }], d.duels.map(function(x) {
+          return '<tr><td>' + esc(when(x.finished_at || x.created_at)) + '</td><td><span class="tag ' + esc(x.outcome || x.status) + '">' + esc(x.outcome === 'win' ? 'won' : x.outcome === 'lose' ? 'Gnomie won' : x.outcome || 'playing') + '</span>' +
+            (x.status === 'done' ? ' <span class="muted">' + x.you_score + '–' + x.gnomie_score + '</span>' : '') + '</td><td class="num">' + (x.paid_cents != null ? money(x.paid_cents) : '') + '</td></tr>';
+        }), 'No duels.');
+        table($('wl-events'), [{ t: 'When' }, { t: 'What' }, { t: 'Details' }], d.events.map(function(n) {
+          return '<tr><td>' + esc(when(n.created_at)) + '</td><td>' + esc(eventName(n.action)) + '</td><td>' + esc(n.detail) + '</td></tr>';
+        }), 'Nothing yet.');
+
+        var err = $('tool-error');
+        async function act(path, body, confirmText) {
+          if (confirmText && !confirm(confirmText)) return;
+          try { await api('POST', path, Object.assign({ code: w.code }, body)); showWallet(w.code); refresh(); }
+          catch (x) { err.textContent = x.message; }
+        }
+        $('w-close').addEventListener('click', function() { $('wallet-card').hidden = true; });
+        $('adj-go').addEventListener('click', function() {
+          var c = cents($('adj-amt').value);
+          if (!c) { err.textContent = 'Enter an amount.'; return; }
+          act('hq/adjust', { cents: c, kind: $('adj-kind').value, note: $('adj-note').value }, (c > 0 ? 'Add ' : 'Remove ') + money(Math.abs(c)) + (c > 0 ? ' to ' : ' from ') + w.name + '’s wallet?');
+        });
+        $('ren-go').addEventListener('click', function() { act('hq/rename', { name: $('ren-name').value }); });
+        $('ren-anon').addEventListener('click', function() { act('hq/rename', { anonymous: true }); });
+        $('pin-go').addEventListener('click', async function() {
+          try { await api('POST', 'hq/set-pin', { code: w.code, pin: $('pin-new').value }); err.innerHTML = '<span class="ok">New PIN saved. Send it to them privately.</span>'; }
+          catch (x) { err.textContent = x.message; }
+        });
+        if ($('unlock-go')) $('unlock-go').addEventListener('click', function() { act('hq/unlock', {}); });
+        if ($('tf-go')) $('tf-go').addEventListener('click', function() { act('hq/2fa-off', {}, 'Turn off this fan’s authenticator app? Do this only if they lost their phone and you’ve confirmed it’s really them.'); });
+        $('out-go').addEventListener('click', function() { act('hq/signout-all', {}, 'Sign this wallet out on every device?'); });
+        $('ban-go').addEventListener('click', function() {
+          act('hq/status', { status: w.status === 'banned' ? 'active' : 'banned' }, w.status === 'banned' ? 'Unban this wallet?' : 'Ban this wallet? They’ll be signed out and can’t play.');
+        });
+        $('wallet-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      // ---------- refresh ----------
+      async function refresh() {
+        try {
+          await loadStats();
+          if (loaded.loads) loadLoads(true);
+          if (loaded.games) { loadDrops(true); loadDuels(true); loadBoard(); }
+          if (loaded.wallets) loadWallets();
+          if (loaded.events) loadEvents(true);
+        } catch (x) { console.error(x); }
+      }
+      $('refresh').addEventListener('click', refresh);
+      $('days').addEventListener('change', refresh);
+
+      function start() { $('login').hidden = true; $('app').hidden = false; refresh(); }
+
+      api('GET', 'hq/session').then(function(s) {
+        if (!s.ready) { $('login').hidden = false; $('login-form').hidden = true; $('not-ready').hidden = false; return; }
+        if (s.locked) { showLocked(); return; }
+        if (s.signedIn) start(); else showLogin();
+      }, function() { showLogin(); });
+    })();
+  </script>
+</body>
+</html>

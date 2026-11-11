@@ -87,10 +87,17 @@
       var self = this;
       container.innerHTML = '';
 
-      function link(label, url, note) {
+      function link(label, url, note, preferred) {
         var a = document.createElement('a');
         a.href = url; a.target = '_blank'; a.rel = 'noopener';
         a.textContent = label;
+        if (preferred) {
+          a.classList.add('pay-preferred');
+          var badge = document.createElement('span');
+          badge.className = 'pay-preferred-badge';
+          badge.textContent = '★ Preferred';
+          a.insertBefore(badge, a.firstChild);
+        }
         if (note) {
           var sub = document.createElement('span');
           sub.className = 'pay-fee-note';
@@ -116,7 +123,7 @@
         container.appendChild(div);
       }
 
-      link('YouPay', opts.youpay || self.YOUPAY_DEFAULT, 'Fees added at checkout · I get listed price');
+      link('YouPay', opts.youpay || self.YOUPAY_DEFAULT, 'Fees added at checkout · I get listed price', opts.youpayPreferred === true);
       // Throne is for gifts only (tips, bills, wishlist). Pass { throne: false }
       // anywhere someone is paying for content or access.
       if (opts.throne !== false) {
@@ -294,6 +301,14 @@
         '<a href="links.html">Links</a>' +
         '<a href="gallery.html">Gallery</a>' +
         '<div class="nav-dropdown">' +
+          '<a href="#" class="nav-dropdown-toggle">Games &#9662;</a>' +
+          '<div class="nav-dropdown-menu">' +
+            '<a href="games.html" class="nav-all-games">All Games</a>' +
+            '<a href="drop-the-ball.html">Drop the Ball</a>' +
+            '<a href="dice-duel.html">Dice Duel</a>' +
+          '</div>' +
+        '</div>' +
+        '<div class="nav-dropdown">' +
           '<a href="#" class="nav-dropdown-toggle">Expenses &#9662;</a>' +
           '<div class="nav-dropdown-menu">' +
             '<a href="adopt-a-bill.html">Adopt a Bill</a>' +
@@ -333,6 +348,12 @@
       '<a href="#" id="drawer-contact-btn" class="age-gated" data-age-action="contact">Contact</a>' +
       '<a href="links.html">Links</a>' +
       '<a href="gallery.html">Gallery</a>' +
+      '<a href="#" class="drawer-services-toggle" id="drawer-games-toggle">Games &#9662;</a>' +
+      '<div class="drawer-services-sub" id="drawer-games-sub">' +
+        '<a href="games.html" class="nav-all-games">All Games</a>' +
+        '<a href="drop-the-ball.html">Drop the Ball</a>' +
+        '<a href="dice-duel.html">Dice Duel</a>' +
+      '</div>' +
       '<a href="#" class="drawer-services-toggle" id="drawer-expenses-toggle">Expenses &#9662;</a>' +
       '<div class="drawer-services-sub" id="drawer-expenses-sub">' +
         '<a href="adopt-a-bill.html">Adopt a Bill</a>' +
@@ -469,7 +490,7 @@
       if (o.onSale) {
         priceEl.innerHTML = '<s class="uncensored-was">$' + window.UncensoredOffer.FULL.price + '</s>' +
           '<span class="uncensored-now">$' + o.price + '</span>' +
-          '<span class="uncensored-off">50% OFF</span>';
+          '<span class="uncensored-usd">USD</span><span class="uncensored-off">50% OFF</span>';
         timerEl.innerHTML = '&#9203; Deal ends in <strong>' + window.UncensoredOffer.formatLeft(o.msLeft) + '</strong>';
       } else {
         priceEl.innerHTML = '<span class="uncensored-now">$' + o.price + '</span><span class="uncensored-usd">USD</span>';
@@ -602,6 +623,16 @@
         e.preventDefault();
         servicesSub.classList.toggle('open');
         servicesToggle.innerHTML = servicesSub.classList.contains('open') ? 'Services &#9652;' : 'Services &#9662;';
+      });
+    }
+
+    var gamesToggle = document.getElementById('drawer-games-toggle');
+    var gamesSub = document.getElementById('drawer-games-sub');
+    if (gamesToggle && gamesSub) {
+      gamesToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        gamesSub.classList.toggle('open');
+        gamesToggle.innerHTML = gamesSub.classList.contains('open') ? 'Games &#9652;' : 'Games &#9662;';
       });
     }
 

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dice Duel | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261111y" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <main class="section duel-page games-lock">
+    <a class="games-back" href="games.html">&larr; All Games</a>
+    <h1 class="section-title games-heading">Dice Duel</h1>
+
+    <div class="gallery-age-gate" id="games-gate">
+      <div>
+        <h3>18+ GAMES</h3>
+        <p>This contains adult content (18+).<br />Please confirm your birthdate:</p>
+        <form id="games-gate-form" autocomplete="off">
+          <input type="date" id="games-gate-birthdate" name="birthdate" required />
+          <div id="games-gate-error" class="age-error" aria-live="polite"></div>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="games-content">
+      <section id="wallet-root"></section>
+
+      <details class="duel-how">
+        <summary>How to play</summary>
+        <ul>
+          <li><strong>Take turns.</strong> Tap Roll, then tap one of your 3 columns to put the die there. Gnomie does the same on her side.</li>
+          <li><strong>Pairs and triples turn pink.</strong> Two of the same number in a column count double. Three count triple, so three 4s = 36.</li>
+          <li><strong>Knock out her dice.</strong> Your die removes any of Gnomie&rsquo;s matching numbers in the column straight across. She can do it to you too.</li>
+          <li><strong>The game ends</strong> when either board is full. Higher total wins.</li>
+        </ul>
+      </details>
+
+      <section class="duel-card" id="duel-root"></section>
+
+      <section class="lb-card">
+        <h2 class="lb-title">Dice Duel Leaderboard</h2>
+        <p class="lb-sub">This game only &middot; <a href="games.html">See the overall board</a></p>
+        <div id="lb-game"></div>
+      </section>
+
+      <p class="duel-wins" id="lb-wins"></p>
+    </div>
+  </main>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <script src="components.js?v=20261111y"></script>
+  <script src="games.js?v=20261111y"></script>
+  <script src="dice-duel.js?v=20261111y"></script>
+</body>
+</html>

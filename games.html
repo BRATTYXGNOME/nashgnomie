@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Games | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261111y" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <main class="section games-page">
+    <h1 class="section-title games-heading">Games</h1>
+
+    <div class="games-content">
+      <!-- Wallet (shared by every game) -->
+      <section id="wallet-root"></section>
+
+      <!-- All games -->
+      <section class="games-list">
+        <a class="game-card" href="drop-the-ball.html">
+          <div class="game-card-art" aria-hidden="true">
+            <span class="gc-ball"></span>
+            <span class="gc-pegs"></span>
+            <span class="gc-drains"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+          <div class="game-card-body">
+            <h2 class="game-card-title">Drop the Ball</h2>
+            <span class="btn btn-primary game-card-play">Play</span>
+          </div>
+        </a>
+        <a class="game-card" href="dice-duel.html">
+          <div class="game-card-art game-card-dice" aria-hidden="true">
+            <span class="gc-die gc-die-a"><i></i><i></i><i></i></span>
+            <span class="gc-die gc-die-b gc-die-pink"><i></i><i></i></span>
+          </div>
+          <div class="game-card-body">
+            <h2 class="game-card-title">Dice Duel</h2>
+            <span class="btn btn-primary game-card-play">Play</span>
+          </div>
+        </a>
+      </section>
+
+      <!-- Leaderboard across every game -->
+      <section class="lb-card">
+        <h2 class="lb-title">All Games Leaderboard</h2>
+        <p class="lb-sub">Every game combined</p>
+        <div id="lb-all"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <script src="components.js?v=20261111y"></script>
+  <script src="games.js?v=20261111y"></script>
+  <script>
+    // No birthdate gate on this page; each game has its own.
+    Games.mountWallet(document.getElementById('wallet-root'));
+    Games.renderLeaderboard(document.getElementById('lb-all'), 'all');
+    document.addEventListener('wallet:change', function() {
+      Games.renderLeaderboard(document.getElementById('lb-all'), 'all');
+    });
+  </script>
+</body>
+</html>
