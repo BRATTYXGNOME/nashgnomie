@@ -42,9 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      var result = window.AgeGate.verifyHomepage(birthdateIn.value);
+      var result = window.AgeGate.verify(birthdateIn.value);
 
-      if (result.reason === 'underage') {
+      if (result.reason === 'mismatch') {
+        ageError.textContent = window.AgeGate.message(result);
+      } else if (result.reason === 'underage') {
         ageInputContainer.style.display = 'none';
         underageBlock.style.display = 'block';
       } else if (result.success) {
@@ -86,10 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (result.success) {
         galleryAgeGate.style.display = 'none';
-      } else if (result.reason === 'underage') {
-        galleryAgeError.textContent = 'You must be 18 or older to view this content.';
-      } else if (result.reason === 'mismatch') {
-        window.AgeGate.redirectMismatch();
+        galleryAgeGate.parentElement.classList.add('unlocked');
+      } else {
+        galleryAgeError.textContent = window.AgeGate.message(result);
       }
     });
   }
@@ -205,8 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (heroDmBtn) heroDmBtn.addEventListener('click', function(e) { e.preventDefault(); openContactPopup(); });
-  if (aboutDmBtn) aboutDmBtn.addEventListener('click', function(e) { e.preventDefault(); openContactPopup(); });
+  // DM ME buttons are age-gated (class "age-gated" in index.html); components.js
+  // asks for the birthdate, then opens this popup.
   if (contactClose) contactClose.addEventListener('click', closeContactPopup);
   if (contactOverlay) {
     contactOverlay.addEventListener('click', function(e) {
@@ -239,131 +240,63 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Copy-to-clipboard for tip badges
-  document.querySelectorAll('.copy-badge').forEach(function(badge) {
-    badge.addEventListener('click', function() {
-      const copyText = this.getAttribute('data-copy');
-      const valueEl = this.querySelector('.copy-badge-value');
-      const originalText = valueEl.textContent;
-
-      navigator.clipboard.writeText(copyText).then(function() {
-        valueEl.textContent = 'Copied!';
-        badge.classList.add('copied');
-        setTimeout(function() {
-          valueEl.textContent = originalText;
-          badge.classList.remove('copied');
-        }, 1200);
-      });
-    });
-  });
+  // Fill the Tip Me popup with the shared payment list (components.js)
+  var tipLinks = document.getElementById('tip-popup-links');
+  if (tipLinks && window.PaymentOptions) window.PaymentOptions.render(tipLinks);
 
   // ==========================================
   // ADOPT A BILL POPUP
+  // Each bill has its own YouPay + Throne link; the rest of the
+  // payment options come from PaymentOptions in components.js.
   // ==========================================
   const billPopupData = {
     rent: {
       title: 'Adopt: Rent',
       desc: 'Help cover my share of rent. Thank you for helping keep a roof over my head!',
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101964", type: "link" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l6t6-unbtkc", type: "link" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
-        { label: "Cashtag", value: "$pewpewser", type: "copy" },
-        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
-      ]
+      youpay: 'https://youpay.me/NashGnomie/gift/1101964',
+      throne: 'https://throne.com/nashgnomie/item/95d2dcb8-7e1b-4520-9449-bc43a1e48791'
     },
     pet: {
       title: 'Adopt: Pet Expenses',
       desc: 'Food and care for 2 cats & 2 geckos.',
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101963", type: "link" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l74c-1npsse8", type: "link" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
-        { label: "Cashtag", value: "$pewpewser", type: "copy" },
-        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
-      ]
+      youpay: 'https://youpay.me/NashGnomie/gift/1101963',
+      throne: 'https://throne.com/nashgnomie/item/87ff0888-a476-490b-90ed-a36b0e050325'
     },
     phone: {
       title: 'Adopt: Phone Bill',
       desc: 'Mobile phone service & data.',
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101959", type: "link" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l75t-g6uwiw", type: "link" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
-        { label: "Cashtag", value: "$pewpewser", type: "copy" },
-        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
-      ]
+      youpay: 'https://youpay.me/NashGnomie/gift/1101959',
+      throne: 'https://throne.com/nashgnomie/item/d2e95052-22c6-4f48-9951-bae90f869c88'
     },
     utilities: {
       title: 'Adopt: Utilities',
       desc: 'Electricity, water, internet, and extras.',
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101962", type: "link" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l6t6-unbtkc", type: "link" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
-        { label: "Cashtag", value: "$pewpewser", type: "copy" },
-        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
-      ]
+      youpay: 'https://youpay.me/NashGnomie/gift/1101962',
+      throne: 'https://throne.com/nashgnomie/item/70f5146b-7d9f-4003-9439-7b456f88658c'
     },
     transportation: {
       title: 'Adopt: Transportation',
       desc: 'Bus pass & rideshare (e.g., Lyft).',
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101958", type: "link" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l768-1gsp6rd", type: "link" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
-        { label: "Cashtag", value: "$pewpewser", type: "copy" },
-        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
-      ]
+      youpay: 'https://youpay.me/NashGnomie/gift/1101958',
+      throne: 'https://throne.com/nashgnomie/item/1076e82e-f3de-4f06-97ef-ec2702dfb8c3'
     },
     essentials: {
       title: 'Adopt: Essentials',
       desc: 'Toiletries, cleaning, and home supplies.',
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101961", type: "link" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l751-o7b7jq", type: "link" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
-        { label: "Cashtag", value: "$pewpewser", type: "copy" },
-        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
-      ]
+      youpay: 'https://youpay.me/NashGnomie/gift/1101961',
+      throne: 'https://throne.com/nashgnomie/item/6ec49a6c-1e04-4d19-bd65-addcd3c21bd5'
     },
     groceries: {
       title: 'Adopt: Groceries',
       desc: 'Food and pantry for one person.',
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101960", type: "link" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l74u-1x6s1gj", type: "link" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
-        { label: "Cashtag", value: "$pewpewser", type: "copy" },
-        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
-      ]
+      youpay: 'https://youpay.me/NashGnomie/gift/1101960',
+      throne: 'https://throne.com/nashgnomie/item/e4083dc8-1802-427d-bee8-999625a13d94'
     },
     total: {
       title: 'Adopt: All Bills',
       desc: 'Cover everything at once. You are incredible!',
-      links: [
-        { label: "YouPay", url: "https://youpay.me/NashGnomie/gift/1101965", type: "link" },
-        { label: "AllMyLinks", url: "https://allmylinks.com/link/out?id=xsliz-3l6t6-unbtkc", type: "link" },
-        { label: "Cash App", url: "https://cash.app/$pewpewser", type: "link" },
-        { label: "Cashtag", value: "$pewpewser", type: "copy" },
-        { label: "Amazon Gift Card", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Apple Pay", value: "nashgnomie@gmail.com", type: "copy" },
-        { label: "Zelle", value: "nashgnomie@gmail.com", type: "copy" }
-      ]
+      youpay: 'https://youpay.me/NashGnomie/gift/1101965',
+      throne: 'https://throne.com/nashgnomie/item/4b4026a4-fd37-441d-ab9f-8df569ba653a'
     }
   };
 
@@ -374,55 +307,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = billPopupData[billKey];
     if (!data) return;
 
-    var title = document.getElementById('bill-popup-title');
-    var desc = document.getElementById('bill-popup-desc');
-    var links = document.getElementById('bill-popup-links');
-
-    title.textContent = data.title;
-    desc.textContent = data.desc;
-    links.innerHTML = '';
-
-    data.links.forEach(function(item) {
-      if (item.type === 'link') {
-        var a = document.createElement('a');
-        a.href = item.url;
-        a.target = '_blank';
-        a.rel = 'noopener';
-        a.textContent = item.label;
-        links.appendChild(a);
-      } else if (item.type === 'copy') {
-        var div = document.createElement('div');
-        div.className = 'copy-badge';
-        div.setAttribute('data-copy', item.value);
-
-        var labelSpan = document.createElement('span');
-        labelSpan.className = 'copy-badge-label';
-        labelSpan.textContent = item.label;
-
-        var valueSpan = document.createElement('span');
-        valueSpan.className = 'copy-badge-value';
-        valueSpan.textContent = item.value;
-
-        div.appendChild(labelSpan);
-        div.appendChild(valueSpan);
-
-        div.addEventListener('click', function() {
-          var copyVal = this.getAttribute('data-copy');
-          var valEl = this.querySelector('.copy-badge-value');
-          var origText = valEl.textContent;
-
-          navigator.clipboard.writeText(copyVal).then(function() {
-            valEl.textContent = 'Copied!';
-            div.classList.add('copied');
-            setTimeout(function() {
-              valEl.textContent = origText;
-              div.classList.remove('copied');
-            }, 1200);
-          });
-        });
-
-        links.appendChild(div);
-      }
+    document.getElementById('bill-popup-title').textContent = data.title;
+    document.getElementById('bill-popup-desc').textContent = data.desc;
+    window.PaymentOptions.render(document.getElementById('bill-popup-links'), {
+      youpay: data.youpay,
+      throne: data.throne
     });
 
     billOverlay.classList.add('active');

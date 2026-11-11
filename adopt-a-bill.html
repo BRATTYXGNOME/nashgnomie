@@ -12,7 +12,8 @@
 
   <div class="section" style="max-width:900px;margin:0 auto;">
     <h1 class="section-title" style="font-size:28px;margin-bottom:4px;">Adopt a Bill</h1>
-    <p style="font-size:13px;color:var(--text-body);margin-bottom:20px;">Help me cover my monthly expenses. Tap any bill to see payment options.</p>
+    <p style="font-size:13px;color:var(--text-body);margin-bottom:8px;">Help me cover my monthly expenses.</p>
+    <p class="bill-hint">&#10022; Click on an expense to see all the ways you can adopt that bill!</p>
     <table class="bill-table">
       <thead><tr><th>Bill Type</th><th>Description</th><th>Cost / Month</th></tr></thead>
       <tbody id="bill-table-body">
@@ -245,38 +246,8 @@
       if (!d) return;
       document.getElementById('reimburse-popup-title').textContent = d.title;
       document.getElementById('reimburse-popup-desc').textContent = d.desc;
-      var links = document.getElementById('reimburse-popup-links');
-      links.innerHTML = '';
-
-      // YouPay
-      var a1 = document.createElement('a'); a1.href = d.youpay; a1.target = '_blank'; a1.rel = 'noopener'; a1.textContent = 'YouPay'; links.appendChild(a1);
-      // Cash App
-      var a2 = document.createElement('a'); a2.href = 'https://cash.app/$pewpewser'; a2.target = '_blank'; a2.rel = 'noopener'; a2.textContent = 'Cash App'; links.appendChild(a2);
-      // Cashtag copy
-      var cb1 = document.createElement('div'); cb1.className = 'copy-badge'; cb1.setAttribute('data-copy','$pewpewser');
-      cb1.innerHTML = '<span class="copy-badge-label">Cashtag</span><span class="copy-badge-value">$pewpewser</span>'; links.appendChild(cb1);
-      // Amazon copy
-      var cb2 = document.createElement('div'); cb2.className = 'copy-badge'; cb2.setAttribute('data-copy','nashgnomie@gmail.com');
-      cb2.innerHTML = '<span class="copy-badge-label">Amazon Gift Card</span><span class="copy-badge-value">nashgnomie@gmail.com</span>'; links.appendChild(cb2);
-      // Apple Pay copy
-      var cb3 = document.createElement('div'); cb3.className = 'copy-badge'; cb3.setAttribute('data-copy','nashgnomie@gmail.com');
-      cb3.innerHTML = '<span class="copy-badge-label">Apple Pay</span><span class="copy-badge-value">nashgnomie@gmail.com</span>'; links.appendChild(cb3);
-      // Zelle copy
-      var cb4 = document.createElement('div'); cb4.className = 'copy-badge'; cb4.setAttribute('data-copy','nashgnomie@gmail.com');
-      cb4.innerHTML = '<span class="copy-badge-label">Zelle</span><span class="copy-badge-value">nashgnomie@gmail.com</span>'; links.appendChild(cb4);
-
-      // Wire copy badges
-      links.querySelectorAll('.copy-badge').forEach(function(badge) {
-        badge.addEventListener('click', function() {
-          var val = this.getAttribute('data-copy');
-          var el = this.querySelector('.copy-badge-value');
-          var orig = el.textContent;
-          navigator.clipboard.writeText(val).then(function() {
-            el.textContent = 'Copied!'; badge.classList.add('copied');
-            setTimeout(function() { el.textContent = orig; badge.classList.remove('copied'); }, 1200);
-          });
-        });
-      });
+      // Shared payment list (components.js): this item's YouPay link + main Throne page
+      window.PaymentOptions.render(document.getElementById('reimburse-popup-links'), { youpay: d.youpay });
 
       reimburseOverlay.classList.add('active');
       document.body.style.overflow = 'hidden';

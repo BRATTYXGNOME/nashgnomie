@@ -67,7 +67,7 @@
     <!-- DEALS TICKER -->
     <div class="ticker">
       <div class="ticker-track" id="ticker-track">
-        <span class="ticker-content">&#9888;&#65039; UNDER CONSTRUCTION &#9888;&#65039;<span class="ticker-sep">&#12539;</span><a href="coming-soon.html">PANTY SHOP COMING SOON!</a><span class="ticker-sep">&#12539;</span><a href="https://onlyfans.com/brattyxgnome/c261">10% OFF OnlyFans</a> + more discounts! (NO PPV)<span class="ticker-sep">&#12539;</span><a href="coming-soon.html">50% OFF LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees)</a><span class="ticker-sep">&#12539;</span></span><span class="ticker-content">&#9888;&#65039; UNDER CONSTRUCTION &#9888;&#65039;<span class="ticker-sep">&#12539;</span><a href="coming-soon.html">PANTY SHOP COMING SOON!</a><span class="ticker-sep">&#12539;</span><a href="https://onlyfans.com/brattyxgnome/c261">50% OFF OnlyFans</a> + more discounts after you subscribe! (NO PPV)<span class="ticker-sep">&#12539;</span><a href="coming-soon.html">50% OFF LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees)</a><span class="ticker-sep">&#12539;</span></span>
+        <span class="ticker-content">&#9888;&#65039; UNDER CONSTRUCTION &#9888;&#65039;<span class="ticker-sep">&#12539;</span><a href="coming-soon.html">PANTY SHOP COMING SOON!</a><span class="ticker-sep">&#12539;</span><a href="https://onlyfans.com/brattyxgnome/c261" class="age-gated" target="_blank" rel="noopener">10% OFF OnlyFans</a> + more discounts! (NO PPV)<span class="ticker-sep">&#12539;</span><a href="coming-soon.html" class="age-gated">50% OFF LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees)</a><span class="ticker-sep">&#12539;</span></span><span class="ticker-content">&#9888;&#65039; UNDER CONSTRUCTION &#9888;&#65039;<span class="ticker-sep">&#12539;</span><a href="coming-soon.html">PANTY SHOP COMING SOON!</a><span class="ticker-sep">&#12539;</span><a href="https://onlyfans.com/brattyxgnome/c261" class="age-gated" target="_blank" rel="noopener">50% OFF OnlyFans</a> + more discounts after you subscribe! (NO PPV)<span class="ticker-sep">&#12539;</span><a href="coming-soon.html" class="age-gated">50% OFF LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees)</a><span class="ticker-sep">&#12539;</span></span>
       </div>
     </div>
 
@@ -78,7 +78,7 @@
         <h1>NASH | Gnomie</h1>
         <p class="hero-tagline">Your new favorite online crush!</p>
         <div class="btn-group">
-          <a href="#" class="btn btn-primary" id="hero-dm-btn">DM ME</a>
+          <a href="#" class="btn btn-primary age-gated" data-age-action="contact" id="hero-dm-btn">DM ME</a>
           <a href="coming-soon.html" class="btn btn-outline">Browse menu</a>
         </div>
       </div>
@@ -93,13 +93,13 @@
         Curious? DM me and find out what you've been missing!
       </p>
       <div class="btn-group" style="margin-bottom:16px;">
-        <a href="#" class="btn btn-primary" id="about-dm-btn">DM ME</a>
+        <a href="#" class="btn btn-primary age-gated" data-age-action="contact" id="about-dm-btn">DM ME</a>
         <a href="#" class="btn btn-outline" id="tip-btn">TIP ME</a>
       </div>
       <ul class="about-details">
-        <li><span class="about-label">Age:</span> 31 <span class="about-note">(b-day: 31 AUG '93)</span></li>
+        <li><span class="about-label">Age:</span> <span data-nash-age>33</span> <span class="about-note">(b-day: 31 AUG '93)</span></li>
         <li><span class="about-label">Location:</span> Internet &#8211; West Coast, USA</li>
-        <li><span class="about-label">Seeking:</span> Fans, Subscribers, FinSubs, deep connections, and flirty fun!</li>
+        <li><span class="about-label">Seeking:</span> Online connections with people who love spoiling me in every way (especially monetarily).</li>
       </ul>
       <a href="https://creatorresourcehub.com" class="btn btn-ghost" target="_blank" rel="noopener">18+ Creator Resource Hub</a>
     </section>
@@ -139,6 +139,7 @@
     <!-- ADOPT A BILL -->
     <section class="bill-section" id="adopt">
       <h2 class="section-title">Adopt a Bill</h2>
+      <p class="bill-hint">&#10022; Click on an expense to see all the ways you can adopt that bill!</p>
       <table class="bill-table">
         <thead>
           <tr>
@@ -198,16 +199,29 @@
     <!-- FAN REVIEWS -->
     <section class="reviews-section" id="reviews">
       <div class="reviews-header">
-        <h2 class="section-title">Fan reviews</h2>
-        <div class="reviews-rating-badge">
-          <span class="reviews-stars" id="avg-stars"></span>
-          <span class="reviews-avg" id="avg-rating">Loading...</span>
+        <div class="reviews-heading">
+          <h2 class="section-title">Fan reviews</h2>
+          <div class="reviews-rating-badge">
+            <span class="reviews-stars" id="avg-stars"></span>
+            <span class="reviews-avg" id="avg-rating">Loading...</span>
+            <span class="reviews-count" id="reviews-count"></span>
+          </div>
+        </div>
+        <div class="reviews-nav" id="reviews-nav" hidden>
+          <button type="button" class="reviews-arrow" id="reviews-prev" aria-label="Previous reviews">&#8249;</button>
+          <button type="button" class="reviews-arrow" id="reviews-next" aria-label="Next reviews">&#8250;</button>
         </div>
       </div>
-      <div class="reviews-scroll" id="reviews-scroll">
-        <div class="review-skeleton"></div>
-        <div class="review-skeleton"></div>
-        <div class="review-skeleton"></div>
+      <div class="reviews-track-wrap" id="reviews-track-wrap">
+        <div class="reviews-scroll" id="reviews-scroll">
+          <div class="review-skeleton"></div>
+          <div class="review-skeleton"></div>
+          <div class="review-skeleton"></div>
+        </div>
+      </div>
+      <div class="reviews-progress" id="reviews-progress" hidden>
+        <div class="reviews-progress-bar"><span id="reviews-progress-fill"></span></div>
+        <span class="reviews-progress-text" id="reviews-progress-text"></span>
       </div>
       <div class="reviews-cta">
         <a href="https://fan.reviews/creator/adult-content-model/nash-gnomie-brattyxgnome" class="btn btn-primary" target="_blank" rel="noopener">&#9733; Leave a review</a>
@@ -242,27 +256,8 @@
       <button class="modal-close" id="tip-popup-close" aria-label="Close">&times;</button>
       <div class="modal-title">Tip Me</div>
       <div class="modal-desc">Show your appreciation! Tap to copy.</div>
-      <div class="modal-links">
-        <a href="https://youpay.me/nashgnomie" target="_blank" rel="noopener">YouPay.me</a>
-        <a href="https://cash.app/$pewpewser" target="_blank" rel="noopener">Cash App</a>
-        <a href="https://revolut.me/nashgnomie" target="_blank" rel="noopener">Revolut</a>
-        <div class="copy-badge" data-copy="$pewpewser">
-          <span class="copy-badge-label">Cashtag</span>
-          <span class="copy-badge-value">$pewpewser</span>
-        </div>
-        <div class="copy-badge" data-copy="nashgnomie@gmail.com">
-          <span class="copy-badge-label">Amazon Gift Card</span>
-          <span class="copy-badge-value">nashgnomie@gmail.com</span>
-        </div>
-        <div class="copy-badge" data-copy="nashgnomie@gmail.com">
-          <span class="copy-badge-label">Apple Pay</span>
-          <span class="copy-badge-value">nashgnomie@gmail.com</span>
-        </div>
-        <div class="copy-badge" data-copy="nashgnomie@gmail.com">
-          <span class="copy-badge-label">Zelle</span>
-          <span class="copy-badge-value">nashgnomie@gmail.com</span>
-        </div>
-      </div>
+      <!-- Filled in by PaymentOptions (components.js) -->
+      <div class="modal-links" id="tip-popup-links"></div>
     </div>
   </div>
 

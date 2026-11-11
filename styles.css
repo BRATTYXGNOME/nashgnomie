@@ -442,6 +442,18 @@ button {
   color: var(--text-muted);
 }
 
+/* "Click on an expense" hint above the Adopt a Bill tables */
+.bill-hint {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 0 0 14px;
+}
+
 /* --- Gallery Section --- */
 .gallery {
   padding: 28px 0;
@@ -453,26 +465,16 @@ button {
   margin-bottom: 16px;
 }
 
+/* Teasers: 3 across on phones (3x2), 6 across from 640px wide */
 .gallery-scroll {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
   padding: 0 var(--pad-mobile);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x mandatory;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.gallery-scroll::-webkit-scrollbar {
-  height: 0;
 }
 
 .gallery-item {
-  min-width: 160px;
-  max-width: 160px;
-  flex-shrink: 0;
-  scroll-snap-align: start;
+  aspect-ratio: 4 / 5;
   border-radius: var(--radius-card);
   overflow: hidden;
   cursor: pointer;
@@ -481,8 +483,9 @@ button {
 }
 
 .gallery-item img {
+  display: block;
   width: 100%;
-  height: 200px;
+  height: 100%;
   object-fit: cover;
   transition: transform 0.3s;
 }
@@ -559,6 +562,30 @@ button {
   position: relative;
 }
 
+/* 18+ gate (homepage gallery + Gallery page): a compact card that hugs the
+   form with even padding. The teasers stay hidden until it's unlocked. */
+#gallery .gallery-age-gate,
+#gallery-page-gate {
+  position: relative;
+  inset: auto;
+  width: fit-content;
+  max-width: calc(100% - 2 * var(--pad-mobile));
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-card);
+}
+
+#gallery-page-gate {
+  max-width: 100%;
+}
+
+.gallery-container:not(.unlocked) .gallery-scroll,
+.gallery-lock .gallery-page-grid {
+  display: none;
+}
+
 /* --- Adopt a Bill --- */
 .bill-section {
   padding: 28px var(--pad-mobile);
@@ -612,10 +639,19 @@ button {
 
 .reviews-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
+  gap: 12px;
   padding: 0 var(--pad-mobile);
   margin-bottom: 14px;
+}
+
+.reviews-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
 }
 
 .reviews-header .section-title {
@@ -623,70 +659,156 @@ button {
 }
 
 .reviews-rating-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 5px;
   background: var(--accent-subtle);
-  border: 1px solid rgba(255, 95, 162, 0.2);
+  border: 1px solid var(--accent-border);
   border-radius: 16px;
-  padding: 4px 10px;
+  padding: 3px 10px;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .reviews-stars {
   color: var(--accent);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 .reviews-avg {
   color: var(--accent);
-  font-size: 11px;
   font-weight: 600;
+}
+
+.reviews-count {
+  color: var(--text-body);
+}
+
+/* Arrow buttons */
+.reviews-nav {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.reviews-nav[hidden] {
+  display: none;
+}
+
+.reviews-arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-dim);
+  background: var(--bg-card);
+  color: var(--accent);
+  font-size: 22px;
+  line-height: 1;
+  padding-bottom: 3px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+}
+
+.reviews-arrow:hover:not(:disabled) {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+}
+
+.reviews-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Track + edge fades that hint there's more to scroll */
+.reviews-track-wrap {
+  position: relative;
+}
+
+.reviews-track-wrap::before,
+.reviews-track-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 12px;
+  width: 28px;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.2s;
+}
+
+.reviews-track-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg), transparent);
+}
+
+.reviews-track-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg), transparent);
+}
+
+.reviews-track-wrap.at-start::before,
+.reviews-track-wrap.at-end::after {
+  opacity: 0;
 }
 
 .reviews-scroll {
   display: flex;
-  gap: 10px;
-  padding: 0 var(--pad-mobile) 10px;
+  align-items: stretch;
+  gap: 12px;
+  padding: 2px var(--pad-mobile) 12px;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--pad-mobile);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  outline: none;
 }
 
 .reviews-scroll::-webkit-scrollbar {
-  height: 0;
+  display: none;
 }
 
+/* Card: every card the same size; content top, links bottom */
 .review-card {
-  min-width: 230px;
-  max-width: 230px;
+  flex: 0 0 82%;
+  max-width: 300px;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
   background: var(--bg-card);
-  border: 1px solid var(--accent-subtle);
+  border: 1px solid var(--accent-border);
   border-radius: var(--radius-card);
-  padding: 14px;
-  flex-shrink: 0;
+  padding: 16px;
   scroll-snap-align: start;
+  transition: border-color 0.2s;
 }
 
-.review-card-header {
+.review-card:hover {
+  border-color: var(--accent-dim);
+}
+
+.review-top {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .review-avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: #2a1a22;
-  border: 1px solid rgba(255, 95, 162, 0.15);
+  border: 1px solid var(--accent-dim);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  color: var(--accent);
+  font-size: 14px;
   font-weight: 600;
+  color: var(--accent);
   overflow: hidden;
 }
 
@@ -696,62 +818,197 @@ button {
   object-fit: cover;
 }
 
-.review-username {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-light);
+.review-who {
+  min-width: 0;
 }
 
-.review-date {
-  font-size: 10px;
-  color: var(--accent-dim);
+.review-username {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Stars: exactly what the reviewer gave, out of 10 */
+.review-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .review-stars {
-  color: var(--accent);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1px;
-  margin-bottom: 6px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.review-stars .star.full,
+.reviews-stars .star.full {
+  color: var(--accent);
+}
+
+.review-stars .star.empty,
+.reviews-stars .star.empty {
+  color: rgba(255, 95, 162, 0.18);
+}
+
+.review-stars .star.half,
+.reviews-stars .star.half {
+  background: linear-gradient(90deg, var(--accent) 50%, rgba(255, 95, 162, 0.18) 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.review-score {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
 }
 
 .review-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--accent);
-  margin-bottom: 3px;
+  color: var(--text-light);
+  line-height: 1.35;
+  margin-bottom: 4px;
 }
 
-.review-text {
-  font-size: 11px;
+.review-body {
+  font-size: 13px;
   line-height: 1.6;
   color: var(--text-body);
-  margin-bottom: 8px;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.review-actions {
+  margin-top: auto;
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.review-more {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.review-more:hover {
+  text-decoration: underline;
 }
 
 .review-link {
-  font-size: 10px;
-  color: var(--accent-dim);
+  font-size: 11px;
+  color: var(--text-muted);
   text-decoration: none;
+  margin-left: auto;
 }
 
 .review-link:hover {
   color: var(--accent);
 }
 
-.reviews-cta {
-  padding: 16px var(--pad-mobile) 0;
+/* Progress bar + "1–3 of 33" */
+.reviews-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px var(--pad-mobile) 0;
+}
+
+.reviews-progress[hidden] {
+  display: none;
+}
+
+.reviews-progress-bar {
+  position: relative;
+  flex: 1;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--accent-subtle);
+  overflow: hidden;
+}
+
+.reviews-progress-bar span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 10%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: left 0.15s linear, width 0.15s linear;
+}
+
+.reviews-progress-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 64px;
+  text-align: right;
+}
+
+.reviews-empty,
+.reviews-error {
+  width: 100%;
+  padding: 24px 0;
+  font-size: 13px;
+  color: var(--text-body);
   text-align: center;
+}
+
+.reviews-cta {
+  padding: 18px var(--pad-mobile) 0;
+  text-align: center;
+}
+
+/* Full review popup: the review shown without any cut-off */
+.review-popup {
+  max-width: 480px;
+}
+
+.review-popup .review-body {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+  font-size: 14px;
+}
+
+.review-popup .review-title {
+  font-size: 16px;
+  padding-right: 24px;
 }
 
 /* Review skeleton loader */
 .review-skeleton {
-  min-width: 230px;
-  max-width: 230px;
-  height: 160px;
+  flex: 0 0 82%;
+  max-width: 300px;
+  height: 250px;
   background: var(--bg-card);
   border: 1px solid var(--accent-subtle);
   border-radius: var(--radius-card);
-  flex-shrink: 0;
   animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
 
@@ -821,6 +1078,10 @@ button {
   color: var(--text-body);
   margin-bottom: 18px;
   line-height: 1.6;
+}
+
+.modal-desc-center {
+  text-align: center;
 }
 
 .modal-links {
@@ -916,6 +1177,37 @@ button {
 
 .copy-badge.copied .copy-badge-value {
   color: #5dca5d;
+}
+
+/* Fee note inside YouPay / Throne buttons */
+.pay-fee-note {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--accent);
+  letter-spacing: 0.2px;
+}
+
+/* "No Fees" divider between fee and no-fee payment options */
+.pay-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.pay-divider::before,
+.pay-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--accent-border);
 }
 
 /* Bill popup */
@@ -1291,6 +1583,11 @@ button {
   gap: 8px;
 }
 
+/* Three across (e.g. the 3 wishlist cards) so there's no lone card */
+.link-grid.link-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .link-card-sm {
   display: flex;
   flex-direction: column;
@@ -1325,7 +1622,6 @@ button {
   font-size: 9px;
   color: var(--text-muted);
 }
-
 /* Email section */
 .links-email-section {
   background: var(--bg-card);
@@ -1661,13 +1957,8 @@ button {
     gap: 12px;
   }
 
-  .gallery-item {
-    min-width: 200px;
-    max-width: 200px;
-  }
-
-  .gallery-item img {
-    height: 250px;
+  #gallery .gallery-age-gate {
+    max-width: calc(100% - 2 * var(--pad-desktop));
   }
 
   .gallery-cta {
@@ -1688,19 +1979,28 @@ button {
     padding: 36px 0;
   }
 
-  .reviews-header {
-    padding: 0 var(--pad-desktop);
+  .reviews-header,
+  .reviews-progress {
+    padding-left: var(--pad-desktop);
+    padding-right: var(--pad-desktop);
   }
 
   .reviews-scroll {
-    padding: 0 var(--pad-desktop) 12px;
-    gap: 12px;
+    padding: 2px var(--pad-desktop) 12px;
+    scroll-padding: 0 var(--pad-desktop);
+    gap: 16px;
   }
 
-  .review-card {
-    min-width: 220px;
-    max-width: 220px;
-    padding: 16px;
+  .review-card,
+  .review-skeleton {
+    flex: 0 0 290px;
+    max-width: 290px;
+    min-height: 260px;
+  }
+
+  .reviews-track-wrap::before,
+  .reviews-track-wrap::after {
+    width: 48px;
   }
 
   .reviews-cta {
@@ -1746,5 +2046,12 @@ button {
     max-width: 900px;
     margin-left: auto;
     margin-right: auto;
+  }
+}
+
+/* Teaser gallery: one row of 6 once there's room */
+@media (min-width: 640px) {
+  .gallery-scroll {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }

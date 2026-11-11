@@ -104,16 +104,16 @@
     <!-- WISHLIST & GIFT CARDS -->
     <section class="link-section">
       <h2 class="link-section-title">Wishlist &amp; gift cards</h2>
-      <div class="link-grid" style="margin-bottom:10px;">
+      <div class="link-grid link-grid-3" style="margin-bottom:10px;">
         <a href="https://www.amazon.com/hz/wishlist/ls/3GIMM66C0BNFN?ref_=wl_share" class="link-card-sm" target="_blank" rel="noopener"><span class="link-card-icon">📦</span><span class="link-card-name">Amazon</span></a>
         <a href="https://youpay.me/NashGnomie" class="link-card-sm" target="_blank" rel="noopener"><span class="link-card-icon">💸</span><span class="link-card-name">YouPay</span></a>
+        <a href="https://throne.com/nashgnomie" class="link-card-sm" target="_blank" rel="noopener"><span class="link-card-icon">👑</span><span class="link-card-name">Throne</span></a>
       </div>
       <div class="links-email-section">
         <p>💳 Gift cards — send to my email:</p>
         <div class="links-email-display" id="email-display">nashgnomie@proton.me</div>
         <div class="btn-group" style="justify-content:center;">
           <button class="btn btn-primary" id="copy-email-btn" style="font-size:11px;padding:7px 14px;">Copy email</button>
-          <a href="mailto:nashgnomie@proton.me" class="btn btn-outline" style="font-size:11px;padding:7px 14px;">Open email app</a>
         </div>
       </div>
       <div class="link-grid">
@@ -141,7 +141,7 @@
     <div class="modal">
       <button class="modal-close" id="link-age-close" aria-label="Close">&times;</button>
       <div class="modal-title">Age Verification Required</div>
-      <div class="modal-desc">This link contains adult content (18+). Please verify your birthdate:</div>
+      <div class="modal-desc" id="link-age-desc">This contains adult content (18+).<br />Please confirm your birthdate:</div>
       <form id="link-age-form" autocomplete="off">
         <input type="date" id="link-age-birthdate" name="birthdate" required style="width:100%;padding:10px 14px;background:var(--bg-card);border:1px solid var(--accent-border);border-radius:var(--radius);color:var(--text-light);font-size:14px;font-family:var(--font-body);margin-bottom:12px;" />
         <div id="link-age-error" class="age-error" aria-live="polite"></div>
@@ -178,6 +178,12 @@
       link.addEventListener('click', function(e) {
         e.preventDefault();
         pendingUrl = this.href;
+        // Telegram DM link gets the DM wording; everything else the standard 18+ line
+        var isDm = /t\.me\/nashgnomie\/?$/.test(this.href);
+        document.getElementById('link-age-desc').classList.toggle('modal-desc-center', !isDm);
+        document.getElementById('link-age-desc').innerHTML = isDm
+          ? 'I prefer to chat with individuals 21 or older, but you must be 18+ to DM me. Please confirm your date of birth:'
+          : 'This contains adult content (18+).<br />Please confirm your birthdate:';
         linkAgeErr.textContent = '';
         linkAgeBd.value = '';
         linkAgeOverlay.classList.add('active');
@@ -197,10 +203,8 @@
           document.body.style.overflow = '';
           if (pendingUrl) window.open(pendingUrl, '_blank', 'noopener');
           pendingUrl = null;
-        } else if (result.reason === 'underage') {
-          linkAgeErr.textContent = 'You must be 18 or older to access this content.';
-        } else if (result.reason === 'mismatch') {
-          window.AgeGate.redirectMismatch();
+        } else {
+          linkAgeErr.textContent = window.AgeGate.message(result);
         }
       });
     }

@@ -7,6 +7,113 @@
 (function() {
 
   // ==========================================
+  // NASH'S BIRTHDAY / LIVE AGE
+  // Any element with data-nash-age shows the current age, worked out from
+  // the birthdate below using West Coast (Pacific) time. No manual updates.
+  // ==========================================
+  window.NashBirthday = {
+    YEAR: 1993, MONTH: 8, DAY: 31,
+    TIME_ZONE: 'America/Los_Angeles',
+
+    // Today's date in Pacific time as { y, m, d } (m is 1-12)
+    today: function() {
+      var now = new Date();
+      try {
+        var parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: this.TIME_ZONE, year: 'numeric', month: 'numeric', day: 'numeric'
+        }).formatToParts(now);
+        var out = {};
+        parts.forEach(function(p) { if (p.type !== 'literal') out[p.type] = parseInt(p.value, 10); });
+        return { y: out.year, m: out.month, d: out.day };
+      } catch (e) {
+        return { y: now.getFullYear(), m: now.getMonth() + 1, d: now.getDate() };
+      }
+    },
+
+    age: function() {
+      var t = this.today();
+      var a = t.y - this.YEAR;
+      if (t.m < this.MONTH || (t.m === this.MONTH && t.d < this.DAY)) a--;
+      return a;
+    },
+
+    render: function() {
+      var a = String(this.age());
+      document.querySelectorAll('[data-nash-age]').forEach(function(el) { el.textContent = a; });
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { window.NashBirthday.render(); });
+  } else {
+    window.NashBirthday.render();
+  }
+  // Keeps it right if someone has the page open over midnight on the birthday
+  setInterval(function() { window.NashBirthday.render(); }, 60000);
+
+  // ==========================================
+  // PAYMENT OPTIONS (shared by Tip, Adopt a Bill & Reimburse popups)
+  // PaymentOptions.render(container, { youpay: url, throne: url })
+  // Fee-based options (YouPay, Throne) come first with a fee note,
+  // then a "No Fees" divider and everything else.
+  // ==========================================
+  window.PaymentOptions = {
+    THRONE_DEFAULT: 'https://throne.com/nashgnomie',
+    YOUPAY_DEFAULT: 'https://youpay.me/NashGnomie',
+    EMAIL: 'nashgnomie@gmail.com',
+    CASHTAG: '$pewpewser',
+
+    render: function(container, opts) {
+      opts = opts || {};
+      var self = this;
+      container.innerHTML = '';
+
+      function link(label, url, note) {
+        var a = document.createElement('a');
+        a.href = url; a.target = '_blank'; a.rel = 'noopener';
+        a.textContent = label;
+        if (note) {
+          var sub = document.createElement('span');
+          sub.className = 'pay-fee-note';
+          sub.textContent = '✦ ' + note;
+          a.appendChild(sub);
+        }
+        container.appendChild(a);
+      }
+
+      function copy(label, value) {
+        var div = document.createElement('div');
+        div.className = 'copy-badge';
+        div.innerHTML = '<span class="copy-badge-label"></span><span class="copy-badge-value"></span>';
+        div.querySelector('.copy-badge-label').textContent = label;
+        var valEl = div.querySelector('.copy-badge-value');
+        valEl.textContent = value;
+        div.addEventListener('click', function() {
+          navigator.clipboard.writeText(value).then(function() {
+            valEl.textContent = 'Copied!'; div.classList.add('copied');
+            setTimeout(function() { valEl.textContent = value; div.classList.remove('copied'); }, 1200);
+          });
+        });
+        container.appendChild(div);
+      }
+
+      link('YouPay', opts.youpay || self.YOUPAY_DEFAULT, 'Fees added at checkout · I get listed price');
+      link('Throne', opts.throne || self.THRONE_DEFAULT, 'Price includes fees · I get listed price');
+
+      var divider = document.createElement('div');
+      divider.className = 'pay-divider';
+      divider.textContent = '✦ No Fees ✦';
+      container.appendChild(divider);
+
+      link('Revolut', 'https://revolut.me/nashgnomie');
+      link('Cash App', 'https://cash.app/' + self.CASHTAG);
+      copy('Cashtag', self.CASHTAG);
+      copy('Apple Pay', self.EMAIL);
+      copy('Zelle', self.EMAIL);
+    }
+  };
+
+  // ==========================================
   // AGE GATE SYSTEM (shared across all pages)
   // ==========================================
   window.AgeGate = {
@@ -46,37 +153,39 @@
       return age;
     },
 
+    // The FIRST birthdate someone enters is locked in (even if it's under 18).
+    // Every gate after that, on every page, must get that exact same date.
     // Returns { success: true } or { success: false, reason: 'underage'|'mismatch' }
     verify: function(dob) {
-      if (this.calculateAge(dob) < 18) {
-        return { success: false, reason: 'underage' };
-      }
       var stored = this.getStoredDOB();
       if (stored && stored !== dob) {
-        this.clearDOB();
         return { success: false, reason: 'mismatch' };
       }
       if (!stored) {
         this.storeDOB(dob);
       }
-      return { success: true };
-    },
-
-    // Homepage always resets DOB
-    verifyHomepage: function(dob) {
       if (this.calculateAge(dob) < 18) {
         return { success: false, reason: 'underage' };
       }
-      this.storeDOB(dob);
       return { success: true };
     },
 
-    // Redirect to homepage with mismatch warning
-    redirectMismatch: function() {
-      this.clearDOB();
-      this.clearSession();
-      window.location.href = 'index.html?warning=dob_mismatch';
-    }
+    // Kept so older code keeps working; the homepage follows the same rule now
+    verifyHomepage: function(dob) {
+      return this.verify(dob);
+    },
+
+    MISMATCH_MSG: "That doesn't match the birthdate you entered before. Please enter your real birthday.",
+    UNDERAGE_MSG: 'You must be 18 or older to access this content.',
+
+    message: function(result) {
+      if (!result || result.success) return '';
+      return result.reason === 'mismatch' ? this.MISMATCH_MSG : this.UNDERAGE_MSG;
+    },
+
+    // Old behavior sent people to the homepage and wiped the saved date.
+    // Now a mismatch is simply refused, so this does nothing destructive.
+    redirectMismatch: function() {}
   };
 
   // ==========================================
@@ -90,7 +199,7 @@
       '<a href="index.html" class="nav-logo">NASH | Gnomie</a>' +
       '<div class="nav-links">' +
         '<a href="index.html">Home</a>' +
-        '<a href="#" id="contact-btn">Contact</a>' +
+        '<a href="#" id="contact-btn" class="age-gated" data-age-action="contact">Contact</a>' +
         '<a href="links.html">Links</a>' +
         '<a href="gallery.html">Gallery</a>' +
         '<div class="nav-dropdown">' +
@@ -130,7 +239,7 @@
     drawer.innerHTML = 
       '<button class="nav-drawer-close" id="nav-drawer-close" aria-label="Close">&times;</button>' +
       '<a href="index.html">Home</a>' +
-      '<a href="#" id="drawer-contact-btn">Contact</a>' +
+      '<a href="#" id="drawer-contact-btn" class="age-gated" data-age-action="contact">Contact</a>' +
       '<a href="links.html">Links</a>' +
       '<a href="gallery.html">Gallery</a>' +
       '<a href="#" class="drawer-services-toggle" id="drawer-expenses-toggle">Expenses &#9662;</a>' +
@@ -199,7 +308,7 @@
       '<div class="modal">' +
         '<button class="modal-close" id="shared-age-close" aria-label="Close">&times;</button>' +
         '<div class="modal-title">Age Verification Required</div>' +
-        '<div class="modal-desc">This link contains adult content (18+). Please verify your birthdate:</div>' +
+        '<div class="modal-desc" id="shared-age-desc"></div>' +
         '<form id="shared-age-form" autocomplete="off" style="display:flex;flex-direction:column;align-items:center;gap:8px;">' +
           '<input type="date" id="shared-age-bd" name="birthdate" required style="width:100%;max-width:240px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--accent-border);border-radius:var(--radius);color:var(--text-light);font-size:14px;font-family:var(--font-body);" />' +
           '<div id="shared-age-error" class="age-error" aria-live="polite"></div>' +
@@ -301,14 +410,17 @@
     var contactOverlay = document.getElementById('contact-popup-overlay');
     if (!contactOverlay) return;
 
-    function openContactPopup() {
+    // ageOk: true when the visitor just passed an age gate to get here (DM ME),
+    // so the links inside don't ask a second time.
+    function openContactPopup(ageOk) {
+      contactOverlay.classList.toggle('age-ok', ageOk === true);
       contactOverlay.classList.add('active');
       document.body.style.overflow = 'hidden';
       if (window.closeDrawer) window.closeDrawer();
     }
 
     function closeContactPopup() {
-      contactOverlay.classList.remove('active');
+      contactOverlay.classList.remove('active', 'age-ok');
       document.body.style.overflow = '';
     }
 
@@ -339,7 +451,7 @@
     var isHomepage = window.location.pathname === '/' || 
                      window.location.pathname.endsWith('index.html') || 
                      window.location.pathname === '';
-    if (!isHomepage) {
+    if (!isHomepage && !document.getElementById('stars')) {
       document.body.insertBefore(buildStars(), document.body.firstChild);
     }
 
@@ -379,20 +491,40 @@
     var bd = document.getElementById('shared-age-bd');
     var err = document.getElementById('shared-age-error');
     var closeBtn = document.getElementById('shared-age-close');
-    var pendingUrl = null;
+    // What to do once the birthdate checks out
+    var pending = null; // { url, newTab } or { action: 'contact' }
+
+    // Wording above the date box: DM gates vs. everything else
+    var DM_TEXT = 'I prefer to chat with individuals 21 or older, but you must be 18+ to DM me. Please confirm your date of birth:';
+    var DEFAULT_TEXT = 'This contains adult content (18+).<br />Please confirm your birthdate:';
 
     if (bd) bd.max = new Date().toISOString().split('T')[0];
 
-    // Intercept contact popup age links
+    // Any link/button with .age-gated (or the contact popup's links) asks for a
+    // birthdate first. data-age-action="contact" opens the Contact Me popup after.
     document.addEventListener('click', function(e) {
-      var link = e.target.closest('.contact-age-link');
-      if (!link) return;
+      var el = e.target.closest('.contact-age-link, .age-gated');
+      if (!el) return;
+      // Contact links skip a second check if the visitor came in through DM ME
+      if (el.classList.contains('contact-age-link') && el.closest('.age-ok')) return;
       e.preventDefault();
-      pendingUrl = link.href;
+      e.stopImmediatePropagation();
+      var desc = document.getElementById('shared-age-desc');
+      var isDm = el.getAttribute('data-age-action') === 'contact' || /t\.me\/nashgnomie\/?$/.test(el.href || '');
+      if (desc) {
+        desc.innerHTML = isDm ? DM_TEXT : DEFAULT_TEXT;
+        desc.classList.toggle('modal-desc-center', !isDm);
+      }
+      if (el.getAttribute('data-age-action') === 'contact') {
+        pending = { action: 'contact' };
+      } else {
+        pending = { url: el.href, newTab: el.target === '_blank' || el.hostname !== location.hostname };
+      }
       if (err) err.textContent = '';
       if (bd) bd.value = '';
+      if (window.closeDrawer) window.closeDrawer(); // e.g. Contact tapped in the phone menu
       if (overlay) { overlay.classList.add('active'); document.body.style.overflow = 'hidden'; }
-    });
+    }, true);
 
     if (form) {
       form.addEventListener('submit', function(e) {
@@ -400,22 +532,28 @@
         err.textContent = '';
         if (!bd.value) { err.textContent = 'Please enter your birthdate.'; return; }
         var result = window.AgeGate.verify(bd.value);
-        if (result.success) {
-          overlay.classList.remove('active');
-          document.body.style.overflow = '';
-          if (pendingUrl) window.open(pendingUrl, '_blank', 'noopener');
-          pendingUrl = null;
-        } else if (result.reason === 'underage') {
-          err.textContent = 'You must be 18 or older to access this content.';
-        } else if (result.reason === 'mismatch') {
-          window.AgeGate.redirectMismatch();
+        if (!result.success) {
+          err.textContent = window.AgeGate.message(result);
+          return;
+        }
+        var next = pending;
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+        pending = null;
+        if (!next) return;
+        if (next.action === 'contact') {
+          if (window.openContactPopup) window.openContactPopup(true);
+        } else if (next.newTab) {
+          window.open(next.url, '_blank', 'noopener');
+        } else {
+          window.location.href = next.url;
         }
       });
     }
 
     function closeSharedAge() {
       if (overlay) { overlay.classList.remove('active'); document.body.style.overflow = ''; }
-      pendingUrl = null;
+      pending = null;
     }
     if (closeBtn) closeBtn.addEventListener('click', closeSharedAge);
     if (overlay) overlay.addEventListener('click', function(e) { if (e.target === this) closeSharedAge(); });

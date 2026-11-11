@@ -1,236 +1,214 @@
-import json, os, time, hashlib, re
-from dataclasses import dataclass, asdict
-from typing import List, Dict, Any, Optional, Set
-from datetime import datetime, timedelta
-import requests
-from bs4 import BeautifulSoup
-import yaml
+"""
+Scrapes Nash's reviews from fan.reviews.
+
+fan.reviews only shows relative dates ("4mo ago"), so we keep its text exactly
+as shown and re-scrape regularly (see server.py) instead of storing it forever.
+Reviews come back newest first.
+
+Run directly to refresh the fallback snapshot in data/reviews.json:
+    python scraper.py
+"""
+import html, json, os, re, time
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
-@dataclass
-class Review:
-    username: str
-    avatar_url: Optional[str]
-    rating: Optional[float]
-    review_title: Optional[str]
-    review_text: str
-    time_text: Optional[str]
-    permalink: Optional[str]
-    scraped_date: Optional[str] = None
+import requests
+import yaml
+from bs4 import BeautifulSoup
+
+# fan.reviews' grey "no avatar" placeholder. We drop it so the site shows its
+# own pink initial instead.
+EMPTY_AVATAR_HINT = "avatar-empty"
+
+
+def clean(s: Optional[str]) -> Optional[str]:
+    """fan.reviews sometimes double-encodes text (shows '&amp;' literally)."""
+    return html.unescape(s).strip() if s else s
+
+
+def load_config(path: str = "config.yaml") -> Dict[str, Any]:
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
 
 class ReviewScraper:
     def __init__(self, cfg: Dict[str, Any]):
         self.cfg = cfg
-        self.base_url = cfg["fan_reviews_url"].rstrip("/")
+        self.base_url = cfg["fan_reviews_url"].rstrip("/") + "/"
+        self.sel = cfg["selectors"]
+        self.max_pages = int(cfg["pagination"].get("max_pages", 20))
+        self.sleep_s = cfg["request"].get("sleep_between_pages_ms", 700) / 1000.0
+        self.timeout = cfg["request"].get("timeout", 20)
+        self.json_path = cfg["storage"]["json_path"]
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": cfg["request"]["user_agent"]})
-        self.timeout = cfg["request"]["timeout"]
-        self.json_path = cfg["storage"]["json_path"]
-        os.makedirs(os.path.dirname(self.json_path), exist_ok=True)
-        self.sel = cfg["selectors"]
-        self.max_pages = int(cfg["pagination"]["max_pages"])
-        self.pagination_mode = cfg["pagination"].get("mode", "discover")
-        self.sleep_ms = cfg["request"]["sleep_between_pages_ms"]
-        self.dedupe_fields = cfg["dedupe"]["fields"]
+
+    # ---------- fetching ----------
 
     def _get(self, url: str) -> str:
         r = self.session.get(url, timeout=self.timeout)
         r.raise_for_status()
         return r.text
 
-    def _sleep(self):
-        time.sleep(self.sleep_ms / 1000.0)
+    def _page_url(self, n: int) -> str:
+        return self.base_url if n == 1 else f"{self.base_url}comment-page-{n}/"
 
-    def _parse_relative_date(self, text: str) -> Optional[str]:
-        """Convert '2h ago', '5d ago', '1w ago', '3mo ago' etc. to ISO date string."""
-        if not text:
-            return None
-        text = text.strip().lower()
-        m = re.match(r'(\d+)\s*(h|hr|hour|d|day|w|wk|week|mo|month|y|yr|year)s?\s*ago', text)
-        if not m:
-            # Try "edited" suffix e.g. "5d ago(edited)"
-            m = re.match(r'(\d+)\s*(h|hr|hour|d|day|w|wk|week|mo|month|y|yr|year)s?\s*ago', text.split('(')[0].strip())
-        if not m:
-            return datetime.utcnow().isoformat()
-        num = int(m.group(1))
-        unit = m.group(2)
-        now = datetime.utcnow()
-        if unit in ('h', 'hr', 'hour'):
-            dt = now - timedelta(hours=num)
-        elif unit in ('d', 'day'):
-            dt = now - timedelta(days=num)
-        elif unit in ('w', 'wk', 'week'):
-            dt = now - timedelta(weeks=num)
-        elif unit in ('mo', 'month'):
-            dt = now - timedelta(days=num * 30)
-        elif unit in ('y', 'yr', 'year'):
-            dt = now - timedelta(days=num * 365)
-        else:
-            dt = now
-        return dt.isoformat()
+    def _last_page(self, soup: BeautifulSoup) -> int:
+        nums = [1]
+        for a in soup.select('a[href*="comment-page-"]'):
+            m = re.search(r"comment-page-(\d+)", a["href"])
+            if m:
+                nums.append(int(m.group(1)))
+        return min(max(nums), self.max_pages)
 
-    def _calc_relative_time(self, iso_date: str) -> str:
-        """Convert ISO date string back to relative time like '2d ago'."""
-        try:
-            dt = datetime.fromisoformat(iso_date)
-        except Exception:
-            return ""
-        now = datetime.utcnow()
-        diff = now - dt
-        seconds = int(diff.total_seconds())
-        if seconds < 3600:
-            mins = max(1, seconds // 60)
-            return f"{mins}m ago"
-        elif seconds < 86400:
-            hours = seconds // 3600
-            return f"{hours}h ago"
-        elif seconds < 604800:
-            days = seconds // 86400
-            return f"{days}d ago"
-        elif seconds < 2592000:
-            weeks = seconds // 604800
-            return f"{weeks}w ago"
-        elif seconds < 31536000:
-            months = seconds // 2592000
-            return f"{months}mo ago" if months > 0 else "1mo ago"
-        else:
-            years = seconds // 31536000
-            return f"{years}y ago"
+    # ---------- parsing ----------
 
-    def _recalculate_dates(self, reviews: List[Review]) -> List[Review]:
-        """Recalculate all relative dates from stored absolute dates."""
-        for r in reviews:
-            if r.scraped_date:
-                r.time_text = self._calc_relative_time(r.scraped_date)
-        return reviews
+    def _text(self, node, sel: str) -> Optional[str]:
+        el = node.select_one(sel) if sel else None
+        return el.get_text(" ", strip=True) if el else None
 
-    def _hash_for_dedupe(self, r: Review) -> str:
-        parts = []
-        for f in self.dedupe_fields:
-            v = getattr(r, f, None)
-            parts.append("" if v is None else str(v))
-        return hashlib.sha256("||".join(parts).encode("utf-8")).hexdigest()
-
-    def _load_existing(self) -> Dict[str, Any]:
-        if not os.path.exists(self.json_path):
-            return {"reviews": [], "hashes": []}
-        try:
-            with open(self.json_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            data.setdefault("reviews", [])
-            data.setdefault("hashes", [])
-            return data
-        except Exception:
-            return {"reviews": [], "hashes": []}
-
-    def _save(self, reviews: List[Review], hashes: List[str]):
-        with open(self.json_path, "w", encoding="utf-8") as f:
-            json.dump({"reviews": [asdict(r) for r in reviews], "hashes": hashes}, f,
-                      ensure_ascii=False, indent=2)
-
-    def _parse_rating(self, container: BeautifulSoup) -> Optional[float]:
-        sel = self.sel.get("rating_text")
-        node = container.select_one(sel) if sel else None
-        if node:
-            txt = node.get_text(strip=True)
+    def _rating(self, li) -> Optional[float]:
+        txt = self._text(li, self.sel["rating_text"])
+        if txt:
             try:
                 return float(txt)
             except ValueError:
                 pass
-        # fallback: count stars
-        stars = container.select(".comment-rate-group .star-rating .star.star-full")
-        if stars:
-            return float(len(stars))
-        return None
+        stars = li.select(".star-rating .star.star-full")
+        return float(len(stars)) if stars else None
 
-    def _extract_perma(self, li: BeautifulSoup, page_url: str) -> Optional[str]:
-        cid = li.get("id")
-        return f"{page_url}#{cid}" if cid else None
-
-    def _extract_review(self, li: BeautifulSoup, page_url: str) -> Optional[Review]:
-        s = self.sel
-        username_node = li.select_one(s["username"])
-        if not username_node:
+    def _avatar(self, li) -> Optional[str]:
+        img = li.select_one(self.sel["avatar"])
+        src = img.get("src") if img else None
+        if not src or EMPTY_AVATAR_HINT in src:
             return None
-        username = username_node.get_text(strip=True)
+        return urljoin(self.base_url, src)
 
-        avatar_url = None
-        avatar_node = li.select_one(s["avatar"])
-        if avatar_node and avatar_node.has_attr("src"):
-            avatar_url = avatar_node["src"]
+    # ---------- layout-independent fallbacks ----------
+    # Used when a config.yaml selector stops matching. They rely on things
+    # WordPress keeps the same across themes: reviews are <li id="comment-123">,
+    # reviewer names link to /profile/, dates read "X ago", scores sit near "/10".
 
-        rating = self._parse_rating(li)
+    TIME_RE = re.compile(r"\b(?:\d+\s*(?:s|sec|m|min|h|hr|d|w|wk|mo|y|yr)|\d+\s+(?:second|minute|hour|day|week|month|year)s?|an?\s+(?:minute|hour|day|week|month|year))\s+ago\b", re.I)
 
-        title_node = li.select_one(s.get("review_title"))
-        title = title_node.get_text(strip=True) if title_node else None
+    def _fallback_username(self, li) -> Optional[str]:
+        for a in li.select('a[href*="/profile/"]'):
+            name = a.get_text(" ", strip=True)
+            if name:
+                return name
+        img = li.select_one("img[alt]")
+        return img["alt"].strip() if img and img["alt"].strip() else None
 
-        body_node = li.select_one(s["review_content"])
-        if not body_node:
+    def _fallback_time(self, li) -> Optional[str]:
+        m = self.TIME_RE.search(li.get_text(" ", strip=True))
+        return m.group(0) if m else None
+
+    def _fallback_rating(self, li) -> Optional[float]:
+        m = re.search(r"(\d+(?:\.\d+)?)\s*/\s*10\b", li.get_text(" ", strip=True))
+        return float(m.group(1)) if m else None
+
+    def _fallback_body(self, li):
+        # The review is the longest paragraph in the card
+        paras = [p for p in li.find_all("p") if p.get_text(strip=True)]
+        return max(paras, key=lambda p: len(p.get_text(strip=True))) if paras else None
+
+    def _parse_review(self, li, page_url: str) -> Optional[Dict[str, Any]]:
+        username = self._text(li, self.sel["username"]) or self._fallback_username(li)
+        body = li.select_one(self.sel["review_content"]) or self._fallback_body(li)
+        if not username or not body:
             return None
-        if title_node:
-            title_node.extract()
-        review_text = body_node.get_text("\n", strip=True)
 
-        time_text = None
-        for tsel in s["time_text"].split(","):
-            t = li.select_one(tsel.strip())
-            if t:
-                time_text = t.get_text(strip=True)
-                break
+        # Title: configured selector, else a bold line at the start of the review
+        title_el = body.select_one(self.sel["review_title"])
+        if not title_el:
+            first = body.find(["strong", "b"])
+            if first and body.get_text(strip=True).startswith(first.get_text(strip=True)):
+                title_el = first
+        title = clean(title_el.get_text(" ", strip=True)) if title_el else None
+        if title_el:
+            title_el.extract()
+        text = clean(body.get_text("\n", strip=True))
 
-        permalink = self._extract_perma(li, page_url)
-        scraped_date = self._parse_relative_date(time_text)
-        return Review(username, avatar_url, rating, title, review_text, time_text, permalink, scraped_date)
+        cid = li.get("id", "")
+        m = re.search(r"(\d+)$", cid)
+        return {
+            "id": int(m.group(1)) if m else 0,
+            "username": clean(username),
+            "avatar_url": self._avatar(li),
+            "rating": self._rating(li) or self._fallback_rating(li),
+            "review_title": title,
+            "review_text": text,
+            "time_text": self._text(li, self.sel["time_text"]) or self._fallback_time(li),
+            "permalink": f"{page_url}#{cid}" if cid else page_url,
+        }
 
-    def _discover_pages(self, html: str, page_url: str) -> List[str]:
-        soup = BeautifulSoup(html, "html.parser")
-        pages = {page_url}
-        pag = soup.select_one("#comments_pagination")
-        if pag:
-            for a in pag.select("a.page-numbers"):
-                href = a.get("href")
-                if href:
-                    pages.add(urljoin(page_url, href))
-        return sorted(pages)
+    def _review_items(self, soup):
+        items = soup.select(self.sel["review_container"])
+        if items:
+            return items
+        # Fallback: any top-level WordPress comment (skip replies nested inside another)
+        return [li for li in soup.select('li[id^="comment-"]')
+                if not li.find_parent("li", id=re.compile(r"^comment-"))]
 
-    def scrape(self) -> Dict[str, Any]:
-        existing = self._load_existing()
-        collected: List[Review] = [Review(**r) for r in existing["reviews"]]
-        known: Set[str] = set(existing["hashes"])
+    def expected_count(self, soup) -> Optional[int]:
+        """fan.reviews' own review total, from the page's structured data."""
+        m = re.search(r'"reviewCount"\s*:\s*"?(\d+)', str(soup))
+        return int(m.group(1)) if m else None
 
-        first_html = self._get(self.base_url)
-        page_urls = self._discover_pages(first_html, self.base_url) if self.pagination_mode == "discover" else [self.base_url]
-        page_urls = page_urls[: self.max_pages]
+    # ---------- public ----------
 
-        for i, page_url in enumerate(page_urls, start=1):
-            html = first_html if i == 1 else self._get(page_url)
-            soup = BeautifulSoup(html, "html.parser")
-            cards = soup.select(self.sel["review_container"])
+    def scrape(self) -> List[Dict[str, Any]]:
+        """Fetch every page of reviews. Returns them newest first.
+        After a run, self.expected holds fan.reviews' own total (or None)."""
+        first = BeautifulSoup(self._get(self._page_url(1)), "html.parser")
+        self.expected = self.expected_count(first)
+        last = self._last_page(first)
+
+        seen, reviews = set(), []
+        n = 1
+        while n <= self.max_pages:
+            if n > 1:
+                time.sleep(self.sleep_s)
+                try:
+                    soup = BeautifulSoup(self._get(self._page_url(n)), "html.parser")
+                except requests.HTTPError:
+                    break  # ran past the last page
+            else:
+                soup = first
             added = 0
-            for li in cards:
-                r = self._extract_review(li, page_url)
-                if not r:
-                    continue
-                h = self._hash_for_dedupe(r)
-                if h in known:
-                    continue
-                collected.append(r)
-                known.add(h)
-                added += 1
-            print(f"{page_url} -> +{added} new (total {len(collected)})")
-            if i < len(page_urls):
-                self._sleep()
+            for li in self._review_items(soup):
+                r = self._parse_review(li, self._page_url(n))
+                if r and r["id"] not in seen:
+                    seen.add(r["id"])
+                    reviews.append(r)
+                    added += 1
+            # Stop after the last page we know of, unless we're still short of
+            # fan.reviews' own total (e.g. the page links changed) and still finding new ones.
+            short = self.expected is not None and len(reviews) < self.expected
+            if n >= last and (not short or added == 0):
+                break
+            n += 1
 
-        # Recalculate relative dates for ALL reviews from absolute dates
-        collected = self._recalculate_dates(collected)
-        self._save(collected, list(known))
-        return {"count": len(collected), "path": self.json_path}
+        if not reviews:
+            raise RuntimeError("Found 0 reviews - fan.reviews layout may have changed (check config.yaml selectors)")
 
-def load_config(path: str = "config.yaml") -> Dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        # Higher comment id = posted later on fan.reviews
+        reviews.sort(key=lambda r: r["id"], reverse=True)
+        return reviews
+
+    def save_snapshot(self, reviews: List[Dict[str, Any]]) -> None:
+        os.makedirs(os.path.dirname(self.json_path) or ".", exist_ok=True)
+        data = {"scraped_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "reviews": reviews}
+        with open(self.json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+
 
 if __name__ == "__main__":
-    cfg = load_config()
-    out = ReviewScraper(cfg).scrape()
-    print(f"Saved {out['count']} total reviews -> {out['path']}")
+    scraper = ReviewScraper(load_config())
+    found = scraper.scrape()
+    scraper.save_snapshot(found)
+    print(f"Saved {len(found)} reviews -> {scraper.json_path}")
+    for r in found[:5]:
+        print(f"  {r['time_text']:>10}  {r['username']}")

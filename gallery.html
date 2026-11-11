@@ -10,7 +10,7 @@
 <body>
   <div id="nav-inject"></div>
 
-  <div class="section" style="max-width:700px;margin:0 auto;position:relative;">
+  <div class="section gallery-lock" style="max-width:700px;margin:0 auto;position:relative;">
     <h1 class="section-title" style="font-size:28px;text-align:center;">18+ Teaser Gallery</h1>
 
     <!-- AGE GATE FOR GALLERY PAGE -->
@@ -75,10 +75,9 @@
         var result = window.AgeGate.verify(bd.value);
         if (result.success) {
           gate.style.display = 'none';
-        } else if (result.reason === 'underage') {
-          err.textContent = 'You must be 18 or older to view this content.';
-        } else if (result.reason === 'mismatch') {
-          window.AgeGate.redirectMismatch();
+          gate.parentElement.classList.remove('gallery-lock');
+        } else {
+          err.textContent = window.AgeGate.message(result);
         }
       });
     }

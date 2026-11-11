@@ -5,28 +5,28 @@ pagination:
   mode: "discover"
   max_pages: 20
 
+# CSS selectors for fan.reviews. Each one lists the current layout first and
+# the older layout after the comma, so a small site change doesn't break it.
 selectors:
   review_container: "ol.commentlist.main-comment > li.comment.depth-1"
-  username: ".comment-header .author-link"
-  avatar: ".comment-header .comment-author a img"
+  username: ".comment-meta-author a, .comment-header .author-link"
+  avatar: ".comment-author-img img, .comment-header .comment-author a img"
   rating_text: ".comment-rate .comment-rate__cur"
-  rating_data_attr: null
-  review_content: ".comment-content p"
-  review_title: ".comment-content .review_title"
-  time_text: ".comment-header .comment-date .time, .comment-mobile .comment-date .time"
+  review_content: ".comment-text p, .comment-content p"
+  review_title: ".review_title"
+  time_text: ".comment-meta-date, .comment-header .comment-date .time"
 
 storage:
+  # Last good scrape. Served if fan.reviews can't be reached.
   json_path: "data/reviews.json"
-  use_sqlite: false
-  sqlite_path: "data/reviews.sqlite3"
+
+# How long the server reuses a scrape before fetching fan.reviews again
+cache_minutes: 60
 
 request:
   user_agent: "Mozilla/5.0 (compatible; GnomeMod-ReviewBot/1.0; +https://nashgnomie.vip)"
   timeout: 20
   sleep_between_pages_ms: 700
-
-dedupe:
-  fields: ["username", "rating", "review_text"]
 
 server:
   host: "0.0.0.0"
