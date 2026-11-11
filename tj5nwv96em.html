@@ -728,6 +728,8 @@
       api('GET', 'hq/session').then(function(s) {
         if (!s.ready) { $('login').hidden = false; $('login-form').hidden = true; $('not-ready').hidden = false; return; }
         if (s.locked) { showLocked(); return; }
+        // Until 2FA is connected, only the password is needed (no code box)
+        $('otp').hidden = !s.twoFactor;
         if (s.signedIn) start(); else showLogin();
       }, function() { showLogin(); });
     })();

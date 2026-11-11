@@ -546,7 +546,7 @@
           '<p class="wl-lead">Before you get your wallet code:</p>' +
           '<label><input type="checkbox" required /> <span>I am at least <strong>18 years old</strong> (21+ preferred).</span></label>' +
           '<label><input type="checkbox" required /> <span>I understand my <strong>wallet balance is shared across all games</strong>.</span></label>' +
-          '<label><input type="checkbox" required /> <span>I understand the money I send through YouPay or Throne is real, but my <strong>wallet balance is not</strong>. It&rsquo;s a record of what I&rsquo;ve sent, used only to play games on this site, and it <strong>can&rsquo;t be refunded or withdrawn</strong>.</span></label>' +
+          '<label><input type="checkbox" required /> <span>I understand the money I send through Throne is real, but my <strong>wallet balance is not</strong>. It&rsquo;s a record of what I&rsquo;ve sent, used only to play games on this site, and it <strong>can&rsquo;t be refunded or withdrawn</strong>.</span></label>' +
           '<div class="age-error wl-error" aria-live="polite"></div>' +
           '<button type="submit" class="btn btn-primary wl-wide">I Agree, Get My Code</button>' +
           '<button type="button" class="wl-link" data-act="signin">Already have a wallet? Sign in</button>');
