@@ -2533,3 +2533,9 @@ button {
     display: none;
   }
 }
+
+/* Pink italic subtext (e.g. "Better than my OnlyFans!") */
+.menu-item small.menu-item-hype {
+  font-style: italic;
+  color: var(--accent);
+}
