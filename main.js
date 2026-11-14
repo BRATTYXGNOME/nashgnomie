@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   // TEASER MODAL (Lightbox)
   // ==========================================
-  const teaserImages = [
+  let teaserImages = [
     "https://i.ibb.co/8gB2XFxh/teaser001.gif",
     "https://i.ibb.co/MkncchXh/teaser003.jpg",
     "https://i.ibb.co/yFpXf6pG/teaser004.png",
@@ -141,9 +141,20 @@ document.addEventListener('DOMContentLoaded', () => {
     teaserModalImg.src = teaserImages[currentTeaserIndex];
   }
 
-  teaserThumbs.forEach(function(img, idx) {
-    img.addEventListener('click', function() { openTeaserModal(idx); });
+  // Clicks work for whatever pictures are showing (the list can change from Backstage)
+  const teaserStrip = document.querySelector('.gallery-scroll');
+  if (teaserStrip) teaserStrip.addEventListener('click', function(e) {
+    const img = e.target.closest('.teaser-thumb'); if (!img) return;
+    openTeaserModal(Array.prototype.indexOf.call(teaserStrip.querySelectorAll('.teaser-thumb'), img));
   });
+  // The teaser pictures Gnomie picked in Backstage (the built-in ones show until this loads)
+  if (teaserStrip) fetch('/api/site/teasers').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+    if (!d || !Array.isArray(d.items) || !d.items.length) return;
+    teaserImages = d.items.map(function(x) { return x.url; });
+    teaserStrip.innerHTML = teaserImages.map(function(u, i) {
+      return '<div class="gallery-item"><img src="' + u.replace(/"/g, '&quot;') + '" alt="Teaser ' + (i + 1) + '" class="teaser-thumb" loading="lazy" /><div class="teaser-overlay"></div></div>';
+    }).join('');
+  }).catch(function() {});
 
   if (teaserModalClose) teaserModalClose.addEventListener('click', closeTeaserModal);
   if (teaserArrowLeft) teaserArrowLeft.addEventListener('click', showPrevTeaser);

@@ -163,6 +163,8 @@ async function ensureSchema(db) {
   // Region gets its own column in the event log (fails harmlessly if it's already there)
   try { await db.prepare('ALTER TABLE admin_log ADD COLUMN region TEXT').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE nudges ADD COLUMN response TEXT').run(); } catch (e) {}
+  // 'nudge' = ask them to add money (default); 'note' = just a message (a thank-you, a bonus...)
+  try { await db.prepare('ALTER TABLE nudges ADD COLUMN kind TEXT').run(); } catch (e) {}
   // When the fan confirmed they saved their wallet code (a reminder shows until then)
   try { await db.prepare('ALTER TABLE wallets ADD COLUMN code_saved_at INTEGER').run(); } catch (e) {}
   await carryOverOldAdjustments(db);
@@ -235,6 +237,7 @@ const WALLET_SELECT = `SELECT w.*,
   (SELECT t.secret IS NOT NULL FROM wallet_totp t WHERE t.wallet_id = w.id) AS two_factor,
   (SELECT n.id FROM nudges n WHERE n.wallet_id = w.id AND n.closed_at IS NULL ORDER BY n.id DESC LIMIT 1) AS nudge_id,
   (SELECT n.message FROM nudges n WHERE n.wallet_id = w.id AND n.closed_at IS NULL ORDER BY n.id DESC LIMIT 1) AS nudge_message,
+  (SELECT n.kind FROM nudges n WHERE n.wallet_id = w.id AND n.closed_at IS NULL ORDER BY n.id DESC LIMIT 1) AS nudge_kind,
   (SELECT c.created_at FROM close_requests c WHERE c.wallet_id = w.id) AS close_requested_at,
   (SELECT k.created_at FROM breaks k WHERE k.wallet_id = w.id) AS break_since,
   (SELECT a.version FROM agreements a WHERE a.wallet_id = w.id ORDER BY a.id DESC LIMIT 1) AS terms_version,
@@ -264,7 +267,8 @@ function publicWallet(w) {
     // Only a spoof wallet ever gets this flag (it's how its own wallet shows the spoof load buttons)
     ...(w.spoof ? { spoof: true, spoofWait: Math.max(0, Math.ceil(((w.spoof_last || 0) + 30000 - Date.now()) / 1000)) } : {}),
     unfinished: heldGames(w).map(h => h.game).concat(w.mind_active ? ['read-my-mind'] : []),
-    nudge: w.nudge_id && !w.break_since ? { id: w.nudge_id, message: w.nudge_message || '' } : null,
+    // A nudge to add money waits while they're on a break; a plain message (thank-you, bonus) always shows
+    nudge: w.nudge_id && (!w.break_since || w.nudge_kind === 'note') ? { id: w.nudge_id, message: w.nudge_message || '', kind: w.nudge_kind === 'note' ? 'note' : 'nudge' } : null,
     closeRequested: !!w.close_requested_at, onBreak: !!w.break_since, codeSaved: !!w.code_saved_at,
     color: colorOf(w), loadCount: w.load_count || 0, telegram: w.telegram || '', throneName: w.throne_name || ''
   };
@@ -738,10 +742,10 @@ routes['POST nudge/seen'] = async (env, request) => {
 routes['POST nudge/close'] = async (env, request) => {
   const w = await needWallet(env, request);
   const { id, response } = await readJson(request);
-  const now = Date.now(), answer = response === 'break' || response === 'promise' ? response : 'closed';
+  const now = Date.now(), answer = ['break', 'promise', 'thanks'].indexOf(response) !== -1 ? response : 'closed';
   const r = await env.DB.prepare('UPDATE nudges SET closed_at = ?, seen_at = COALESCE(seen_at, ?), response = ? WHERE id = ? AND wallet_id = ? AND closed_at IS NULL').bind(now, now, answer, id, w.id).run();
   if (answer === 'break') await env.DB.prepare('INSERT OR IGNORE INTO breaks (wallet_id, created_at) VALUES (?, ?)').bind(w.id, now).run();
-  if (r.meta.changes === 1) await logEvent(env, request, answer === 'break' ? 'nudge_break' : answer === 'promise' ? 'nudge_promise' : 'nudge_closed', w.id, 'Nudge #' + id);
+  if (r.meta.changes === 1) await logEvent(env, request, answer === 'break' ? 'nudge_break' : answer === 'promise' ? 'nudge_promise' : answer === 'thanks' ? 'note_thanks' : 'nudge_closed', w.id, 'Message #' + id);
   return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
 };
 
@@ -1733,6 +1737,60 @@ routes['POST hq/load-buttons'] = async (env, request) => {
   await logEvent(env, request, 'backstage_loads', null, list.map(x => '$' + x.cents / 100).join(', '));
   return json({ ok: true, throne: list });
 };
+// ---------- Teaser pictures (homepage + Gallery page), edited in Backstage ----------
+// Uploaded pictures live in Cloudflare R2 storage (binding TEASERS) and are served
+// from /api/media?k=...; pictures can also be plain https links (like the ImgBB ones).
+const DEFAULT_TEASERS = [
+  'https://i.ibb.co/8gB2XFxh/teaser001.gif', 'https://i.ibb.co/MkncchXh/teaser003.jpg', 'https://i.ibb.co/yFpXf6pG/teaser004.png',
+  'https://i.ibb.co/4ZQ57dLG/teaser005.png', 'https://i.ibb.co/8Dx5khhJ/teaser006.png', 'https://i.ibb.co/j9QgVSzS/teaser007.jpg'
+].map(url => ({ url }));
+const TEASER_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
+function teaserKey(url) { const m = /^\/api\/media\?k=(teasers\/[A-Za-z0-9]+\.(?:jpg|png|gif|webp))$/.exec(url || ''); return m ? m[1] : null; }
+routes['GET site/teasers'] = async (env) => json({ items: await siteGet(env.DB, 'teasers', DEFAULT_TEASERS) }, 200, { 'cache-control': 'public, max-age=30' });
+routes['GET media'] = async (env, request, url) => {
+  const key = url.searchParams.get('k') || '';
+  if (!/^teasers\/[A-Za-z0-9]+\.(jpg|png|gif|webp)$/.test(key) || !env.TEASERS) return json({ error: 'Not found.' }, 404);
+  const obj = await env.TEASERS.get(key);
+  if (!obj) return json({ error: 'Not found.' }, 404);
+  return new Response(obj.body, { headers: { 'content-type': (obj.httpMetadata && obj.httpMetadata.contentType) || 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' } });
+};
+routes['GET hq/teasers'] = async (env, request) => {
+  await needHQ(env, request);
+  return json({ items: await siteGet(env.DB, 'teasers', DEFAULT_TEASERS), storage: !!env.TEASERS });
+};
+// Upload one picture (the raw file is the request body). Returns its new address.
+routes['POST hq/teaser-upload'] = async (env, request) => {
+  await needHQ(env, request);
+  if (!env.TEASERS) throw new Oops('Picture storage isn’t connected yet. Finish the Cloudflare setup first (you can still paste links).', 503);
+  const type = (request.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+  if (!TEASER_TYPES[type]) throw new Oops('Pictures must be JPG, PNG, GIF or WebP.');
+  const buf = await request.arrayBuffer();
+  if (!buf.byteLength) throw new Oops('That file is empty.');
+  if (buf.byteLength > 20 * 1024 * 1024) throw new Oops('That picture is over 20 MB. Try a smaller one.');
+  const key = 'teasers/' + randomHex(12) + '.' + TEASER_TYPES[type];
+  await env.TEASERS.put(key, buf, { httpMetadata: { contentType: type } });
+  await logEvent(env, request, 'backstage_teaser_upload', null, key + ' · ' + Math.round(buf.byteLength / 1024) + ' KB');
+  return json({ url: '/api/media?k=' + key });
+};
+// Save the list (order + which pictures). Uploaded pictures taken off the list are deleted.
+routes['POST hq/teasers'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
+  if (!Array.isArray(b.items) || b.items.length > 60) throw new Oops('Keep up to 60 pictures.');
+  const items = b.items.map((x, i) => {
+    const u = String(x && x.url || '').trim();
+    if (!teaserKey(u) && !/^https:\/\/[^\s"'<>]+$/i.test(u)) throw new Oops('Picture ' + (i + 1) + ' has a bad address.');
+    return { url: u };
+  });
+  const before = await siteGet(env.DB, 'teasers', DEFAULT_TEASERS);
+  await env.DB.prepare('INSERT INTO site_content (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
+    .bind('teasers', JSON.stringify(items), Date.now()).run();
+  const keep = new Set(items.map(x => teaserKey(x.url)).filter(Boolean));
+  const gone = before.map(x => teaserKey(x.url)).filter(k => k && !keep.has(k));
+  if (gone.length && env.TEASERS) { for (const k of gone) { try { await env.TEASERS.delete(k); } catch (e) {} } }
+  await logEvent(env, request, 'backstage_teasers', null, items.length + ' pictures' + (gone.length ? ' · deleted ' + gone.length : ''));
+  return json({ ok: true, items });
+};
 routes['GET site/ticker'] = async (env) => {
   const t = await siteGet(env.DB, 'ticker', DEFAULT_TICKER);
   const items = (t.items || []).filter(i => i.on !== false).map(i => ({ text: i.text, kind: i.kind, url: i.url || '', code: i.code || '', after: i.after || '', highlight: i.highlight || 'none' }));
@@ -2612,7 +2670,7 @@ routes['GET hq/inbox'] = async (env, request) => {
     db.prepare(`SELECT r.*, ${who} FROM load_reports r JOIN wallets w ON w.id = r.wallet_id WHERE r.status = 'open' ORDER BY r.id DESC LIMIT 50`).all(),
     db.prepare(`SELECT r.*, ${who} FROM fan_requests r JOIN wallets w ON w.id = r.wallet_id WHERE r.status = 'open' ORDER BY r.id DESC LIMIT 50`).all(),
     db.prepare(`SELECT c.*, ${who}, w.balance_cents FROM close_requests c JOIN wallets w ON w.id = c.wallet_id ORDER BY c.created_at DESC LIMIT 50`).all(),
-    db.prepare(`SELECT n.*, ${who} FROM nudges n JOIN wallets w ON w.id = n.wallet_id WHERE n.response IN ('promise', 'break') AND n.closed_at >= ? ORDER BY n.closed_at DESC LIMIT 50`).bind(monthAgo).all(),
+    db.prepare(`SELECT n.*, ${who} FROM nudges n JOIN wallets w ON w.id = n.wallet_id WHERE n.response IN ('promise', 'break', 'thanks') AND n.closed_at >= ? ORDER BY n.closed_at DESC LIMIT 50`).bind(monthAgo).all(),
     db.prepare(`SELECT k.*, ${who} FROM breaks k JOIN wallets w ON w.id = k.wallet_id WHERE k.created_at >= ? ORDER BY k.created_at DESC LIMIT 50`).bind(monthAgo).all()
   ]);
   const items = [];
@@ -2635,7 +2693,7 @@ routes['GET hq/inbox'] = async (env, request) => {
   closes.results.forEach(c => items.push({ key: 'close:' + c.wallet_id + ':' + c.created_at, kind: 'close', at: c.created_at, code: c.code, name: c.name,
     text: 'asked you to close their wallet', note: 'Balance ' + money(c.balance_cents) }));
   nudges.results.forEach(n => { const k = 'nudge:' + n.id; if (!seen.has(k)) items.push({ key: k, kind: 'nudge', at: n.closed_at, code: n.code, name: n.name,
-    text: n.response === 'promise' ? 'answered your nudge: “I promise I’ll do better”' : 'answered your nudge by starting a financial break', note: n.message ? 'You said: ' + n.message : '' }); });
+    text: n.response === 'thanks' ? 'said \u201cThank you, Gnomie!\u201d to your message' : n.response === 'promise' ? 'answered your nudge: “I promise I’ll do better”' : 'answered your nudge by starting a financial break', note: n.message ? 'You said: ' + n.message : '' }); });
   breaks.results.forEach(k => { const key = 'break:' + k.wallet_id + ':' + k.created_at; if (!seen.has(key)) items.push({ key, kind: 'break', at: k.created_at, code: k.code, name: k.name,
     text: 'started a financial break', note: 'Nudges are paused for them' }); });
   items.sort((a, b) => b.at - a.at);
@@ -2874,10 +2932,12 @@ routes['POST hq/nudge'] = async (env, request) => {
   const b = await readJson(request);
   const w = await hqWallet(env.DB, b.code);
   if (w.status !== 'active') throw new Oops('This wallet isn’t open.');
-  if (w.break_since) throw new Oops('They’re on a financial break, so nudges are paused.');
+  const kind = b.kind === 'note' ? 'note' : 'nudge';
+  if (kind === 'nudge' && w.break_since) throw new Oops('They’re on a financial break, so nudges to add money are paused. You can still send a message.');
   const message = String(b.message || '').replace(/[\u0000-\u001f\u007f<>]/g, ' ').trim().slice(0, 140) || null;
-  await env.DB.prepare('INSERT INTO nudges (wallet_id, message, created_at) VALUES (?, ?, ?)').bind(w.id, message, Date.now()).run();
-  await logEvent(env, request, 'backstage_nudge', w.id, message || '(no message)');
+  if (kind === 'note' && !message) throw new Oops('Write the message first.');
+  await env.DB.prepare('INSERT INTO nudges (wallet_id, message, kind, created_at) VALUES (?, ?, ?, ?)').bind(w.id, message, kind, Date.now()).run();
+  await logEvent(env, request, kind === 'note' ? 'backstage_note_sent' : 'backstage_nudge', w.id, message || '(no message)');
   return json({ ok: true });
 };
 

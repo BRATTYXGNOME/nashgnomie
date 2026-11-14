@@ -5457,3 +5457,7 @@ body.wl-modal-open { overflow: hidden; }
 .wl-saved.wl-saved-nudge { border-color: #f5b942; background: rgba(245, 185, 66, 0.08); animation: rm-shake 0.35s; }
 .wl-code-reminder { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; border: 1px dashed #f5b942; background: rgba(245, 185, 66, 0.08); font-size: 13px; color: var(--text-light); cursor: pointer; line-height: 1.45; }
 .wl-code-reminder input { margin-top: 2px; accent-color: var(--accent); width: 16px; height: 16px; flex: none; }
+
+/* A message from Gnomie (thank-you, bonus) instead of a nudge to add money */
+.wl-nudge.wl-nudge-note { border-color: rgba(167, 139, 250, 0.55); background: linear-gradient(135deg, rgba(167, 139, 250, 0.14), rgba(255, 95, 162, 0.1)); }
+.wl-nudge-from { display: block; margin-bottom: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }

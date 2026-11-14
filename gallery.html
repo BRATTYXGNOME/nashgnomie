@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Gallery | NASH | Gnomie</title>
   <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261114v" />
+  <link rel="stylesheet" href="styles.css?v=20261114w" />
 </head>
 <body>
   <div id="nav-inject"></div>
@@ -57,7 +57,7 @@
     </div>
   </div>
 
-  <script src="components.js?v=20261114v"></script>
+  <script src="components.js?v=20261114w"></script>
   <script>
     // Gallery page age gate
     var gate = document.getElementById('gallery-page-gate');
@@ -104,7 +104,19 @@
     function prev() { currentIdx = (currentIdx - 1 + teaserImages.length) % teaserImages.length; modalImg.src = teaserImages[currentIdx]; }
     function next() { currentIdx = (currentIdx + 1) % teaserImages.length; modalImg.src = teaserImages[currentIdx]; }
 
-    document.querySelectorAll('.gallery-page-thumb').forEach(function(img, i) { img.addEventListener('click', function() { openModal(i); }); });
+    // Clicks work for whatever pictures are showing; the list comes from Backstage
+    var grid = document.querySelector('.gallery-page-grid');
+    grid.addEventListener('click', function(e) {
+      var img = e.target.closest('.gallery-page-thumb'); if (!img) return;
+      openModal(Array.prototype.indexOf.call(grid.querySelectorAll('.gallery-page-thumb'), img));
+    });
+    fetch('/api/site/teasers').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+      if (!d || !Array.isArray(d.items) || !d.items.length) return;
+      teaserImages = d.items.map(function(x) { return x.url; });
+      grid.innerHTML = teaserImages.map(function(u, i) {
+        return '<div class="gallery-page-card"><img src="' + u.replace(/"/g, '&quot;') + '" alt="Teaser ' + (i + 1) + '" class="gallery-page-thumb" loading="lazy" /></div>';
+      }).join('');
+    }).catch(function() {});
     if (modalClose) modalClose.addEventListener('click', closeModal);
     if (arrowL) arrowL.addEventListener('click', prev);
     if (arrowR) arrowR.addEventListener('click', next);

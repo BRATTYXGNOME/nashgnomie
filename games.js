@@ -954,9 +954,12 @@
         container.appendChild(rem);
       }
       if (w.nudge) {
-        var nudge = el('div', { class: 'wl-nudge', role: 'status' },
-          '<p class="wl-nudge-text">' + (w.nudge.message ? esc(w.nudge.message) : 'Your wallet will be closed if it stays at $0! Add funds to keep your wallet.') + '</p>' +
-          '<div class="wl-nudge-answers"><button type="button" class="wl-pill" data-answer="promise">I promise I&rsquo;ll do better</button><button type="button" class="wl-pill wl-pill-quiet" data-answer="break">I&rsquo;m taking a financial break</button></div>' +
+        var isNote = w.nudge.kind === 'note';   // a message (thank-you, bonus) vs. a nudge to add money
+        var nudge = el('div', { class: 'wl-nudge' + (isNote ? ' wl-nudge-note' : ''), role: 'status' },
+          '<p class="wl-nudge-text">' + (isNote ? '<span class="wl-nudge-from">&#128140; From Gnomie</span>' : '') + (w.nudge.message ? esc(w.nudge.message) : 'Your wallet will be closed if it stays at $0! Add funds to keep your wallet.') + '</p>' +
+          (isNote
+            ? '<div class="wl-nudge-answers"><button type="button" class="wl-pill" data-answer="thanks">&#9825; Thank you, Gnomie!</button></div>'
+            : '<div class="wl-nudge-answers"><button type="button" class="wl-pill" data-answer="promise">I promise I&rsquo;ll do better</button><button type="button" class="wl-pill wl-pill-quiet" data-answer="break">I&rsquo;m taking a financial break</button></div>') +
           '<button type="button" class="wl-nudge-x" data-answer="" aria-label="Close">&times;</button>');
         nudge.querySelectorAll('[data-answer]').forEach(function(b) {
           b.addEventListener('click', async function() {

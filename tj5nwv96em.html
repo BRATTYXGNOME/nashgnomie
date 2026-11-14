@@ -223,6 +223,16 @@
     .so-boots .so-lace-line { fill: none; stroke: #fff; stroke-width: 1.2; stroke-linecap: round; }
     .so-jacket { fill: #231d27; }
     .so-shades { fill: #1b1117; }
+    /* Site tab: teaser pictures */
+    .tz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-bottom: 4px; }
+    .tz-item { position: relative; aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: #111; cursor: grab; }
+    .tz-item img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+    .tz-item.dragging { opacity: 0.35; }
+    .tz-item.drop-here { outline: 3px solid var(--accent); outline-offset: -3px; }
+    .tz-num { position: absolute; left: 6px; top: 6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: rgba(0, 0, 0, 0.7); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+    .tz-del { position: absolute; right: 6px; top: 6px; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.75); color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }
+    .tz-del:hover { background: #e0245e; }
+    .tz-upload { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); color: var(--accent); cursor: pointer; font-weight: 600; font-size: 13px; }
     /* Site tab: load buttons */
     .ld-list { display: flex; flex-direction: column; gap: 8px; }
     .ld-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -544,6 +554,22 @@
         </section>
         <section class="card">
           <div class="row" style="justify-content:space-between;align-items:baseline">
+            <h2 style="margin:0">Teaser pictures</h2>
+            <span class="muted" style="font-size:12px">Shown on your homepage and the Gallery page, in this order</span>
+          </div>
+          <p class="muted" style="margin:6px 0 10px" id="tz-note">Drag pictures to reorder. &times; removes one.</p>
+          <div class="tz-grid" id="tz-grid"></div>
+          <div class="tk-bar">
+            <label class="ghost tz-upload" id="tz-upload-btn">&#128228; Upload pictures<input type="file" id="tz-file" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden /></label>
+            <input type="text" id="tz-link" placeholder="&hellip;or paste a picture link (https://)" style="flex:1;min-width:200px" />
+            <button type="button" class="ghost" id="tz-add-link">Add link</button>
+            <span class="tk-saved" id="tz-saved"></span>
+            <button type="button" id="tz-save">Save order</button>
+          </div>
+          <div class="error" id="tz-error"></div>
+        </section>
+        <section class="card">
+          <div class="row" style="justify-content:space-between;align-items:baseline">
             <h2 style="margin:0">Load buttons (Throne)</h2>
             <span class="muted" style="font-size:12px">The amounts fans tap to load their wallet</span>
           </div>
@@ -626,7 +652,7 @@
   <div class="tip" id="tip" hidden></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="gnomie-figure.js?v=20261114v"></script>
+  <script src="gnomie-figure.js?v=20261114w"></script>
   <script>
     (function() {
       'use strict';
@@ -676,7 +702,7 @@
         terms_agreed: 'Fan agreed to updated terms', pin_changed: 'Fan changed their PIN', pin_change_failed: 'Wrong PIN while changing it',
         issue_reported: 'Fan reported a game problem', new_code_requested: 'Fan asked for a new code', backstage_new_code: 'You gave a new code',
         backstage_request_done: 'You handled a request', backstage_request_declined: 'You declined a request',
-        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note', game_given_up: 'Fan gave up a game', backstage_mind_words: 'You changed the Read My Mind words', backstage_spell_words: 'You changed the Spell It Out words', backstage_look: 'You changed your Spell It Out look', backstage_loads: 'You changed the load buttons', gift_with_code: 'Gift with a wallet code loaded automatically', spoof_load: 'Spoof wallet loaded play money', backstage_count_loss: 'You counted an idle game as a loss',
+        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note', game_given_up: 'Fan gave up a game', backstage_mind_words: 'You changed the Read My Mind words', backstage_spell_words: 'You changed the Spell It Out words', backstage_look: 'You changed your Spell It Out look', backstage_loads: 'You changed the load buttons', backstage_teasers: 'You changed the teaser pictures', backstage_note_sent: 'You sent a message', note_thanks: 'Fan thanked you for your message', backstage_teaser_upload: 'You uploaded a teaser picture', gift_with_code: 'Gift with a wallet code loaded automatically', spoof_load: 'Spoof wallet loaded play money', backstage_count_loss: 'You counted an idle game as a loss',
         backstage_spoof_on: 'You made a spoof wallet', backstage_spoof_off: 'You made a spoof wallet normal again', backstage_colors: 'You changed color unlocks',
         backstage_deleted: 'You deleted an unused wallet', wallet_deleted: 'Fan deleted their unused wallet', backstage_recorded_load: 'You recorded a Throne load',
         backstage_edited_load: 'You edited a load', backstage_split: 'You split an entry (Throne + credit)', backstage_ticker: 'You changed the homepage ticker',
@@ -690,6 +716,13 @@
         'Your balance looks a little light today.',
         'Be a good boy and top it up 💕',
         'Your wallet will be closed if it stays at $0! Add funds to keep your wallet.'
+      ];
+      // Messages that aren't asking for money: thank-yous, bonuses
+      var NOTES = [
+        'Thanks so much for playing! You’ve been a good boy and earned a little bonus! 😈💸✨',
+        'I added a little bonus to your wallet. Have fun 💕',
+        'Thank you for spoiling me 😘',
+        'You’ve been so good lately. Enjoy a treat on me ✨'
       ];
       var COLOR_HEX = { green: '#4ade80', blue: '#60a5fa', purple: '#a78bfa', orange: '#fb923c', gold: '#facc15', red: '#f87171', white: '#f4f1f4', electric: '#22d3ee' };
       function eventName(a) { return EVENTS[a] || a.replace(/_/g, ' '); }
@@ -1000,6 +1033,64 @@
         catch (x) { $('mw-error').textContent = x.message; }
       });
 
+      // ---------- Site: teaser pictures ----------
+      var tz = [], tzSaved = '', tzStorage = false, tzDrag = null;
+      function tzDirty() { var d = JSON.stringify(tz) !== tzSaved; $('tz-saved').textContent = d ? 'Unsaved changes' : ''; $('tz-saved').style.color = d ? 'var(--accent)' : ''; }
+      function tzPaint() {
+        $('tz-grid').innerHTML = tz.length ? tz.map(function(x, i) {
+          return '<div class="tz-item" draggable="true" data-i="' + i + '"><img src="' + esc(x.url) + '" alt="" loading="lazy" /><span class="tz-num">' + (i + 1) + '</span>' +
+            '<button type="button" class="tz-del" data-del title="Remove">&times;</button></div>';
+        }).join('') : '<p class="muted">No pictures yet.</p>';
+        tzDirty();
+      }
+      async function loadTeasers() {
+        try {
+          var d = await api('GET', 'hq/teasers'); tz = d.items; tzSaved = JSON.stringify(tz); tzStorage = d.storage; tzPaint();
+          if (!tzStorage) $('tz-note').innerHTML = 'Drag pictures to reorder. &times; removes one. <strong>Uploading needs the Cloudflare picture storage connected</strong> &mdash; until then you can paste links.';
+        } catch (x) { $('tz-error').textContent = x.message; }
+      }
+      async function tzSave(silent) {
+        $('tz-error').textContent = '';
+        try { var d = await api('POST', 'hq/teasers', { items: tz }); tz = d.items; tzSaved = JSON.stringify(tz); tzPaint(); if (!silent) { $('tz-saved').textContent = 'Saved \u2713'; $('tz-saved').style.color = ''; } return true; }
+        catch (x) { $('tz-error').textContent = x.message; return false; }
+      }
+      $('tz-grid').addEventListener('dragstart', function(e) { var it = e.target.closest('.tz-item'); if (!it) return; tzDrag = +it.dataset.i; it.classList.add('dragging'); try { e.dataTransfer.setData('text/plain', String(tzDrag)); } catch (x) {} });
+      $('tz-grid').addEventListener('dragend', function() { tzDrag = null; document.querySelectorAll('.tz-item').forEach(function(x) { x.classList.remove('dragging', 'drop-here'); }); });
+      $('tz-grid').addEventListener('dragover', function(e) { var it = e.target.closest('.tz-item'); if (tzDrag == null || !it) return; e.preventDefault(); document.querySelectorAll('.tz-item').forEach(function(x) { x.classList.toggle('drop-here', x === it && +it.dataset.i !== tzDrag); }); });
+      $('tz-grid').addEventListener('drop', function(e) {
+        var it = e.target.closest('.tz-item'); if (tzDrag == null || !it) return; e.preventDefault();
+        var to = +it.dataset.i, moved = tz.splice(tzDrag, 1)[0]; tz.splice(to, 0, moved); tzDrag = null; tzPaint();
+      });
+      $('tz-grid').addEventListener('click', async function(e) {
+        if (!e.target.closest('[data-del]')) return;
+        var i = +e.target.closest('.tz-item').dataset.i;
+        if (!await uiConfirm('Remove picture ' + (i + 1) + ' from your teasers?' + (/^\/api\/media/.test(tz[i].url) ? '\n\nIt\u2019s an uploaded picture, so it\u2019s deleted for good when you save.' : ''))) return;
+        tz.splice(i, 1); tzPaint();
+      });
+      $('tz-file').addEventListener('change', async function() {
+        var files = Array.prototype.slice.call(this.files || []); this.value = '';
+        if (!files.length) return;
+        $('tz-error').textContent = '';
+        for (var k = 0; k < files.length; k++) {
+          $('tz-saved').textContent = 'Uploading ' + (k + 1) + ' of ' + files.length + '\u2026'; $('tz-saved').style.color = 'var(--accent)';
+          try {
+            var res = await fetch('/api/hq/teaser-upload', { method: 'POST', headers: { 'content-type': files[k].type || 'application/octet-stream' }, body: files[k] });
+            var d = await res.json();
+            if (!res.ok) throw new Error(d.error || 'Upload failed.');
+            tz.push({ url: d.url });
+          } catch (x) { $('tz-error').textContent = files[k].name + ': ' + x.message; break; }
+        }
+        tzPaint();
+        // Save right away so uploaded pictures are never left unsaved
+        if (await tzSave(true)) { $('tz-saved').textContent = 'Uploaded & saved \u2713'; $('tz-saved').style.color = ''; }
+      });
+      $('tz-add-link').addEventListener('click', function() {
+        var u = $('tz-link').value.trim();
+        if (!/^https:\/\/\S+$/i.test(u)) { $('tz-error').textContent = 'Paste a picture link that starts with https://'; return; }
+        $('tz-error').textContent = ''; tz.push({ url: u }); $('tz-link').value = ''; tzPaint();
+      });
+      $('tz-save').addEventListener('click', function() { tzSave(false); });
+
       // ---------- Site: load buttons ----------
       var ld = [], ldSaved = '';
       function ldPaint() {
@@ -1115,7 +1206,7 @@
         if (tab === 'games' && !loaded.games) { loadDrops(true); loadDuels(true); loadBoard(); loaded.games = true; }
         if (tab === 'wallets' && !loaded.wallets) { loadWallets(); loaded.wallets = true; }
         if (tab === 'activity' && !loaded.events) loadEvents(true);
-        if (tab === 'site' && !loaded.site) { loadTicker(); loadLoadButtons(); loadMindWords(); loadSpellWords(); loadLook(); loaded.site = true; }
+        if (tab === 'site' && !loaded.site) { loadTicker(); loadTeasers(); loadLoadButtons(); loadMindWords(); loadSpellWords(); loadLook(); loaded.site = true; }
       });
       var loaded = {};
 
@@ -1642,14 +1733,14 @@
       });
 
       function nudgeStats(list) {
-        var seen = 0, closed = 0, loaded = 0, promise = 0, brk = 0;
-        list.forEach(function(n) { if (n.seen_at) seen++; if (n.closed_at && !n.response || n.response === 'closed') closed++; if (n.response === 'promise') promise++; if (n.response === 'break') brk++; if (n.loadedAfter) loaded++; });
-        return '<span>Sent <b>' + list.length + '</b></span><span>Seen <b>' + seen + '</b></span><span>Closed <b>' + closed + '</b></span><span>&ldquo;I&rsquo;ll do better&rdquo; <b>' + promise + '</b></span><span>Took a break <b>' + brk + '</b></span><span>Loaded after <b>' + loaded + '</b></span>';
+        var seen = 0, closed = 0, loaded = 0, promise = 0, brk = 0, thanks = 0;
+        list.forEach(function(n) { if (n.seen_at) seen++; if (n.closed_at && !n.response || n.response === 'closed') closed++; if (n.response === 'promise') promise++; if (n.response === 'break') brk++; if (n.response === 'thanks') thanks++; if (n.loadedAfter) loaded++; });
+        return '<span>Sent <b>' + list.length + '</b></span><span>Seen <b>' + seen + '</b></span><span>Closed <b>' + closed + '</b></span><span>&ldquo;I&rsquo;ll do better&rdquo; <b>' + promise + '</b></span><span>Took a break <b>' + brk + '</b></span><span>&#9825; Thanked <b>' + thanks + '</b></span><span>Loaded after <b>' + loaded + '</b></span>';
       }
       function nudgeRow(n) {
-        var st = n.response === 'promise' ? '“I’ll do better” ' + when(n.closed_at) : n.response === 'break' ? 'started a break ' + when(n.closed_at) :
+        var st = n.response === 'thanks' ? '♡ thanked you ' + when(n.closed_at) : n.response === 'promise' ? '“I’ll do better” ' + when(n.closed_at) : n.response === 'break' ? 'started a break ' + when(n.closed_at) :
                  n.closed_at ? 'closed ' + when(n.closed_at) : n.seen_at ? 'seen ' + when(n.seen_at) : 'not seen yet';
-        return '<li><span>' + esc(when(n.created_at)) + ' · ' + (n.message ? esc(n.message) : '<span class="muted">no message</span>') + '</span>' +
+        return '<li><span>' + esc(when(n.created_at)) + ' · ' + (n.kind === 'note' ? '&#128140; ' : '&#128276; ') + (n.message ? esc(n.message) : '<span class="muted">no message</span>') + '</span>' +
           '<span class="muted" style="white-space:nowrap">' + esc(st) + (n.loadedAfter ? ' · <span class="ok">loaded</span>' : '') + '</span></li>';
       }
 
@@ -1704,9 +1795,10 @@
             '<button type="button" class="wide" id="adj-go">Apply</button>' +
           '</div>' +
           '<div class="tool w-tool" data-panel-tool="nudge" hidden>' +
-            '<h3>Nudge to add money</h3>' +
-            '<p class="help">Shows a banner at the top of their wallet until they answer or close it.</p>' +
-            (w.onBreakSince ? '<p class="help" style="color:#7dd3fc">They&rsquo;re on a financial break, so nudges are paused.</p>' : '') +
+            '<h3>Nudge or message</h3>' +
+            '<div class="seg" id="nudge-kind"><button type="button" data-k="nudge" class="on">&#128276; Ask to add money</button><button type="button" data-k="note">&#128140; Just a message</button></div>' +
+            '<p class="help" id="nudge-help">Shows a banner at the top of their wallet until they answer or close it. They can answer &ldquo;I promise I&rsquo;ll do better&rdquo; or start a financial break.</p>' +
+            (w.onBreakSince ? '<p class="help" id="nudge-break-note" style="color:#7dd3fc">They&rsquo;re on a financial break, so nudges to add money are paused. Messages still go through.</p>' : '') +
             '<div class="row"><select id="nudge-pick">' + NUDGES.map(function(t) { return '<option>' + esc(t) + '</option>'; }).join('') + '<option value="">Write my own&hellip;</option></select></div>' +
             '<div class="row"><input type="text" id="nudge-msg" maxlength="140" value="' + esc(NUDGES[0]) + '" aria-label="Nudge message" /><button type="button" id="nudge-go"' + (w.status !== 'active' || w.onBreakSince ? ' disabled' : '') + '>Send nudge</button></div>' +
             '<div class="nudge-stats">' + nudgeStats(d.nudges) + '</div>' +
@@ -1885,8 +1977,22 @@
           b.addEventListener('click', function() { act('hq/note-delete', { id: +b.dataset.noteDel }, 'Delete this note?'); });
         });
         $('c-go').addEventListener('click', function() { act('hq/contacts', { telegram: $('c-tg').value, throne: $('c-th').value }); });
+        var nudgeKind = 'nudge';
+        function paintNudgeKind() {
+          var list = nudgeKind === 'note' ? NOTES : NUDGES;
+          document.querySelectorAll('#nudge-kind button').forEach(function(b) { b.classList.toggle('on', b.dataset.k === nudgeKind); });
+          $('nudge-help').innerHTML = nudgeKind === 'note'
+            ? 'A friendly message, like a thank-you or letting them know you added a bonus. Shows at the top of their wallet with a &ldquo;&#9825; Thank you, Gnomie!&rdquo; button.'
+            : 'Shows a banner at the top of their wallet until they answer or close it. They can answer &ldquo;I promise I&rsquo;ll do better&rdquo; or start a financial break.';
+          $('nudge-pick').innerHTML = list.map(function(t) { return '<option>' + esc(t) + '</option>'; }).join('') + '<option value="">Write my own&hellip;</option>';
+          $('nudge-msg').value = list[0];
+          $('nudge-go').textContent = nudgeKind === 'note' ? 'Send message' : 'Send nudge';
+          $('nudge-go').disabled = w.status !== 'active' || (nudgeKind === 'nudge' && !!w.onBreakSince);
+        }
+        $('nudge-kind').addEventListener('click', function(e) { var b = e.target.closest('button[data-k]'); if (!b) return; nudgeKind = b.dataset.k; paintNudgeKind(); });
         $('nudge-go').addEventListener('click', function() {
-          act('hq/nudge', { message: $('nudge-msg').value }, 'Send ' + w.name + ' a nudge to add money?');
+          act('hq/nudge', { message: $('nudge-msg').value, kind: nudgeKind },
+            nudgeKind === 'note' ? 'Send ' + w.name + ' this message?\n\n\u201c' + $('nudge-msg').value + '\u201d' : 'Send ' + w.name + ' a nudge to add money?');
         });
         $('ren-go').addEventListener('click', function() { act('hq/rename', { name: $('ren-name').value }); });
         $('ren-anon').addEventListener('click', function() { act('hq/rename', { anonymous: true }); });
