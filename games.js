@@ -890,15 +890,16 @@
         pform.querySelectorAll('.wl-pinlen button').forEach(function(b) {
           b.addEventListener('click', function() { state.pinLen = +b.dataset.len; render(); });
         });
-        var nameInput = pform.querySelectorAll('input')[2], anon = pform.querySelector('.wl-anon');
+        var pins = pform.querySelectorAll('input[type=password]');
+        var nameInput = pform.querySelector('input[type=text]'), anon = pform.querySelector('.wl-anon');
         anon.addEventListener('change', function() { nameInput.disabled = anon.checked; });
         pform.addEventListener('submit', async function(e) {
           e.preventDefault();
-          var ins = pform.querySelectorAll('input'), err = pform.querySelector('.wl-error');
-          var pin = ins[0].value;
+          var err = pform.querySelector('.wl-error');
+          var pin = pins[0].value.trim();
           if (!pform.querySelector('.wl-saved-box').checked) { err.textContent = 'Save your wallet code first, then check the box.'; return; }
           if (!new RegExp('^\\d{' + state.pinLen + '}$').test(pin)) { err.textContent = 'Your PIN must be ' + state.pinLen + ' digits.'; return; }
-          if (pin !== ins[1].value) { err.textContent = "Those PINs don't match."; return; }
+          if (pin !== pins[1].value.trim()) { err.textContent = "Those PINs don't match."; return; }
           try {
             await GamesAPI.setPin(pin);
             state.wallet = await GamesAPI.setName(nameInput.value, anon.checked);
