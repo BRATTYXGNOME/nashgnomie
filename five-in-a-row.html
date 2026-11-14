@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>5 in a Row | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261114b" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <main class="section duel-page fv-page games-lock">
+    <a class="games-back" href="games.html">&larr; All Games</a>
+    <h1 class="section-title games-heading">5 in a Row</h1>
+
+    <div class="gallery-age-gate" id="games-gate">
+      <div>
+        <h3>18+ GAMES</h3>
+        <p class="gate-rule">You <strong>MUST</strong> be 18 or older<br />to participate in this feature.<br /><span class="gate-pref">21+ preferred.</span></p>
+        <form id="games-gate-form" autocomplete="off">
+          <label class="gate-label" for="games-gate-birthdate">Your birthdate</label>
+          <input type="date" id="games-gate-birthdate" name="birthdate" required />
+          <div id="games-gate-error" class="age-error" aria-live="polite"></div>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="games-content">
+      <section id="wallet-root"></section>
+
+      <details class="duel-how">
+        <summary>How to play</summary>
+        <ul>
+          <li><strong>Tap a column</strong> to drop your piece. It falls to the lowest open spot.</li>
+          <li><strong>You and Gnomie take turns.</strong> Your pieces are your color, hers are pink.</li>
+          <li><strong>First to line up 5 wins:</strong> across, up and down, or diagonal.</li>
+          <li><strong>Block her lines</strong> before she gets to 5. If the board fills up with no winner, it&rsquo;s a tie.</li>
+        </ul>
+      </details>
+
+      <section class="duel-card fv-card" id="fv-root"></section>
+
+      <details class="game-activity" id="game-activity" data-label="5 in a Row" data-ready="1" hidden></details>
+
+      <section class="lb-card">
+        <h2 class="lb-title">5 in a Row Leaderboard</h2>
+        <p class="lb-sub">This game only &middot; <a href="games.html">See the overall board</a></p>
+        <div id="lb-game"></div>
+      </section>
+
+      <p class="duel-wins" id="lb-wins"></p>
+    </div>
+  </main>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <script src="components.js?v=20261114b"></script>
+  <script src="games.js?v=20261114b"></script>
+  <script src="five-in-a-row.js?v=20261114b"></script>
+</body>
+</html>

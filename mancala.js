@@ -33,6 +33,7 @@
       if (result.success) start(); else window.AgeGate.handleFailure(result, err);
     });
   })();
+  G.autoPass(function() { start(); });
 
   var started = false;
   async function start() {
@@ -107,17 +108,6 @@
   }
 
   // ---------- 1) pick an amount ----------
-  function amountsHTML() {
-    var w = state.wallet, bal = w ? w.balanceCents : 0, ready = w && w.hasPin;
-    if (state.chosen && !(ready && bal >= pays(state.chosen).lose)) state.chosen = null;
-    return '<div class="duel-amounts">' + M.AMOUNTS.map(function(a) {
-      var p = pays(a), ok = ready && bal >= p.lose;
-      return '<button type="button" class="duel-amount' + (state.chosen === a ? ' on' : '') + (ok ? '' : ' locked') + '" data-amt="' + a + '"' + (ok ? '' : ' disabled') + '>' +
-        '<span class="da-amt">' + G.shortMoney(a) + '</span>' +
-        (ok ? '<span class="da-sub">Lose = ' + money(p.lose) + '</span>' : '<span class="da-sub">\u{1F512} ' + G.shortMoney(p.lose) + '+ wallet</span>') +
-      '</button>';
-    }).join('') + '</div>';
-  }
   function payTable(a, small) {
     var p = pays(a);
     return '<div class="duel-pays' + (small ? ' duel-pays-small' : '') + '">' +
@@ -128,21 +118,27 @@
   }
   function renderSetup() {
     var w = state.wallet, bal = w ? w.balanceCents : 0, ready = w && w.hasPin;
+    var problem = state.chosen ? G.amountProblem(state.chosen, bal, 2) : '';
     root.innerHTML =
       '<h2 class="duel-title">Play for</h2>' +
-      amountsHTML() +
-      (state.chosen ? payTable(state.chosen) : '') +
+      G.amountBoxHTML(state.chosen, bal, 2) +
+      '<div class="amt-paybox">' + (state.chosen && !problem ? payTable(state.chosen) : '') + '</div>' +
       '<p class="duel-double">If Gnomie wins, you lose <strong>DOUBLE</strong>.</p>' +
-      '<button type="button" class="btn btn-primary duel-start" id="mc-start"' + (state.chosen ? '' : ' disabled') + '>' +
-        (state.chosen ? 'Start for ' + money(state.chosen) : 'Pick an amount') + '</button>' +
-      '<p class="duel-status">' + (state.error || (!ready ? 'Set up your wallet above to play.' : bal <= 0 ? 'Load your wallet to play.' : '')) + '</p>' +
+      '<button type="button" class="btn btn-primary duel-start" id="mc-start"' + (state.chosen && !problem && ready ? '' : ' disabled') + '>' +
+        (state.chosen && !problem ? 'Start for ' + money(state.chosen) : 'Type an amount') + '</button>' +
+      '<p class="duel-status amt-msg">' + (state.error || problem || (!ready ? 'Set up your wallet above to play.' : bal <= 0 ? 'Load your wallet to play.' : '')) + '</p>' +
       '<button type="button" class="wl-link game-demo-btn" id="mc-demo">&#9654; Watch a demo</button>';
-    root.querySelectorAll('.duel-amount').forEach(function(b) {
-      b.addEventListener('click', function() { state.chosen = +b.dataset.amt; state.error = ''; render(); });
-    });
+    G.wireAmountBox(root, bal, 2, function(c, pr) {
+      state.chosen = c; state.error = '';
+      root.querySelector('.amt-paybox').innerHTML = c && !pr ? payTable(c) : '';
+      var st = document.getElementById('mc-start');
+      st.disabled = !c || !!pr || !ready;
+      st.textContent = c && !pr ? 'Start for ' + money(c) : 'Type an amount';
+      root.querySelector('.amt-msg').innerHTML = pr;
+    }, function(c) { state.chosen = c; state.error = ''; render(); });
     document.getElementById('mc-demo').addEventListener('click', runDemo);
     document.getElementById('mc-start').addEventListener('click', async function() {
-      if (!state.chosen || state.busy) return;
+      if (!state.chosen || state.busy || G.amountProblem(state.chosen, state.wallet ? state.wallet.balanceCents : 0, 2)) return;
       state.busy = true;
       try {
         var res = await G.api.mancalaStart(state.chosen);

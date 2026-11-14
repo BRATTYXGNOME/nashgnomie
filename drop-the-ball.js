@@ -38,6 +38,7 @@
       if (result.success) start(); else window.AgeGate.handleFailure(result, err);
     });
   })();
+  G.autoPass(function() { start(); });
 
   var started = false;
   function start() {
@@ -187,7 +188,9 @@
     var segs = [], t = 0;
     for (var i = 0; i < path.length; i++) {
       var dur = i === 0 ? 260 : Math.max(105, 205 - i * 7) * randBetween(0.88, 1.12);
-      segs.push({ start: t, dur: dur, pop: i === 0 ? 0 : randBetween(0.25, 0.75), wob: randBetween(-0.12, 0.12) });
+      var skip = i > 0 && Math.abs(path[i] - path[i - 1]) > 1;   // a big bounce that skipped a peg
+      if (skip) dur *= 1.35;
+      segs.push({ start: t, dur: dur, pop: i === 0 ? 0 : skip ? randBetween(0.9, 1.3) : randBetween(0.15, 0.9), wob: randBetween(-0.22, 0.22) });
       t += dur;
     }
     return { path: path, segs: segs, total: t, settle: 320, x: xAt(path[0]), y: 14, spin: 0, anim: true, t0: performance.now() };

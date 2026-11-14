@@ -260,9 +260,15 @@
     // Call after a failed verify(): a mismatch never locks anyone out (typos
     // happen), it starts them over at the homepage's first birthdate screen.
     // Under 18 just shows the message in errorEl.
+    // A mismatch gets ONE retry (birthdates are fiddly to type on phones);
+    // a second mismatch starts them over at the homepage gate.
     handleFailure: function(result, errorEl) {
       if (!result || result.success) return;
       if (result.reason === 'mismatch') {
+        var tries = 0;
+        try { tries = Number(sessionStorage.getItem('nashgnomie_dob_retry') || 0); sessionStorage.setItem('nashgnomie_dob_retry', String(tries + 1)); } catch (e) {}
+        if (tries < 1 && errorEl) { errorEl.textContent = 'Oops, that doesn’t match the birthdate you entered before. Try that again.'; return; }
+        try { sessionStorage.removeItem('nashgnomie_dob_retry'); } catch (e) {}
         this.redirectMismatch();
       } else if (errorEl) {
         errorEl.textContent = this.UNDERAGE_MSG;
@@ -309,6 +315,7 @@
             '<a href="too-far.html">Too Far (31) <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
             '<a href="spin-the-bottle.html">Spin the Bottle <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
             '<a href="mancala.html">Mancala <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
+            '<a href="five-in-a-row.html">5 in a Row <span class="nav-new" data-new-until="2026-12-05">NEW</span></a>' +
           '</div>' +
         '</div>' +
         '<div class="nav-dropdown">' +
@@ -359,6 +366,7 @@
         '<a href="too-far.html">Too Far (31) <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
         '<a href="spin-the-bottle.html">Spin the Bottle <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
         '<a href="mancala.html">Mancala <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
+        '<a href="five-in-a-row.html">5 in a Row <span class="nav-new" data-new-until="2026-12-05">NEW</span></a>' +
       '</div>' +
       '<a href="#" class="drawer-services-toggle" id="drawer-expenses-toggle">Expenses &#9662;</a>' +
       '<div class="drawer-services-sub" id="drawer-expenses-sub">' +
@@ -688,6 +696,44 @@
   // ==========================================
   // INJECT ALL COMPONENTS
   // ==========================================
+  // Birthdate boxes: the phone date wheel is fiddly, so every age gate gets three
+  // simple boxes (Month / Day / Year) that fill in the original date field.
+  function easyBirthdates() {
+    document.querySelectorAll('input[type="date"]').forEach(function(input) {
+      if (input.dataset.easy || !input.closest('form')) return;
+      input.dataset.easy = '1';
+      input.removeAttribute('required');
+      input.style.display = 'none';
+      var box = document.createElement('div');
+      box.className = 'dob-boxes';
+      box.innerHTML =
+        '<input type="text" inputmode="numeric" maxlength="2" placeholder="MM" aria-label="Birth month" autocomplete="bday-month" />' +
+        '<span>/</span><input type="text" inputmode="numeric" maxlength="2" placeholder="DD" aria-label="Birth day" autocomplete="bday-day" />' +
+        '<span>/</span><input type="text" inputmode="numeric" maxlength="4" placeholder="YYYY" aria-label="Birth year" autocomplete="bday-year" />';
+      input.parentNode.insertBefore(box, input);
+      var parts = box.querySelectorAll('input');
+      function sync() {
+        var m = parts[0].value, d = parts[1].value, y = parts[2].value;
+        var ok = /^\d{1,2}$/.test(m) && /^\d{1,2}$/.test(d) && /^\d{4}$/.test(y) && +m >= 1 && +m <= 12 && +d >= 1 && +d <= 31;
+        input.value = ok ? y + '-' + ('0' + m).slice(-2) + '-' + ('0' + d).slice(-2) : '';
+      }
+      parts.forEach(function(p, i) {
+        p.addEventListener('input', function() {
+          p.value = p.value.replace(/\D/g, '');
+          sync();
+          if (i < 2 && p.value.length === 2 && parts[i + 1]) parts[i + 1].focus();
+        });
+        p.addEventListener('keydown', function(e) { if (e.key === 'Backspace' && !p.value && i > 0) parts[i - 1].focus(); });
+      });
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    easyBirthdates();
+    // pop-up age gates are added later, so catch those too
+    if (window.MutationObserver) new MutationObserver(function() { easyBirthdates(); }).observe(document.body, { childList: true, subtree: true });
+  });
+  window.addEventListener('load', easyBirthdates);
+
   // "NEW" tags take themselves down after their date (data-new-until="YYYY-MM-DD")
   function dropOldNew() {
     var today = new Date().toISOString().slice(0, 10);

@@ -20,13 +20,22 @@ function randomBit() {
 
 // One ball: starts at h = 12 + 2*aim, bounces left/right with equal chance,
 // side walls bounce it back inward. Same rule as oddsFor() in games.js.
+// One peg row: 85% a small bounce (1 step), 15% a big bounce that skips a peg (3 steps).
+// Walls bounce the ball back in. The odds below follow exactly this rule.
+const BIG_BOUNCE = 15;
+function bounceTo(h, dir, big) {
+  let n = h + dir * (big ? 3 : 1);
+  if (n < 0) n = -n;
+  if (n > MAX_H) n = 2 * MAX_H - n;
+  return n;
+}
 export function dropPath(aim) {
   let h = 12 + 2 * aim;
   const path = [h];
   for (let r = 0; r < ROWS; r++) {
-    if (h === 0) h = 1;
-    else if (h === MAX_H) h = MAX_H - 1;
-    else h += randomBit() ? 1 : -1;
+    const big = randomBelow(100) < BIG_BOUNCE;
+    const dir = h === 0 ? 1 : h === MAX_H ? -1 : (randomBit() ? 1 : -1);
+    h = bounceTo(h, dir, big);
     path.push(h);
   }
   return { path, slot: h / 2 };
@@ -36,14 +45,17 @@ export function dropPath(aim) {
 export function oddsFor(aim) {
   let dist = new Array(MAX_H + 1).fill(0);
   dist[12 + 2 * aim] = 1;
+  const pBig = BIG_BOUNCE / 100;
   for (let r = 0; r < ROWS; r++) {
     const next = new Array(MAX_H + 1).fill(0);
     for (let h = 0; h <= MAX_H; h++) {
       const p = dist[h];
       if (!p) continue;
-      if (h === 0) next[1] += p;
-      else if (h === MAX_H) next[MAX_H - 1] += p;
-      else { next[h - 1] += p / 2; next[h + 1] += p / 2; }
+      const dirs = h === 0 ? [[1, 1]] : h === MAX_H ? [[-1, 1]] : [[1, 0.5], [-1, 0.5]];
+      for (const [dir, pd] of dirs) {
+        next[bounceTo(h, dir, false)] += p * pd * (1 - pBig);
+        next[bounceTo(h, dir, true)] += p * pd * pBig;
+      }
     }
     dist = next;
   }
@@ -264,4 +276,80 @@ export function mancalaBeadMove(beads, side, i) {
     for (let k = 7; k < 13; k++) { b[13].push(...b[k]); b[k] = []; }
   }
   return b;
+}
+
+// ---------- 5 in a Row vs Gnomie ----------
+// 8 columns x 7 rows. Pieces drop to the lowest open spot in a column.
+// First to line up 5 (across, up-down or diagonal) wins; a full board is a tie.
+// board[c] = column c from the bottom up, each 'y' (you) or 'g' (Gnomie).
+export const FIVE = { COLS: 8, ROWS: 7, NEED: 5, AMOUNTS: [100, 1000, 2000], PAY: { win: 1, tie: 1.5, lose: 2 } };
+export function fiveStart() { return Array.from({ length: FIVE.COLS }, () => []); }
+export function fiveOpenCols(b) { const out = []; for (let c = 0; c < FIVE.COLS; c++) if (b[c].length < FIVE.ROWS) out.push(c); return out; }
+export function fiveDrop(b, c, who) { const n = b.map(col => col.slice()); n[c].push(who); return { board: n, row: n[c].length - 1 }; }
+function fiveAt(b, c, r) { return c >= 0 && c < FIVE.COLS && r >= 0 && r < FIVE.ROWS ? b[c][r] : undefined; }
+// The winning line through (c, r), or null
+export function fiveLine(b, c, r) {
+  const who = fiveAt(b, c, r);
+  if (!who) return null;
+  for (const [dc, dr] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+    const line = [[c, r]];
+    for (let k = 1; fiveAt(b, c + dc * k, r + dr * k) === who; k++) line.push([c + dc * k, r + dr * k]);
+    for (let k = 1; fiveAt(b, c - dc * k, r - dr * k) === who; k++) line.unshift([c - dc * k, r - dr * k]);
+    if (line.length >= FIVE.NEED) return line;
+  }
+  return null;
+}
+export function fiveFull(b) { return b.every(col => col.length >= FIVE.ROWS); }
+// Gnomie: fair but beatable. She always takes a winning move, usually (not
+// always) blocks yours, and looks a few moves ahead (how far changes each move).
+function fiveScore(b) {
+  let s = 0;
+  const W = [0, 1, 6, 30, 160, 100000];
+  for (let c = 0; c < FIVE.COLS; c++) for (let r = 0; r < FIVE.ROWS; r++) {
+    for (const [dc, dr] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+      const ec = c + dc * 4, er = r + dr * 4;
+      if (ec < 0 || ec >= FIVE.COLS || er < 0 || er >= FIVE.ROWS) continue;
+      let g = 0, y = 0;
+      for (let k = 0; k < 5; k++) { const v = fiveAt(b, c + dc * k, r + dr * k); if (v === 'g') g++; else if (v === 'y') y++; }
+      if (g && !y) s += W[g]; else if (y && !g) s -= W[y] * 1.15;
+    }
+  }
+  for (let r = 0; r < FIVE.ROWS; r++) { if (b[3][r] === 'g' || b[4][r] === 'g') s += 2; if (b[3][r] === 'y' || b[4][r] === 'y') s -= 2; }
+  return s;
+}
+function fiveSearch(b, who, depth, alpha, beta) {
+  const cols = fiveOpenCols(b);
+  if (!cols.length) return 0;
+  if (depth === 0) return fiveScore(b);
+  const order = cols.slice().sort((x, y) => Math.abs(3.5 - x) - Math.abs(3.5 - y));
+  if (who === 'g') {
+    let best = -Infinity;
+    for (const c of order) {
+      const d = fiveDrop(b, c, 'g');
+      const v = fiveLine(d.board, c, d.row) ? 1e7 + depth : fiveSearch(d.board, 'y', depth - 1, alpha, beta);
+      best = Math.max(best, v); alpha = Math.max(alpha, v); if (alpha >= beta) break;
+    }
+    return best;
+  }
+  let best = Infinity;
+  for (const c of order) {
+    const d = fiveDrop(b, c, 'y');
+    const v = fiveLine(d.board, c, d.row) ? -1e7 - depth : fiveSearch(d.board, 'g', depth - 1, alpha, beta);
+    best = Math.min(best, v); beta = Math.min(beta, v); if (alpha >= beta) break;
+  }
+  return best;
+}
+export function gnomieFive(b) {
+  const cols = fiveOpenCols(b);
+  for (const c of cols) { const d = fiveDrop(b, c, 'g'); if (fiveLine(d.board, c, d.row)) return c; }       // win if she can
+  if (randomBelow(100) < 72) for (const c of cols) { const d = fiveDrop(b, c, 'y'); if (fiveLine(d.board, c, d.row)) return c; } // usually block
+  if (randomBelow(100) < 22) return cols[randomBelow(cols.length)];                                      // a loose move now and then
+  const depth = [1, 1, 2, 2, 3, 4][randomBelow(6)];
+  let best = [], bestV = -Infinity;
+  for (const c of cols) {
+    const d = fiveDrop(b, c, 'g');
+    const v = fiveSearch(d.board, 'y', depth - 1, -Infinity, Infinity);
+    if (v > bestV + 1e-9) { bestV = v; best = [c]; } else if (Math.abs(v - bestV) < 1e-9) best.push(c);
+  }
+  return best[randomBelow(best.length)];
 }

@@ -41,18 +41,29 @@
   };
   var BOARD_ORDER = ['sweet', 'spicy', 'savage'];
 
+  // One peg row: 85% a small bounce (1 step), 15% a big bounce that skips a
+  // peg (3 steps); walls bounce it back. Same rule as the server.
+  var BIG_BOUNCE = 15;
+  function bounceTo(h, dir, big) {
+    var n = h + dir * (big ? 3 : 1);
+    if (n < 0) n = -n;
+    if (n > MAX_H) n = 2 * MAX_H - n;
+    return n;
+  }
   // Chance of each drain (array of 13) for a given aim, exact.
   function oddsFor(aim) {
-    var dist = new Array(MAX_H + 1).fill(0);
+    var dist = new Array(MAX_H + 1).fill(0), pBig = BIG_BOUNCE / 100;
     dist[12 + 2 * aim] = 1;
     for (var r = 0; r < ROWS; r++) {
       var next = new Array(MAX_H + 1).fill(0);
       for (var h = 0; h <= MAX_H; h++) {
         var p = dist[h];
         if (!p) continue;
-        if (h === 0) next[1] += p;
-        else if (h === MAX_H) next[MAX_H - 1] += p;
-        else { next[h - 1] += p / 2; next[h + 1] += p / 2; }
+        var dirs = h === 0 ? [[1, 1]] : h === MAX_H ? [[-1, 1]] : [[1, 0.5], [-1, 0.5]];
+        for (var d = 0; d < dirs.length; d++) {
+          next[bounceTo(h, dirs[d][0], false)] += p * dirs[d][1] * (1 - pBig);
+          next[bounceTo(h, dirs[d][0], true)] += p * dirs[d][1] * pBig;
+        }
       }
       dist = next;
     }
@@ -102,9 +113,9 @@
   function dropPath(aim) {
     var h = 12 + 2 * aim, path = [h];
     for (var r = 0; r < ROWS; r++) {
-      if (h === 0) h = 1;
-      else if (h === MAX_H) h = MAX_H - 1;
-      else h += secureRandomBit() ? 1 : -1;
+      var big = (crypto.getRandomValues(new Uint8Array(1))[0] % 100) < BIG_BOUNCE;
+      var dir = h === 0 ? 1 : h === MAX_H ? -1 : (secureRandomBit() ? 1 : -1);
+      h = bounceTo(h, dir, big);
       path.push(h);
     }
     return { path: path, slot: h / 2 };
@@ -169,6 +180,8 @@
     while (n > 0) { at = (at + 1) % 14; if (at === other) continue; p[at]++; n--; path.push(at); }
     return { pits: p, path: path, last: at, own: own };
   }
+  // 5 IN A ROW: 8 columns x 7 rows, decided on the server
+  var FIVE = { COLS: 8, ROWS: 7, AMOUNTS: [100, 1000, 2000], PAY: { win: 1, tie: 1.5, lose: 2 } };
   var BOTTLE = {
     sweet:  { name: 'Sweet',  unlockCents: 1000,  slices: [25, 500, 50, 300, 75, 200, 100, 150] },
     spicy:  { name: 'Spicy',  unlockCents: 4000,  slices: [100, 2000, 200, 1200, 300, 800, 400, 500] },
@@ -341,7 +354,7 @@
     duelStart: async function(amountCents) {
       var s = readStore(), w = currentWallet(s);
       if (!w) throw new Error('Set up your wallet first.');
-      if (DUEL.AMOUNTS.indexOf(amountCents) === -1) throw new Error('Pick an amount to play for.');
+      if (!(amountCents >= 100 && amountCents <= 50000)) throw new Error('Pick an amount from $1.00 to $500.00.');
       if (w.duel) throw new Error('Finish your current game first.');
       var hold = amountCents * DUEL.PAY.lose;
       if (w.balance_cents < hold) throw new Error('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amountCents) + '.');
@@ -424,6 +437,7 @@
     closeRequestCancel: async function() { throw new Error('Not in the preview.'); },
     setBreak: async function() { throw new Error('Not in the preview.'); },
     agree: async function() { return publicWallet(currentWallet(readStore())); },
+    deleteWallet: async function() {},
     loadReports: async function() { return []; },
     reportLoad: async function() { throw new Error('Not in the preview.'); },
     setContacts: async function() { throw new Error('Not in the preview.'); },
@@ -462,6 +476,7 @@
     closeRequestCancel: async function() { return (await call('POST', 'close-request/cancel', {})).wallet; },
     setBreak: async function(on) { return (await call('POST', 'break', { on: !!on })).wallet; },
     agree: async function() { return (await call('POST', 'agree', { agreed: true })).wallet; },
+    deleteWallet: async function() { await call('POST', 'wallet/delete', {}); },
     loadReports: async function() { return (await call('GET', 'load-reports')).rows; },
     reportLoad: async function(r) { return (await call('POST', 'load-report', r)).rows; },
     setContacts: async function(telegram, throne) { return (await call('POST', 'contacts', { telegram: telegram, throne: throne })).wallet; },
@@ -483,6 +498,9 @@
     mancalaState: async function() { return (await call('GET', 'mancala')).game; },
     mancalaStart: async function(amountCents) { return call('POST', 'mancala/start', { amount: amountCents }); },
     mancalaMove: async function(pit) { return call('POST', 'mancala/move', { pit: pit }); },
+    fiveState: async function() { return (await call('GET', 'five')).game; },
+    fiveStart: async function(amountCents) { return call('POST', 'five/start', { amount: amountCents }); },
+    fiveMove: async function(col) { return call('POST', 'five/move', { col: col }); },
     bottleSpin: async function(boardKey, pick) { return call('POST', 'bottle/spin', { board: boardKey, pick: pick }); },
     leaderboard: async function(boardKey) { return (await call('GET', 'leaderboard?board=' + encodeURIComponent(boardKey))).rows; },
     statement: async function() { return (await call('GET', 'statement')).rows; },
@@ -592,11 +610,11 @@
             '<li>Add a load amount to your cart</li>' +
             '<li>Select <strong>&ldquo;Checkout&rdquo;</strong></li>' +
             '<li>Select <strong>&ldquo;Add Gift Message&rdquo;</strong></li>' +
-            '<li>Paste your <strong>EXACT</strong> code</li>' +
+            '<li>Paste your <strong>EXACT</strong> code, dashes included</li>' +
           '</ol>' +
           '<div class="wl-load-grid">' + buttons(LOADS.throne, 'throne') + '</div>' +
         '</div>' +
-        '<p class="wl-warning">&#9888; Paste your <strong>EXACT</strong> code in the gift message. If it&rsquo;s missing or wrong, the load can&rsquo;t reach your wallet and counts as a <strong>GIFT</strong>.</p>' +
+        '<p class="wl-warning">&#9888; Paste your <strong>EXACT</strong> code (dashes included) in the gift message. If it&rsquo;s missing or wrong, the load can&rsquo;t reach your wallet and counts as a <strong>GIFT</strong>.</p>' +
         '<p class="wl-fine">Loads are in USD and usually appear within a minute. Your bank may add conversion fees.</p>' +
       '</div>';
   }
@@ -607,6 +625,34 @@
   // ==========================================
   // The boxes fans check before they can see their wallet (new wallet, every
   // sign-in, and again whenever the terms change)
+  // ---------- on-page dialogs (replace the browser's confirm/prompt/alert pop-ups,
+  // which some browsers block or hide) ----------
+  function uiDialog(msg, opts) {
+    opts = opts || {};
+    return new Promise(function(resolve) {
+      var wrap = document.createElement('div');
+      wrap.className = 'dlg-wrap';
+      wrap.innerHTML = '<div class="dlg" role="dialog" aria-modal="true">' +
+        '<p class="dlg-msg"></p>' +
+        (opts.input ? '<input type="text" class="dlg-input" />' : '') +
+        '<div class="dlg-btns">' + (opts.cancel ? '<button type="button" class="ghost" data-x>Cancel</button>' : '') + '<button type="button" data-ok>' + (opts.ok || 'OK') + '</button></div></div>';
+      wrap.querySelector('.dlg-msg').textContent = msg;
+      var input = wrap.querySelector('.dlg-input');
+      if (input) input.value = opts.value == null ? '' : opts.value;
+      function done(v) { wrap.remove(); document.removeEventListener('keydown', key); resolve(v); }
+      function key(e) { if (e.key === 'Escape') done(opts.input ? null : false); if (e.key === 'Enter' && (input ? document.activeElement === input : true)) { e.preventDefault(); done(input ? input.value : true); } }
+      wrap.querySelector('[data-ok]').addEventListener('click', function() { done(input ? input.value : true); });
+      var x = wrap.querySelector('[data-x]'); if (x) x.addEventListener('click', function() { done(input ? null : false); });
+      wrap.addEventListener('click', function(e) { if (e.target === wrap && opts.cancel) done(input ? null : false); });
+      document.addEventListener('keydown', key);
+      document.body.appendChild(wrap);
+      setTimeout(function() { (input || wrap.querySelector('[data-ok]')).focus(); if (input) input.select(); }, 20);
+    });
+  }
+  function uiConfirm(msg) { return uiDialog(msg, { cancel: true, ok: 'Yes' }); }
+  function uiPrompt(msg, value) { return uiDialog(msg, { cancel: true, input: true, value: value, ok: 'OK' }); }
+  function uiAlert(msg) { return uiDialog(msg, {}); }
+
   var AGREE_BOXES =
     '<p class="wl-lead">Before you see your wallet:</p>' +
     '<label><input type="checkbox" required /> <span>I am <strong>18 or older</strong> (21+ preferred).</span></label>' +
@@ -666,7 +712,23 @@
       if (state.view === 'loading') { container.appendChild(el('p', { class: 'wl-muted' }, 'Loading your wallet…')); return; }
       if (state.view === 'error') { container.appendChild(el('p', { class: 'wl-muted' }, esc(state.error) + ' <button type="button" class="wl-link" onclick="location.reload()">Try again</button>')); return; }
 
-      // 1) No wallet yet: agreement first, no code until they agree
+      // 0) No wallet on this device: choose "start" or "sign in" first, so nobody makes one by accident
+      if (state.view === 'welcome') {
+        container.appendChild(el('h2', { class: 'wl-title' }, 'Game wallet'));
+        var wl = el('div', { class: 'wl-welcome' },
+          '<p class="wl-lead">Your game wallet holds what you&rsquo;ve sent Gnomie on Throne, so you can play every game here. Have a look at the games first, no wallet needed.</p>' +
+          '<div class="wl-welcome-btns">' +
+            '<button type="button" class="btn btn-primary" data-act="start">Start a Game Wallet</button>' +
+            '<button type="button" class="btn btn-outline" data-act="signin">Sign In to My Wallet</button>' +
+          '</div>' +
+          '<p class="wl-fine">Already have a wallet on another phone or computer? Choose <strong>Sign In</strong>, not Start.</p>');
+        wl.querySelector('[data-act=start]').addEventListener('click', function() { state.view = 'agree'; render(); });
+        wl.querySelector('[data-act=signin]').addEventListener('click', function() { state.view = 'signin'; render(); });
+        container.appendChild(wl);
+        return;
+      }
+
+      // 1) Starting a wallet: the agreements first, no code until they agree
       if (state.view === 'agree') {
         container.appendChild(el('h2', { class: 'wl-title' }, 'Your wallet'));
         var form = el('form', { class: 'wl-agree', novalidate: '' },
@@ -675,7 +737,9 @@
           '<button type="submit" class="btn btn-primary wl-wide">' + AGREE_BUTTON + '</button>' +
           '<button type="button" class="wl-link" data-act="terms" aria-expanded="' + (state.termsOpen ? 'true' : 'false') + '">Read the wallet terms ' + (state.termsOpen ? '▴' : '▾') + '</button>' +
           (state.termsOpen ? TERMS_HTML : '') +
-          '<button type="button" class="wl-link" data-act="signin">Already have a wallet? Sign in</button>');
+          '<button type="button" class="btn btn-outline wl-wide" data-act="signin">I Already Have a Wallet: Sign In</button>' +
+          '<button type="button" class="wl-link" data-act="back">Back</button>');
+        form.querySelector('[data-act=back]').addEventListener('click', function() { state.view = 'welcome'; render(); });
         form.addEventListener('submit', async function(e) {
           e.preventDefault();
           var err = form.querySelector('.wl-error');
@@ -718,7 +782,7 @@
       if (state.view === 'signin') {
         container.appendChild(el('h2', { class: 'wl-title' }, 'Sign in to your wallet'));
         var sform = el('form', { class: 'wl-form', novalidate: '' },
-          '<label class="wl-field"><span>Wallet code or leaderboard name</span><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your code or type your name" required /></label>' +
+          '<label class="wl-field"><span>Wallet code (with the dashes) or leaderboard name</span><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. AB3D-EF-GH4J-KL-MN or your name" required /></label>' +
           '<label class="wl-field"><span>PIN</span><input type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="4 or 6 digits" required /></label>' +
           '<p class="wl-fine wl-pin-note">Gnomie never sees your PIN and can&rsquo;t look it up.</p>' +
           '<div class="wl-agree wl-agree-signin">' + AGREE_BOXES + '</div>' +
@@ -726,7 +790,7 @@
           '<button type="submit" class="btn btn-primary wl-wide">' + AGREE_BUTTON + '</button>' +
           '<button type="button" class="wl-link" data-act="forgot" aria-expanded="' + (state.forgotOpen ? 'true' : 'false') + '">Forgot your wallet code? ' + (state.forgotOpen ? '▴' : '▾') + '</button>' +
           (state.forgotOpen ? FORGOT_HTML : '') +
-          '<button type="button" class="wl-link" data-act="back">I don&rsquo;t have a wallet yet</button>');
+          '<button type="button" class="wl-link" data-act="back">Back</button>');
         sform.addEventListener('submit', async function(e) {
           e.preventDefault();
           var inputs = sform.querySelectorAll('input'), err = sform.querySelector('.wl-error');
@@ -744,7 +808,7 @@
           state.forgotOpen = !state.forgotOpen; render();
           container.querySelectorAll('input[type=text], input[type=password]').forEach(function(i, n) { if (keep[n] != null) i.value = keep[n]; });
         });
-        sform.querySelector('[data-act=back]').addEventListener('click', function() { state.view = 'agree'; render(); });
+        sform.querySelector('[data-act=back]').addEventListener('click', function() { state.view = 'welcome'; render(); });
         container.appendChild(sform);
         return;
       }
@@ -787,7 +851,13 @@
           '<label class="wl-check"><input type="checkbox" class="wl-anon" /> <span>Stay anonymous (show me as Anonymous #' + w.anonNumber + ')</span></label>' +
           '<p class="wl-fine">Gnomie never sees your PIN and can&rsquo;t look it up. Don&rsquo;t forget it.</p>' +
           '<div class="age-error wl-error" aria-live="polite"></div>' +
-          '<button type="submit" class="btn btn-primary wl-wide">Save &amp; Continue</button>');
+          '<button type="submit" class="btn btn-primary wl-wide">Save &amp; Continue</button>' +
+          '<button type="button" class="wl-link" data-act="oops">Oops, I already have a wallet. Delete this one and sign in.</button>');
+        pform.querySelector('[data-act=oops]').addEventListener('click', async function() {
+          if (!await uiConfirm('Delete this new wallet and sign in to your real one instead?')) return;
+          try { await GamesAPI.deleteWallet(); } catch (x) {}
+          state.wallet = null; state.view = 'signin'; render(); emit(null);
+        });
         pform.querySelectorAll('.wl-pinlen button').forEach(function(b) {
           b.addEventListener('click', function() { state.pinLen = +b.dataset.len; render(); });
         });
@@ -806,7 +876,7 @@
             state.view = 'ready'; render(); emit(state.wallet);
           } catch (x) {
             // Wallet was removed for sitting unfinished too long: start over
-            if (x.data && /Set up your wallet/.test(x.message)) { state.wallet = null; state.view = 'agree'; render(); emit(null); return; }
+            if (x.data && /Set up your wallet/.test(x.message)) { state.wallet = null; state.view = 'welcome'; render(); emit(null); return; }
             err.textContent = x.message;
           }
         });
@@ -833,7 +903,13 @@
       var top = el('div', { class: 'wl-top' },
         '<div class="wl-balance"><span class="wl-label">Wallet balance</span>' +
           '<span class="wl-amount">' + money(w.balanceCents) + ' <small>USD</small></span>' +
-          (w.heldCents ? '<span class="wl-held">+ ' + money(w.heldCents) + ' set aside for your ' + esc((w.heldFor && w.heldFor.length ? w.heldFor : ['Dice Duel']).join(' &amp; ')) .replace(/&amp;amp;/g, '&amp;') + ' game' + (w.heldFor && w.heldFor.length > 1 ? 's' : '') + '</span>' : '') + '</div>');
+          (w.heldCents ? '<span class="wl-held">+ ' + money(w.heldCents) + ' set aside for your ' + esc((w.heldFor && w.heldFor.length ? w.heldFor : ['Dice Duel']).join(' &amp; ')) .replace(/&amp;amp;/g, '&amp;') + ' game' + (w.heldFor && w.heldFor.length > 1 ? 's' : '') + '</span>' : '') +
+          (w.onBreak ? '<span class="wl-break-badge">&#127769; On a financial break <button type="button" class="wl-break-back" data-act="break-back">I&rsquo;m back</button></span>' : '') + '</div>');
+      if (w.onBreak) container.classList.add('wl-on-break');
+      var backBtn = top.querySelector('[data-act=break-back]');
+      if (backBtn) backBtn.addEventListener('click', async function() {
+        try { state.wallet = await GamesAPI.setBreak(false); render(); emit(state.wallet); } catch (x) {}
+      });
       var actions = el('div', { class: 'wl-actions' });
       var loadBtn = el('button', { type: 'button', class: 'btn btn-primary' }, state.loadOpen ? 'Close' : 'Load Wallet');
       loadBtn.addEventListener('click', function() { state.loadOpen = !state.loadOpen; render(); });
@@ -963,9 +1039,16 @@
                 '<div class="age-error wl-error" aria-live="polite"></div>' +
                 '<div class="wl-set-btns"><button type="button" class="btn btn-outline" data-act="close-send">Request Closure</button><button type="button" class="wl-link" data-act="close-back">Never mind</button></div>' +
               '</div>' : '') +
+            (!w.loadedCents && !w.drainedCents && !w.heldCents ?
+              '<div class="wl-set-row"><div class="wl-set-text"><span class="wl-set-label">Made this wallet by accident?</span><span class="wl-set-value">It has never been loaded, so you can delete it.</span></div><button type="button" class="wl-pill wl-pill-quiet" data-act="delete-wallet">Delete wallet</button></div>' : '') +
             '<button type="button" class="wl-link wl-signout" data-act="signout">Sign out on this device</button>');
+          var del = body.querySelector('[data-act=delete-wallet]');
+          if (del) del.addEventListener('click', async function() {
+            if (!await uiConfirm('Delete this wallet for good? This can’t be undone.')) return;
+            try { await GamesAPI.deleteWallet(); state.wallet = null; state.view = 'welcome'; render(); emit(null); } catch (x) { await uiAlert(x.message); }
+          });
           body.querySelector('[data-act=signout]').addEventListener('click', async function() {
-            await GamesAPI.signOut(); state.wallet = null; state.view = 'agree'; render(); emit(null);
+            await GamesAPI.signOut(); state.wallet = null; state.view = 'welcome'; render(); emit(null);
           });
           var pinEdit = body.querySelector('[data-act=pin-edit]');
           if (pinEdit) pinEdit.addEventListener('click', function() { state.editPin = true; render(); });
@@ -1295,7 +1378,7 @@
 
     GamesAPI.me().then(function(w) {
       state.wallet = w;
-      state.view = !w ? 'agree' : (!w.hasPin ? 'pin' : (w.needsTerms ? 'terms' : 'ready'));
+      state.view = !w ? 'welcome' : (!w.hasPin ? 'pin' : (w.needsTerms ? 'terms' : 'ready'));
       render(); emit(w);
     }, function(x) {
       state.view = 'error'; state.error = x.message; render();
@@ -1382,10 +1465,56 @@
     setTimeout(function() { wrap.remove(); }, 2500);
   }
 
+  // ==========================================
+  // TYPED AMOUNT BOX (Dice Duel, Mancala, 5 in a Row, Too Far style)
+  // worst = how many times the amount they could lose at most (e.g. 2 = Gnomie wins)
+  // ==========================================
+  var AMOUNT_MIN = 100, AMOUNT_MAX = 50000;
+  function amountMax(bal, worst) { return Math.min(AMOUNT_MAX, Math.floor(bal / worst)); }
+  function amountBoxHTML(chosen, bal, worst) {
+    var max = amountMax(bal, worst);
+    var val = chosen ? (chosen / 100).toFixed(2).replace(/\.00$/, '') : '';
+    var chips = [100, 500, 1000, 2000].filter(function(c) { return c <= max; });
+    return '<div class="tf-amount">' +
+      '<label class="tf-amount-box"><span class="tf-amount-cur">$</span><input type="text" class="amt-input" inputmode="decimal" autocomplete="off" placeholder="0" value="' + val + '" aria-label="Amount to play for" /></label>' +
+      (chips.length ? '<div class="tf-chips">' + chips.map(function(c) { return '<button type="button" class="tf-chip' + (chosen === c ? ' on' : '') + '" data-c="' + c + '">' + shortMoney(c) + '</button>'; }).join('') +
+        (max >= AMOUNT_MIN ? '<button type="button" class="tf-chip" data-c="' + max + '">Max</button>' : '') + '</div>' : '') +
+      '<p class="tf-amount-note">' + (max >= AMOUNT_MIN ? 'Suggested amounts above, or type your own: ' + money(AMOUNT_MIN) + ' up to ' + money(max) + '.' : 'Your wallet needs at least ' + money(AMOUNT_MIN * worst) + ' to play.') + '</p>' +
+    '</div>';
+  }
+  function amountProblem(c, bal, worst) {
+    if (!c) return 'Type an amount to play for.';
+    if (c < AMOUNT_MIN) return 'The smallest amount is ' + money(AMOUNT_MIN) + '.';
+    if (c > AMOUNT_MAX) return 'The biggest amount is ' + money(AMOUNT_MAX) + '.';
+    if (Math.round(c * worst) > bal) return 'Your wallet covers up to ' + money(amountMax(bal, worst)) + ' here.';
+    return '';
+  }
+  // Wires the box: onChange(cents, problem) runs as they type; chips call onPick(cents)
+  function wireAmountBox(root, bal, worst, onChange, onPick) {
+    var input = root.querySelector('.amt-input');
+    if (!input) return;
+    input.addEventListener('input', function() {
+      var n = parseFloat(String(input.value).replace(/[$,\s]/g, '')), c = isFinite(n) ? Math.round(n * 100) : 0;
+      root.querySelectorAll('.tf-chip').forEach(function(b) { b.classList.toggle('on', +b.dataset.c === c); });
+      onChange(c, c ? amountProblem(c, bal, worst) : '');
+    });
+    root.querySelectorAll('.tf-chip').forEach(function(b) { b.addEventListener('click', function() { onPick(+b.dataset.c); }); });
+  }
+
+  // Game age gates are skipped for anyone signed in to a wallet that has money
+  // in it: they already confirmed their age to get that far.
+  async function autoPass(start) {
+    try {
+      var w = await GamesAPI.me();
+      if (w && w.hasPin && !w.needsTerms && ((w.balanceCents || 0) > 0 || (w.heldCents || 0) > 0)) { try { window.AgeGate.setVerified(); } catch (e) {} start(); }
+    } catch (x) {}
+  }
+
   window.Games = {
-    TOOFAR: TOOFAR, BOTTLE: BOTTLE, MANCALA: MANCALA, mancalaSow: mancalaSow,
+    TOOFAR: TOOFAR, BOTTLE: BOTTLE, MANCALA: MANCALA, mancalaSow: mancalaSow, FIVE: FIVE,
     DUEL: DUEL, columnScore: columnScore, boardScore: boardScore,
-    placeDie: placeDie, cloneBoard: cloneBoard, emptyBoard: emptyBoard, renderGameActivity: renderGameActivity, celebrate: celebrate,
+    placeDie: placeDie, cloneBoard: cloneBoard, emptyBoard: emptyBoard, renderGameActivity: renderGameActivity, celebrate: celebrate, autoPass: autoPass,
+    amountBoxHTML: amountBoxHTML, amountProblem: amountProblem, wireAmountBox: wireAmountBox,
     LOCAL: LOCAL, ROWS: ROWS, DRAINS: DRAINS, CENTER: CENTER, BOARDS: BOARDS, BOARD_ORDER: BOARD_ORDER,
     oddsFor: oddsFor, drainValue: drainValue, lossFor: lossFor, averageLoss: averageLoss,
     oneIn: oneIn, percent: percent, money: money, shortMoney: shortMoney, dropPath: dropPath,

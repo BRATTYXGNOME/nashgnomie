@@ -38,6 +38,7 @@
       if (result.success) start(); else window.AgeGate.handleFailure(result, err);
     });
   })();
+  G.autoPass(function() { start(); });
 
   var started = false;
   function start() {

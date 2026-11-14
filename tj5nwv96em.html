@@ -111,6 +111,96 @@
     .nudge-list { margin: 8px 0 0; padding: 0; list-style: none; font-size: 12px; }
     .nudge-list li { padding: 5px 0; border-top: 1px solid var(--border); display: flex; justify-content: space-between; gap: 8px; }
     @media (max-width: 700px) { .split { grid-template-columns: 1fr; } }
+
+    /* ===== Backstage v3: side menu, Home inbox, friendlier cards ===== */
+    main { max-width: 1280px; }
+    h1 { text-align: left; margin: 0 0 18px 4px; }
+    #app:not([hidden]) { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 22px; align-items: start; }
+    .side { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 18px; }
+    .side .tabs { flex-direction: column; align-items: stretch; gap: 4px; margin: 0; }
+    .side .tabs button { text-align: left; padding: 10px 14px; font-size: 14px; background: transparent; border-color: transparent; display: flex; align-items: center; gap: 10px; }
+    .side .tabs button:hover { background: var(--card); }
+    .side .tabs button.on { background: rgba(255, 95, 162, 0.16); color: #fff; border-color: rgba(255, 95, 162, 0.4); }
+    .side .tabs .badge { margin-left: auto; }
+    .side .ico { width: 22px; text-align: center; font-size: 16px; }
+    .side-foot { display: flex; flex-direction: column; gap: 6px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .side-foot button { text-align: left; }
+    .topbar { margin-bottom: 14px; }
+    .card { border-radius: 14px; padding: 18px 20px; }
+    h2 { font-size: 16px; }
+    .hello { font-size: 22px; margin: 2px 0 14px; color: var(--light); }
+    .home-nums, .w-nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .home-nums > div, .w-nums > div { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
+    .home-nums span, .w-nums span { font-size: 12px; color: var(--muted); }
+    .home-nums b, .w-nums b { font-size: 24px; color: var(--light); line-height: 1.25; }
+    .home-nums b.small { font-size: 17px; padding-top: 5px; color: var(--accent); }
+    .w-nums small { font-size: 11.5px; color: var(--body); }
+    .inbox-card { border-color: rgba(255, 95, 162, 0.35); }
+    #inbox { margin-top: 10px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .inbox-row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    .inbox-row:last-child { border-bottom: 0; }
+    .inbox-row:hover { background: rgba(255, 255, 255, 0.02); }
+    .inbox-ico { font-size: 20px; width: 28px; text-align: center; flex: none; }
+    .inbox-text { flex: 1; min-width: 0; color: var(--light); }
+    .inbox-text b { color: var(--light); }
+    .inbox-text a { color: var(--accent); text-decoration: none; }
+    .inbox-text .muted { margin-top: 2px; }
+    .inbox-text .error { min-height: 0; }
+    .inbox-acts { display: flex; gap: 6px; flex: none; flex-wrap: wrap; justify-content: flex-end; }
+    .inbox-report, .inbox-unclear { background: rgba(255, 95, 162, 0.05); }
+    .inbox-break .inbox-ico { filter: saturate(1.3); }
+    .inbox-empty { margin: 0; padding: 22px; text-align: center; color: var(--body); font-size: 14px; }
+    .record-card { border-color: rgba(255, 95, 162, 0.35); }
+    .record-card .row input { flex: 1 1 150px; }
+    .fair-rate { margin-top: 12px; font-size: 13px; }
+    .fair-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-weight: 700; font-size: 12.5px; }
+    .fair-badge.ok { background: rgba(111, 220, 154, 0.14); color: var(--good); }
+    .fair-badge.off { background: rgba(250, 204, 21, 0.14); color: #facc15; }
+    .fair-badge.wait { background: rgba(255, 255, 255, 0.06); color: var(--body); }
+    .spoof-rule { margin: 4px 0 10px; }
+    .tag.spoof { background: rgba(167, 139, 250, 0.16); color: #c4b5fd; }
+    .tag.break { background: rgba(125, 211, 252, 0.14); color: #7dd3fc; }
+    /* wallet page */
+    .w-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .w-avatar { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font: 700 18px 'Inter', sans-serif; color: #0d0d0f; flex: none; }
+    .w-title { flex: 1; min-width: 180px; }
+    .w-title h2 { margin: 0; font-size: 20px; }
+    .w-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .badge-pill { padding: 3px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .badge-pill.break { background: rgba(125, 211, 252, 0.14); color: #7dd3fc; border: 1px solid rgba(125, 211, 252, 0.35); }
+    .badge-pill.spoof { background: rgba(167, 139, 250, 0.14); color: #c4b5fd; border: 1px solid rgba(167, 139, 250, 0.35); }
+    .badge-pill.warn { background: rgba(255, 95, 162, 0.14); color: var(--accent); border: 1px solid rgba(255, 95, 162, 0.35); }
+    .w-note { margin-top: 12px; padding: 10px 14px; border-radius: 10px; font-size: 13px; }
+    .w-note.break { background: rgba(125, 211, 252, 0.08); border: 1px solid rgba(125, 211, 252, 0.3); color: #cfeafa; }
+    .w-note.warn { background: rgba(255, 95, 162, 0.08); border: 1px solid rgba(255, 95, 162, 0.3); color: var(--light); }
+    .w-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 14px 0; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .w-actions button.on { background: rgba(255, 95, 162, 0.18); color: #fff; }
+    .w-actions-gap { flex: 1; }
+    .w-tool { margin-bottom: 14px; }
+    .w-split { margin-bottom: 6px; }
+    .w-dl { grid-template-columns: max-content 1fr; margin: 0; }
+    @media (max-width: 900px) {
+      #app:not([hidden]) { display: block; }
+      .side { position: static; gap: 10px; margin-bottom: 12px; }
+      .side .tabs { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      .side .tabs button { padding: 8px 12px; }
+      .side-foot { flex-direction: row; flex-wrap: wrap; justify-content: center; border-top: 0; padding-top: 0; }
+      .home-nums, .w-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .inbox-row { flex-wrap: wrap; }
+      .inbox-acts { width: 100%; justify-content: flex-start; padding-left: 42px; }
+    }
+    .dlg-wrap { position: fixed; inset: 0; z-index: 1000; background: rgba(5, 5, 8, 0.7); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .dlg { width: 100%; max-width: 420px; background: var(--card); border: 1px solid rgba(255, 95, 162, 0.45); border-radius: 14px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+    .dlg-msg { margin: 0 0 14px; color: var(--light); white-space: pre-line; line-height: 1.55; }
+    .dlg-input { width: 100%; margin-bottom: 14px; }
+    .dlg-btns { display: flex; justify-content: flex-end; gap: 8px; }
+    .dlg-choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .dlg-choice { text-align: left; padding: 11px 14px; font-size: 14px; }
+    td.plus { color: var(--good); }
+    .h-note { color: var(--body); max-width: 320px; }
+    .vis { display: inline-block; margin-left: 4px; padding: 0 7px; border-radius: 999px; font-size: 11px; white-space: nowrap; }
+    .vis.shown { background: rgba(111, 220, 154, 0.12); color: var(--good); }
+    .vis.private { background: rgba(255, 255, 255, 0.06); color: var(--muted); }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -163,15 +253,27 @@
     </section>
 
     <div id="app" hidden>
+      <aside class="side">
+        <nav class="tabs" id="tabs">
+          <button type="button" data-tab="overview" class="on"><span class="ico">&#127968;</span> Home</button>
+          <button type="button" data-tab="money"><span class="ico">&#128184;</span> Money</button>
+          <button type="button" data-tab="games"><span class="ico">&#127922;</span> Games</button>
+          <button type="button" data-tab="wallets"><span class="ico">&#128091;</span> Wallets</button>
+          <button type="button" data-tab="activity"><span class="ico">&#128220;</span> Activity</button>
+        </nav>
+        <div class="side-foot">
+          <button type="button" class="ghost small" id="pw-change">Change password</button>
+          <button type="button" class="ghost small" id="logout">Sign out</button>
+          <button type="button" class="ghost small" id="signout-all">Sign out everywhere</button>
+          <button type="button" class="ghost small danger" id="lockdown">Lock Backstage</button>
+        </div>
+      </aside>
+      <div class="main">
       <div class="topbar">
         <span id="updated"></span>
         <span class="row">
           <select id="days"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last year</option></select>
           <button type="button" class="ghost small" id="refresh">Refresh</button>
-          <button type="button" class="ghost small" id="logout">Sign out</button>
-          <button type="button" class="ghost small" id="pw-change">Change password</button>
-          <button type="button" class="ghost small" id="signout-all">Sign out everywhere</button>
-          <button type="button" class="ghost small danger" id="lockdown">Lock Backstage</button>
         </span>
       </div>
       <section class="card lock-card" id="lock-card" hidden>
@@ -186,16 +288,17 @@
         </form>
         <div class="error" id="lock-error"></div>
       </section>
-      <nav class="tabs" id="tabs">
-        <button type="button" data-tab="overview" class="on">Overview</button>
-        <button type="button" data-tab="money">Money</button>
-        <button type="button" data-tab="games">Games</button>
-        <button type="button" data-tab="wallets">Wallets</button>
-        <button type="button" data-tab="activity">Activity</button>
-      </nav>
 
-      <!-- OVERVIEW -->
+      <!-- HOME -->
       <div data-panel="overview">
+        <h2 class="hello" id="hello">Hi, Gnomie</h2>
+        <div class="home-nums" id="home-nums"></div>
+        <section class="card inbox-card">
+          <div class="row" style="justify-content:space-between"><h2 style="margin:0">Inbox <span class="muted" style="font-weight:400">&middot; things that need you</span></h2><span class="muted" id="inbox-count"></span></div>
+          <div id="inbox"></div>
+        </section>
+        <section class="card"><h2>Most popular games</h2><div class="table-wrap"><table id="popular"></table></div></section>
+        <div hidden>
         <section class="card" id="review-card" hidden>
           <h2>Loads that need you</h2>
           <p class="muted">These payments came in but the wallet code or amount wasn&rsquo;t clear. Credit them to the right wallet, or keep them as a gift.</p>
@@ -211,8 +314,24 @@
           <p class="muted">Game problems and new-code requests. Handle them here; the fan sees your answer in their wallet.</p>
           <div id="requests"></div>
         </section>
+        </div>
+      </div>
+
+      <!-- MONEY -->
+      <div data-panel="money" hidden>
+        <section class="card record-card">
+          <h2>&#128229; Record a Throne load</h2>
+          <p class="muted">For when a load didn&rsquo;t come in on its own, or to fix one. The Throne amount counts as a real load (it shows up below and in your totals). A bonus is added on top. The fan sees both as a correction.</p>
+          <div class="row">
+            <input type="text" id="rl-code" placeholder="Wallet code or name" />
+            <input type="text" id="rl-amt" inputmode="decimal" placeholder="Throne amount, e.g. 20" />
+            <input type="text" id="rl-order" placeholder="Throne order # (optional)" />
+            <input type="text" id="rl-bonus" inputmode="decimal" placeholder="Bonus (optional)" />
+            <button type="button" id="rl-go">Record load</button>
+          </div>
+          <div class="error" id="rl-error"></div>
+        </section>
         <section class="card"><div class="tiles" id="ov-tiles"></div></section>
-        <section class="card"><h2>Most popular games</h2><div class="table-wrap"><table id="popular"></table></div></section>
         <section class="card">
           <h2>Loaded per day</h2>
           <div class="legend"><span><i style="background:var(--accent2)"></i>Throne</span></div>
@@ -226,10 +345,6 @@
           <section class="card"><h2>Top loaders</h2><div class="table-wrap"><table id="top-loaded"></table></div></section>
           <section class="card"><h2>Top spenders</h2><div class="table-wrap"><table id="top-spent"></table></div></section>
         </div>
-      </div>
-
-      <!-- MONEY -->
-      <div data-panel="money" hidden>
         <section class="card"><div class="tiles" id="money-tiles"></div></section>
         <section class="card">
           <h2>By platform and status</h2>
@@ -256,10 +371,8 @@
           <div class="tiles" id="drop-tiles"></div>
           <h3>By board</h3>
           <div class="table-wrap"><table id="drop-boards"></table></div>
-          <h3>Fairness check</h3>
-          <p class="muted">Where balls really landed (pink bars) against where the odds say they should, given how players aimed (dashed line). With lots of drops the two should line up closely.</p>
-          <div class="row"><select id="fair-board"><option value="sweet">Sweet</option><option value="spicy">Spicy</option><option value="savage">Savage</option></select><span class="muted" id="fair-n"></span></div>
-          <div class="fair" id="fair"></div><div class="fair-labels" id="fair-labels"></div>
+          <div class="fair-rate" id="drop-fair-rate"></div>
+          <div hidden><select id="fair-board"><option value="sweet">Sweet</option><option value="spicy">Spicy</option><option value="savage">Savage</option></select><span id="fair-n"></span><div id="fair"></div><div id="fair-labels"></div></div>
         </section>
         <section class="card">
           <h2>Dice Duel</h2>
@@ -278,16 +391,15 @@
           <div class="tiles" id="spin-tiles"></div>
           <h3>By board</h3>
           <div class="table-wrap"><table id="spin-boards"></table></div>
-          <h3>Fairness check</h3>
-          <p class="muted">How often the bottle landed on each wedge (pink bars). Every wedge should come up about 1 in 8 (dashed line). The amounts are shuffled into the wedges every spin.</p>
-          <div class="row"><select id="spin-fair-board"><option value="sweet">Sweet</option><option value="spicy">Spicy</option><option value="savage">Savage</option></select><span class="muted" id="spin-fair-n"></span></div>
-          <div class="fair fair8" id="spin-fair"></div><div class="fair-labels fair8" id="spin-fair-labels"></div>
+          <div class="fair-rate" id="spin-fair-rate"></div>
+          <div hidden><select id="spin-fair-board"><option value="sweet">Sweet</option><option value="spicy">Spicy</option><option value="savage">Savage</option></select><span id="spin-fair-n"></span><div id="spin-fair"></div><div id="spin-fair-labels"></div></div>
         </section>
         <section class="card">
           <div class="row" style="justify-content:space-between;margin-bottom:8px">
             <h2 style="margin:0">Leaderboards (with amounts, only you see these)</h2>
-            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Dice Duel wins against Gnomie</option><option value="too-far">Too Far</option><option value="too-far-wins">Too Far wins against Gnomie</option><option value="spin-the-bottle">Spin the Bottle</option><option value="mancala">Mancala</option><option value="mancala-wins">Mancala wins against Gnomie</option></select>
+            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Dice Duel wins against Gnomie</option><option value="too-far">Too Far</option><option value="too-far-wins">Too Far wins against Gnomie</option><option value="spin-the-bottle">Spin the Bottle</option><option value="mancala">Mancala</option><option value="mancala-wins">Mancala wins against Gnomie</option><option value="five-in-a-row">5 in a Row</option><option value="five-in-a-row-wins">5 in a Row wins against Gnomie</option></select>
           </div>
+          <p class="muted spoof-rule">&#127917; Spoof rule: real players who put in at least <input type="text" id="spoof-th" inputmode="decimal" style="width:70px" /> rank above every spoof wallet. <button type="button" class="ghost small" id="spoof-th-go">Save</button></p>
           <div class="table-wrap"><table id="lb"></table></div>
         </section>
         <div class="split">
@@ -301,8 +413,8 @@
         <section class="card">
           <div class="row" style="margin-bottom:8px">
             <input type="search" id="w-q" placeholder="Search code, name, Telegram, Throne or your notes" />
-            <select id="w-sort"><option value="newest">Newest</option><option value="balance">Biggest balance</option><option value="loaded">Most loaded</option><option value="spent">Most spent</option><option value="name">Name</option><option value="quiet">Quietest first</option></select>
-            <select id="w-status"><option value="">Open wallets</option><option value="active">Active only</option><option value="banned">Banned</option><option value="requested">Asked to close</option><option value="inactive">Inactive 6+ months</option><option value="break">On a break</option><option value="closed">Closed</option><option value="all">Everyone (closed too)</option></select>
+            <select id="w-sort"><option value="active">Most active</option><option value="recent">Recently active</option><option value="newest">Newest</option><option value="balance">Biggest balance</option><option value="loaded">Most loaded</option><option value="spent">Most spent</option><option value="name">Name</option><option value="quiet">Quietest first</option></select>
+            <select id="w-status"><option value="">Open wallets</option><option value="active">Active only</option><option value="banned">Banned</option><option value="requested">Asked to close</option><option value="inactive">Inactive 6+ months</option><option value="break">On a break</option><option value="spoof">Spoof wallets</option><option value="closed">Closed</option><option value="all">Everyone (closed too)</option></select>
             <button type="button" class="ghost small" id="wallets-csv">Download CSV</button>
           </div>
           <div class="table-wrap"><table id="wallets"></table></div>
@@ -321,6 +433,7 @@
           <div class="table-wrap"><table id="events"></table></div>
           <div class="more"><button type="button" class="ghost small" id="events-more">Load more</button></div>
         </section>
+      </div>
       </div>
     </div>
   </main>
@@ -378,6 +491,15 @@
         backstage_request_done: 'You handled a request', backstage_request_declined: 'You declined a request',
         nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note'
       };
+      var NUDGES = [
+        'It’s been a while… 👀',
+        'Your wallet is getting lonely.',
+        'I see you. And I’m not mad if you keep going 😏',
+        'Just checking: did you forget about me?',
+        'Your balance looks a little light today.',
+        'Be a good boy and top it up 💕',
+        'Your wallet will be closed if it stays at $0! Add funds to keep your wallet.'
+      ];
       var COLOR_HEX = { green: '#4ade80', blue: '#60a5fa', purple: '#a78bfa', orange: '#fb923c', gold: '#facc15', red: '#f87171', white: '#f4f1f4', electric: '#22d3ee' };
       function eventName(a) { return EVENTS[a] || a.replace(/_/g, ' '); }
 
@@ -394,6 +516,52 @@
         if (!res.ok) throw new Error(data.error || 'Something went wrong.');
         return data;
       }
+
+      // ---------- on-page dialogs (replace the browser's confirm/prompt/alert pop-ups,
+      // which some browsers block or hide) ----------
+      function uiDialog(msg, opts) {
+        opts = opts || {};
+        return new Promise(function(resolve) {
+          var wrap = document.createElement('div');
+          wrap.className = 'dlg-wrap';
+          wrap.innerHTML = '<div class="dlg" role="dialog" aria-modal="true">' +
+            '<p class="dlg-msg"></p>' +
+            (opts.input ? '<input type="text" class="dlg-input" />' : '') +
+            '<div class="dlg-btns">' + (opts.cancel ? '<button type="button" class="ghost" data-x>Cancel</button>' : '') + '<button type="button" data-ok>' + (opts.ok || 'OK') + '</button></div></div>';
+          wrap.querySelector('.dlg-msg').textContent = msg;
+          var input = wrap.querySelector('.dlg-input');
+          if (input) input.value = opts.value == null ? '' : opts.value;
+          function done(v) { wrap.remove(); document.removeEventListener('keydown', key); resolve(v); }
+          function key(e) { if (e.key === 'Escape') done(opts.input ? null : false); if (e.key === 'Enter' && (input ? document.activeElement === input : true)) { e.preventDefault(); done(input ? input.value : true); } }
+          wrap.querySelector('[data-ok]').addEventListener('click', function() { done(input ? input.value : true); });
+          var x = wrap.querySelector('[data-x]'); if (x) x.addEventListener('click', function() { done(input ? null : false); });
+          wrap.addEventListener('click', function(e) { if (e.target === wrap && opts.cancel) done(input ? null : false); });
+          document.addEventListener('keydown', key);
+          document.body.appendChild(wrap);
+          setTimeout(function() { (input || wrap.querySelector('[data-ok]')).focus(); if (input) input.select(); }, 20);
+        });
+      }
+      // A short menu of choices; resolves to the chosen key (or null)
+      function uiChoose(title, options) {
+        return new Promise(function(resolve) {
+          var wrap = document.createElement('div');
+          wrap.className = 'dlg-wrap';
+          wrap.innerHTML = '<div class="dlg" role="dialog" aria-modal="true"><p class="dlg-msg"></p><div class="dlg-choices"></div><div class="dlg-btns"><button type="button" class="ghost" data-x>Cancel</button></div></div>';
+          wrap.querySelector('.dlg-msg').textContent = title;
+          options.forEach(function(o) {
+            var b = document.createElement('button'); b.type = 'button'; b.className = 'ghost dlg-choice'; b.textContent = o[1];
+            b.addEventListener('click', function() { wrap.remove(); resolve(o[0]); });
+            wrap.querySelector('.dlg-choices').appendChild(b);
+          });
+          function close() { wrap.remove(); resolve(null); }
+          wrap.querySelector('[data-x]').addEventListener('click', close);
+          wrap.addEventListener('click', function(e) { if (e.target === wrap) close(); });
+          document.body.appendChild(wrap);
+        });
+      }
+      function uiConfirm(msg) { return uiDialog(msg, { cancel: true, ok: 'Yes' }); }
+      function uiPrompt(msg, value) { return uiDialog(msg, { cancel: true, input: true, value: value, ok: 'OK' }); }
+      function uiAlert(msg) { return uiDialog(msg, {}); }
 
       // ---------- sign in ----------
       function hideLoginForms() { ['login-form', 'setup-form', 'forgot-form', 'expired-form'].forEach(function(id) { $(id).hidden = true; }); }
@@ -456,7 +624,7 @@
       });
       $('logout').addEventListener('click', async function() { await api('POST', 'hq/logout', {}); location.reload(); });
       $('signout-all').addEventListener('click', async function() {
-        if (!confirm('Sign out of Backstage on every device, including this one?\n\nYou can sign straight back in with your password and app code.')) return;
+        if (!await uiConfirm('Sign out of Backstage on every device, including this one?\n\nYou can sign straight back in with your password and app code.')) return;
         try { await api('POST', 'hq/signout-everywhere', {}); } catch (x) {}
         location.reload();
       });
@@ -468,7 +636,7 @@
       $('lock-cancel').addEventListener('click', function() { $('lock-card').hidden = true; $('lock-pw').value = ''; $('lock-otp').value = ''; });
       $('lock-form').addEventListener('submit', async function(e) {
         e.preventDefault();
-        if (!confirm('Lock Backstage now? This can only be undone in Cloudflare.')) return;
+        if (!await uiConfirm('Lock Backstage now? This can only be undone in Cloudflare.')) return;
         try { await api('POST', 'hq/lockdown', { password: $('lock-pw').value, code: $('lock-otp').value }); location.reload(); }
         catch (x) { $('lock-error').textContent = x.message; }
       });
@@ -666,7 +834,18 @@
         sel.innerHTML = '<option value="">All events</option>' + evs.map(function(e) { return '<option value="' + esc(e.action) + '">' + esc(eventName(e.action)) + '</option>'; }).join('');
         sel.value = cur;
 
-        await loadReview(); await loadReports(); await loadRequests();
+        await loadInbox();
+        paintFairness();
+        // Home: four friendly numbers
+        var hr = new Date().getHours();
+        $('hello').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Gnomie';
+        var fav = (s.popular || [])[0];
+        var GN = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Too Far (31)', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row' };
+        $('home-nums').innerHTML =
+          '<div><span>Sent this week</span><b>' + money(credited.d7) + '</b></div>' +
+          '<div><span>Played this week</span><b>' + money((s.series || []).slice(-7).reduce(function(t, d) { return t + (d.spent || 0); }, 0)) + '</b></div>' +
+          '<div><span>Active fans this week</span><b>' + num(m.active_7d) + '</b></div>' +
+          '<div><span>Favorite game</span><b class="small">' + (fav ? esc(GN[fav.game] || fav.game) : '&mdash;') + '</b></div>';
       }
 
       function drawFair() {
@@ -700,6 +879,93 @@
       }
       $('spin-fair-board').addEventListener('change', drawSpinFair);
 
+      // ---------- Home: Inbox ----------
+      var INBOX_ICON = { unclear: '&#10067;', report: '&#128680;', newcode: '&#128273;', issue: '&#128736;&#65039;', close: '&#128682;', nudge: '&#128140;', break: '&#127769;' };
+      async function loadInbox() {
+        var items = (await api('GET', 'hq/inbox')).items;
+        $('inbox-count').textContent = items.length ? items.length + ' waiting' : '';
+        if (!items.length) { $('inbox').innerHTML = '<p class="inbox-empty">&#10024; All caught up. Nothing needs you right now.</p>'; return; }
+        $('inbox').innerHTML = items.map(function(it, i) {
+          var acts = it.kind === 'report' ? '<button type="button" data-ia="credit">Add ' + money(it.cents) + ' to wallet</button><button type="button" class="ghost small" data-ia="decline">Couldn&rsquo;t find it</button>'
+            : it.kind === 'unclear' ? '<button type="button" data-ia="assign">Credit a wallet</button><button type="button" class="ghost small" data-ia="gift">Keep as gift</button>'
+            : it.kind === 'newcode' ? '<button type="button" data-ia="newcode">Give new code</button><button type="button" class="ghost small" data-ia="reqdecline">Decline</button>'
+            : it.kind === 'issue' ? '<button type="button" data-ia="reqdone">Mark handled</button><button type="button" class="ghost small" data-ia="reqdecline">Couldn&rsquo;t help</button>'
+            : it.kind === 'close' ? '<button type="button" class="ghost small" data-ia="open">Open wallet</button>'
+            : '<button type="button" class="ghost small" data-ia="seen">Seen</button>';
+          return '<div class="inbox-row inbox-' + it.kind + '" data-i="' + i + '"><span class="inbox-ico">' + (INBOX_ICON[it.kind] || '&#8226;') + '</span>' +
+            '<div class="inbox-text"><div><b>' + (it.code ? '<a href="#" data-ia="open">' + esc(it.name) + '</a>' : esc(it.name)) + '</b> ' + esc(it.text) + '</div>' +
+            '<div class="muted">' + esc(ago(it.at)) + (it.note ? ' &middot; ' + esc(it.note) : '') + '</div><div class="error"></div></div>' +
+            '<div class="inbox-acts">' + acts + '</div></div>';
+        }).join('');
+        $('inbox').querySelectorAll('.inbox-row').forEach(function(row) {
+          var it = items[+row.dataset.i], err = row.querySelector('.error');
+          row.querySelectorAll('[data-ia]').forEach(function(b) {
+            b.addEventListener('click', async function(e) {
+              e.preventDefault();
+              var a = b.dataset.ia;
+              try {
+                if (a === 'open') { document.querySelector('#tabs [data-tab=wallets]').click(); showWallet(it.code); return; }
+                if (a === 'seen') await api('POST', 'hq/inbox-seen', { key: it.key });
+                if (a === 'credit') { if (!await uiConfirm('Add ' + money(it.cents) + ' to ' + it.name + '’s wallet? They’ll see “Your missing load was found and added.”')) return; await api('POST', 'hq/load-report', { id: it.id, action: 'credit', cents: it.cents }); }
+                if (a === 'decline') { var m = await uiPrompt('Message they’ll see:', 'Gnomie couldn’t find this load. Message her on Telegram.'); if (m == null) return; await api('POST', 'hq/load-report', { id: it.id, action: 'decline', message: m }); }
+                if (a === 'assign') { var c = await uiPrompt('Which wallet code should get it?', it.code || ''); if (!c) return; var amt = await uiPrompt('How much ($)?', it.cents ? (it.cents / 100).toFixed(2) : ''); if (amt == null) return; await api('POST', 'hq/assign-load', { loadId: it.id, code: c, cents: cents(amt) }); }
+                if (a === 'gift') { if (!await uiConfirm('Keep this payment as a gift? It won’t be added to any wallet.')) return; await api('POST', 'hq/dismiss-load', { loadId: it.id }); }
+                if (a === 'newcode') { if (!await uiConfirm('Give ' + it.name + ' a brand-new code? Their old code stops working right away.')) return; var r = await api('POST', 'hq/new-code', { code: it.code }); await uiAlert('New code: ' + r.code + '\n\nIt’s already in their wallet.'); }
+                if (a === 'reqdone') { var m2 = await uiPrompt('Message they’ll see (optional):', 'Handled by Gnomie. Thanks for letting me know!'); if (m2 == null) return; await api('POST', 'hq/request', { id: it.id, action: 'done', message: m2 }); }
+                if (a === 'reqdecline') { var m3 = await uiPrompt('Message they’ll see:', 'Gnomie couldn’t do this one. Message her on Telegram.'); if (m3 == null) return; await api('POST', 'hq/request', { id: it.id, action: 'decline', message: m3 }); }
+                refresh();
+              } catch (x) { err.textContent = x.message; }
+            });
+          });
+        });
+      }
+
+      // ---------- Money: record a Throne load ----------
+      $('rl-go').addEventListener('click', async function() {
+        var err = $('rl-error'); err.textContent = '';
+        var c = $('rl-amt').value ? cents($('rl-amt').value) : 0, bonus = $('rl-bonus').value ? cents($('rl-bonus').value) : 0;
+        if (isNaN(c) || isNaN(bonus) || c + bonus <= 0) { err.textContent = 'Enter the Throne amount (and any bonus).'; return; }
+        var code = $('rl-code').value.trim();
+        if (!code) { err.textContent = 'Which wallet is it for?'; return; }
+        try {
+          var found = (await api('GET', 'hq/wallets?limit=5&status=all&q=' + encodeURIComponent(code))).rows;
+          if (!found.length) { err.textContent = 'No wallet matches that.'; return; }
+          var w = found[0];
+          if (!await uiConfirm('Record ' + money(c) + ' from Throne' + ($('rl-order').value ? ' (order #' + $('rl-order').value + ')' : '') + (bonus ? ' + ' + money(bonus) + ' bonus' : '') + ' for ' + w.name + ' (' + w.code + ')?')) return;
+          await api('POST', 'hq/record-load', { code: w.code, cents: c, order: $('rl-order').value, bonus: bonus });
+          ['rl-code', 'rl-amt', 'rl-order', 'rl-bonus'].forEach(function(id) { $(id).value = ''; });
+          err.innerHTML = '<span class="ok">Recorded for ' + esc(w.name) + '.</span>';
+          refresh();
+        } catch (x) { err.textContent = x.message; }
+      });
+
+      // ---------- Games: plain fairness ratings ----------
+      // "Fair" when every slot lands within the normal wobble of what the odds say
+      function fairRating(groups) {
+        var n = 0, off = 0;
+        groups.forEach(function(g) {
+          if (!g || !g.n) return;
+          n += g.n;
+          g.actual.forEach(function(a, k) {
+            var e = g.expected[k], p = e / g.n, room = 3.5 * Math.sqrt(Math.max(p * (1 - p), 0.0004) * g.n) + 2;
+            if (Math.abs(a - e) > room) off++;
+          });
+        });
+        if (n < 60) return '<span class="fair-badge wait">&#9203; Not enough plays yet to judge</span> <span class="muted">' + num(n) + ' so far; it needs about 60</span>';
+        return off ? '<span class="fair-badge off">&#9888;&#65039; Worth a look</span> <span class="muted">based on ' + num(n) + ' plays (some slots are further from the odds than expected)</span>'
+                   : '<span class="fair-badge ok">&#10003; Fair</span> <span class="muted">based on ' + num(n) + ' plays: results match the odds</span>';
+      }
+      function paintFairness() {
+        if (!stats) return;
+        $('drop-fair-rate').innerHTML = 'Fairness: ' + fairRating(['sweet', 'spicy', 'savage'].map(function(k) { return stats.drop.fairness[k]; }));
+        $('spin-fair-rate').innerHTML = 'Fairness: ' + fairRating(['sweet', 'spicy', 'savage'].map(function(k) {
+          var f = stats.spin.fairness[k]; return f && f.n ? { n: f.n, actual: f.actual, expected: f.actual.map(function() { return f.n / 8; }) } : null;
+        }));
+      }
+      $('spoof-th-go').addEventListener('click', async function() {
+        try { await api('POST', 'hq/spoof-threshold', { cents: cents($('spoof-th').value) }); loadBoard(); } catch (x) { await uiAlert(x.message); }
+      });
+
       // ---------- missing-load reports ----------
       async function loadReports() {
         var rows = (await api('GET', 'hq/load-reports?status=open')).rows;
@@ -719,11 +985,11 @@
           var id = +box.dataset.id, err = box.querySelector('.error'), r = rows.filter(function(x) { return x.id === id; })[0];
           box.querySelector('.r-credit').addEventListener('click', async function() {
             var c = cents(box.querySelector('.r-amt').value);
-            if (!c || !confirm('Add ' + money(c) + ' to ' + (r.name || 'their') + '’s wallet? They’ll see “Your missing load was found and added.”')) return;
+            if (!c || !await uiConfirm('Add ' + money(c) + ' to ' + (r.name || 'their') + '’s wallet? They’ll see “Your missing load was found and added.”')) return;
             try { await api('POST', 'hq/load-report', { id: id, action: 'credit', cents: c }); refresh(); } catch (x) { err.textContent = x.message; }
           });
           box.querySelector('.r-decline').addEventListener('click', async function() {
-            var m = prompt('Message they’ll see:', 'Gnomie couldn’t find this load. Message her on Telegram.');
+            var m = await uiPrompt('Message they’ll see:', 'Gnomie couldn’t find this load. Message her on Telegram.');
             if (m == null) return;
             try { await api('POST', 'hq/load-report', { id: id, action: 'decline', message: m }); refresh(); } catch (x) { err.textContent = x.message; }
           });
@@ -751,17 +1017,17 @@
           var id = +box.dataset.id, err = box.querySelector('.error'), r = rows.filter(function(x) { return x.id === id; })[0];
           var nc = box.querySelector('.q-newcode');
           if (nc) nc.addEventListener('click', async function() {
-            if (!confirm('Give ' + (r.name || 'this wallet') + ' a brand-new code? Their old code stops working right away.')) return;
-            try { var res = await api('POST', 'hq/new-code', { code: r.display_code }); alert('New code: ' + res.code + '\n\nIt’s already in their wallet. Their old code no longer works.'); refresh(); } catch (x) { err.textContent = x.message; }
+            if (!await uiConfirm('Give ' + (r.name || 'this wallet') + ' a brand-new code? Their old code stops working right away.')) return;
+            try { var res = await api('POST', 'hq/new-code', { code: r.display_code }); await uiAlert('New code: ' + res.code + '\n\nIt’s already in their wallet. Their old code no longer works.'); refresh(); } catch (x) { err.textContent = x.message; }
           });
           var dn = box.querySelector('.q-done');
           if (dn) dn.addEventListener('click', async function() {
-            var m = prompt('Message they’ll see (optional):', 'Handled by Gnomie. Thanks for letting me know!');
+            var m = await uiPrompt('Message they’ll see (optional):', 'Handled by Gnomie. Thanks for letting me know!');
             if (m == null) return;
             try { await api('POST', 'hq/request', { id: id, action: 'done', message: m }); refresh(); } catch (x) { err.textContent = x.message; }
           });
           box.querySelector('.q-decline').addEventListener('click', async function() {
-            var m = prompt('Message they’ll see:', r.kind === 'new_code' ? 'Gnomie couldn’t make a new code right now. Message her on Telegram.' : 'Gnomie couldn’t find a problem. Message her on Telegram.');
+            var m = await uiPrompt('Message they’ll see:', r.kind === 'new_code' ? 'Gnomie couldn’t make a new code right now. Message her on Telegram.' : 'Gnomie couldn’t find a problem. Message her on Telegram.');
             if (m == null) return;
             try { await api('POST', 'hq/request', { id: id, action: 'decline', message: m }); refresh(); } catch (x) { err.textContent = x.message; }
           });
@@ -787,12 +1053,12 @@
           var id = +box.dataset.id, err = box.querySelector('.error');
           box.querySelector('.r-credit').addEventListener('click', async function() {
             var c = cents(box.querySelector('.r-amt').value);
-            if (!confirm('Credit ' + money(c) + ' to ' + box.querySelector('.r-code').value + '?')) return;
+            if (!await uiConfirm('Credit ' + money(c) + ' to ' + box.querySelector('.r-code').value + '?')) return;
             try { await api('POST', 'hq/assign-load', { loadId: id, code: box.querySelector('.r-code').value, cents: c }); refresh(); }
             catch (x) { err.textContent = x.message; }
           });
           box.querySelector('.r-gift').addEventListener('click', async function() {
-            if (!confirm('Keep this payment as a gift? It won’t be added to any wallet.')) return;
+            if (!await uiConfirm('Keep this payment as a gift? It won’t be added to any wallet.')) return;
             try { await api('POST', 'hq/dismiss-load', { loadId: id }); refresh(); }
             catch (x) { err.textContent = x.message; }
           });
@@ -866,10 +1132,12 @@
 
       // ---------- leaderboards with amounts ----------
       async function loadBoard() {
-        var key = $('lb-board').value, rows = (await api('GET', 'hq/leaderboard?board=' + key)).rows;
+        var key = $('lb-board').value, lbd = await api('GET', 'hq/leaderboard?board=' + key), rows = lbd.rows;
+        if (document.activeElement !== $('spoof-th')) $('spoof-th').value = /-wins$/.test(key) ? '' : '$' + (lbd.threshold / 100).toFixed(2);
+        $('spoof-th').disabled = /-wins$/.test(key);
         table($('lb'), [{ t: '#' }, { t: 'Wallet' }, { t: /-wins$/.test(key) ? 'Wins' : 'Spent', num: 1 }, { t: 'Holding spot since' }],
           rows.map(function(r) {
-            return '<tr class="click" data-code="' + esc(r.code) + '"><td>' + r.rank + '</td><td>' + esc(r.name) + '<br><span class="muted">' + esc(r.code) + '</span></td><td class="num">' +
+            return '<tr class="click" data-code="' + esc(r.code) + '"><td>' + r.rank + '</td><td>' + esc(r.name) + (r.spoof ? ' <span class="tag spoof">spoof</span>' : '') + '<br><span class="muted">' + esc(r.code) + '</span></td><td class="num">' +
               (/-wins$/.test(key) ? num(r.score) : money(r.score)) + '</td><td class="muted">' + (r.reignStart ? esc(when(r.reignStart)) : '') + '</td></tr>';
           }), 'No one on this board yet.');
       }
@@ -881,13 +1149,13 @@
         var q = [['q', $('w-q').value], ['sort', $('w-sort').value], ['status', $('w-status').value]].filter(function(f) { return f[1]; })
           .map(function(f) { return f[0] + '=' + encodeURIComponent(f[1]); }).join('&');
         walletRows = (await api('GET', 'hq/wallets?limit=200&' + q)).rows;
-        table($('wallets'), [{ t: 'Wallet' }, { t: 'Balance', num: 1 }, { t: 'Loaded', num: 1 }, { t: 'Spent', num: 1 }, { t: 'Status' }, { t: 'Last active' }, { t: 'Joined' }],
+        table($('wallets'), [{ t: 'Wallet' }, { t: 'Balance', num: 1 }, { t: 'Loaded', num: 1 }, { t: 'Spent', num: 1 }, { t: 'Status' }, { t: 'Activity (30 days)', num: 1 }, { t: 'Last active' }, { t: 'Joined' }],
           walletRows.map(function(w) {
             return '<tr class="click" data-code="' + esc(w.code) + '"><td>' + esc(w.name) + '<br><span class="muted">' + esc(w.code) + (w.telegram ? ' · @' + esc(w.telegram) : '') + '</span></td><td class="num">' + money(w.balanceCents) +
               (w.heldCents ? '<br><span class="muted">+ ' + money(w.heldCents) + ' in duel</span>' : '') + '</td><td class="num">' + money(w.loadedCents) + '</td><td class="num">' + money(w.spentCents) + '</td>' +
               '<td><span class="tag ' + esc(w.status) + '">' + esc(w.status) + '</span>' + (w.locked ? ' <span class="tag banned">locked</span>' : '') + (w.hasPin ? '' : ' <span class="tag">no PIN</span>') +
-              (w.closeRequestedAt ? ' <span class="tag needs_review">asked to close</span>' : '') + (w.onBreakSince ? ' <span class="tag">on a break</span>' : '') + '</td>' +
-              '<td class="muted">' + esc(ago(w.lastActive)) + '</td><td class="muted">' + esc(when(w.createdAt)) + '</td></tr>';
+              (w.closeRequestedAt ? ' <span class="tag needs_review">asked to close</span>' : '') + (w.onBreakSince ? ' <span class="tag break">&#127769; on a break</span>' : '') + (w.spoof ? ' <span class="tag spoof">spoof</span>' : '') + '</td>' +
+              '<td class="num">' + num(w.activity30d || 0) + '</td><td class="muted">' + esc(ago(w.lastActive)) + '</td><td class="muted">' + esc(when(w.createdAt)) + '</td></tr>';
           }), 'No wallets found.');
       }
       $('w-q').addEventListener('input', function() { clearTimeout(searchTimer); searchTimer = setTimeout(loadWallets, 300); });
@@ -926,27 +1194,74 @@
         var game = {}; d.perGame.forEach(function(g) { game[g.game] = g; });
         $('wallet-card').hidden = false;
         $('wallet').innerHTML =
-          '<div class="row" style="justify-content:space-between"><h2 style="margin:0">' + esc(w.name) + ' <span class="tag ' + esc(w.status) + '" style="vertical-align:2px">' + esc(w.status) + '</span></h2><button type="button" class="ghost small" id="w-close">Close</button></div>' +
-          (w.closeRequestedAt ? '<div class="review" style="margin-top:12px"><p><strong>They asked you to close their wallet</strong> on ' + esc(when(w.closeRequestedAt)) + '. They agreed their ' + money(w.balanceCents) + ' balance can’t be withdrawn. Use <strong>Close wallet</strong> under Account when you’re ready.</p></div>' : '') +
-          (w.onBreakSince ? '<div class="review" style="margin-top:12px;border-color:var(--border)"><p><strong>On a financial break</strong> since ' + esc(when(w.onBreakSince)) + '. They’ve sent ' + money(w.loadedCents) + ' in total.</p></div>' : '') +
-          '<div class="split" style="margin-top:12px">' +
-            '<div><dl>' +
-              '<dt>Code</dt><dd>' + esc(w.code) + '</dd>' +
-              '<dt>Balance</dt><dd>' + money(w.balanceCents) + (w.heldCents ? ' <span class="muted">+ ' + money(w.heldCents) + ' set aside in a duel</span>' : '') + '</dd>' +
-              '<dt>Loaded</dt><dd>' + money(w.loadedCents) + '</dd>' +
-              '<dt>Spent in games</dt><dd>' + money(w.spentCents) + '</dd>' +
-              '<dt>Status</dt><dd><span class="tag ' + esc(w.status) + '">' + esc(w.status) + '</span>' + (w.locked ? ' <span class="tag banned">locked until ' + esc(when(w.lockedUntil)) + '</span>' : '') + '</dd>' +
-              '<dt>PIN</dt><dd>' + (w.hasPin ? w.pinLength + ' digits' : 'not set') + (w.failedPins ? ' · ' + w.failedPins + ' wrong tries' : '') + '</dd>' +
-              '<dt>Authenticator app</dt><dd>' + (w.twoFactor ? 'On' : 'Off') + '</dd>' +
-              '<dt>Signed-in devices</dt><dd>' + num(d.devices) + (d.lastSignIn ? ' · latest ' + esc(when(d.lastSignIn)) : '') + '</dd>' +
-              '<dt>Joined</dt><dd>' + esc(when(w.createdAt)) + '</dd>' +
-              '<dt>Last active</dt><dd>' + esc(ago(w.lastActive)) + ' <span class="muted">' + esc(when(w.lastActive)) + '</span></dd>' +
-              '<dt>Telegram</dt><dd>' + (w.telegram ? '@' + esc(w.telegram) : '<span class="muted">—</span>') + '</dd>' +
-              '<dt>Throne</dt><dd>' + (w.throneName ? esc(w.throneName) : '<span class="muted">—</span>') + '</dd>' +
-              '<dt>Their color</dt><dd><span class="swatch" style="background:' + esc(COLOR_HEX[w.color] || COLOR_HEX.green) + '"></span>' + esc(w.color) + ' <span class="muted">· ' + num(w.loadCount) + ' loads</span></dd>' +
-              '<dt>Wallet terms</dt><dd>' + (w.termsCurrent ? 'Agreed to the current terms' : '<span class="tag needs_review">not agreed to the current terms</span>') +
-                (d.agreements.length ? ' <span class="muted">· last ' + esc(when(d.agreements[0].created_at)) + ' (' + esc(d.agreements[0].how || '') + ')</span>' : '') + '</dd>' +
-            '</dl>' +
+          // ---- header: who, status badges ----
+          '<div class="w-head">' +
+            '<div class="w-avatar" style="background:' + esc(COLOR_HEX[w.color] || COLOR_HEX.purple) + '">' + esc((w.name || '?').replace(/^[^A-Za-z0-9]+/, '').slice(0, 1).toUpperCase() || '?') + '</div>' +
+            '<div class="w-title"><h2>' + esc(w.name) + '</h2><div class="muted">' + esc(w.code) + ' &middot; joined ' + esc(day(w.createdAt)) + ' &middot; last active ' + esc(ago(w.lastActive)) + '</div></div>' +
+            '<div class="w-badges">' +
+              (w.onBreakSince ? '<span class="badge-pill break">&#127769; On a financial break</span>' : '') +
+              (w.spoof ? '<span class="badge-pill spoof">&#127917; Spoof</span>' : '') +
+              (w.closeRequestedAt ? '<span class="badge-pill warn">Asked to close</span>' : '') +
+              (w.locked ? '<span class="badge-pill warn">Locked</span>' : '') +
+              '<span class="tag ' + esc(w.status) + '">' + esc(w.status) + '</span>' +
+            '</div>' +
+            '<button type="button" class="ghost small" id="w-close" aria-label="Close this wallet view">&times;</button>' +
+          '</div>' +
+          (w.closeRequestedAt ? '<div class="w-note warn">They asked you to close their wallet on ' + esc(when(w.closeRequestedAt)) + '. They agreed their ' + money(w.balanceCents) + ' balance can’t be withdrawn. Use <strong>Close wallet</strong> when you’re ready.</div>' : '') +
+          (w.onBreakSince ? '<div class="w-note break">On a financial break since ' + esc(when(w.onBreakSince)) + '. Nudges are paused. They’ve sent ' + money(w.loadedCents) + ' in total.</div>' : '') +
+          // ---- every action in one row ----
+          '<div class="w-actions">' +
+            '<button type="button" class="ghost small" data-tool="money">&#128184; Add money</button>' +
+            '<button type="button" class="ghost small" data-tool="nudge">&#128276; Nudge</button>' +
+            '<button type="button" class="ghost small" data-tool="profile">&#9999;&#65039; Name, PIN &amp; usernames</button>' +
+            '<button type="button" class="ghost small" id="colors-go">&#127912; ' + (w.colorsUnlocked ? 'Colors unlocked' : 'Unlock all colors') + '</button>' +
+            '<button type="button" class="ghost small" id="spoof-go">&#127917; ' + (w.spoof ? 'Not a spoof' : 'Make spoof') + '</button>' +
+            '<button type="button" class="ghost small" id="code-go">&#128273; New code</button>' +
+            '<button type="button" class="ghost small" id="out-go">Sign out everywhere</button>' +
+            (w.locked ? '<button type="button" class="ghost small" id="unlock-go">Unlock</button>' : '') +
+            (w.twoFactor ? '<button type="button" class="ghost small" id="tf-go">Turn off their 2FA</button>' : '') +
+            '<span class="w-actions-gap"></span>' +
+            (w.status !== 'closed' ? '<button type="button" class="ghost small danger" id="ban-go">' + (w.status === 'banned' ? 'Unban' : 'Ban') + '</button>' : '') +
+            '<button type="button" class="ghost small danger" id="close-go">' + (w.status === 'closed' ? 'Reopen' : 'Close wallet') + '</button>' +
+            (!w.loadedCents && !w.spentCents && !w.balanceCents ? '<button type="button" class="ghost small danger" id="delete-go">Delete</button>' : '') +
+          '</div>' +
+          // ---- the tool you picked opens here ----
+          '<div class="tool w-tool" data-panel-tool="money" hidden>' +
+            '<h3>Money</h3>' +
+            '<div class="seg" id="adj-kind"><button type="button" data-k="load" class="on">&#128229; Throne load</button><button type="button" data-k="adjust">Adjust balance</button><button type="button" data-k="set">Set exact balance</button></div>' +
+            '<p class="help" id="adj-help"></p>' +
+            '<div class="row"><input type="text" id="adj-amt" inputmode="decimal" />' +
+              '<input type="text" id="adj-order" class="only-load" placeholder="Throne order # (optional)" />' +
+              '<input type="text" id="adj-bonus" class="only-load" inputmode="decimal" placeholder="Bonus (optional)" /></div>' +
+            '<div class="row not-load"><input type="text" id="adj-note" maxlength="300" placeholder="Note (optional)" /></div>' +
+            '<div class="row not-load" style="justify-content:space-between"><span class="muted">Who sees the note?</span><div class="seg vis" id="adj-vis"><button type="button" data-v="0" class="on">Only me</button><button type="button" data-v="1">Show them</button></div></div>' +
+            '<button type="button" class="wide" id="adj-go">Apply</button>' +
+          '</div>' +
+          '<div class="tool w-tool" data-panel-tool="nudge" hidden>' +
+            '<h3>Nudge to add money</h3>' +
+            '<p class="help">Shows a banner at the top of their wallet until they answer or close it.</p>' +
+            (w.onBreakSince ? '<p class="help" style="color:#7dd3fc">They&rsquo;re on a financial break, so nudges are paused.</p>' : '') +
+            '<div class="row"><select id="nudge-pick">' + NUDGES.map(function(t) { return '<option>' + esc(t) + '</option>'; }).join('') + '<option value="">Write my own&hellip;</option></select></div>' +
+            '<div class="row"><input type="text" id="nudge-msg" maxlength="140" value="' + esc(NUDGES[0]) + '" aria-label="Nudge message" /><button type="button" id="nudge-go"' + (w.status !== 'active' || w.onBreakSince ? ' disabled' : '') + '>Send nudge</button></div>' +
+            '<div class="nudge-stats">' + nudgeStats(d.nudges) + '</div>' +
+            (d.nudges.length ? '<ul class="nudge-list">' + d.nudges.slice(0, 5).map(nudgeRow).join('') + '</ul>' : '') +
+          '</div>' +
+          '<div class="tool w-tool" data-panel-tool="profile" hidden>' +
+            '<h3>Name, PIN &amp; usernames</h3>' +
+            '<div class="row"><input type="text" id="c-tg" maxlength="41" placeholder="Telegram username" value="' + esc(w.telegram ? '@' + w.telegram : '') + '" /><input type="text" id="c-th" maxlength="40" placeholder="Throne username" value="' + esc(w.throneName || '') + '" /><button type="button" id="c-go">Save</button></div>' +
+            '<div class="row"><input type="text" id="ren-name" maxlength="24" placeholder="New leaderboard name" /><button type="button" id="ren-go">Rename</button><button type="button" class="ghost" id="ren-anon">Make anonymous</button></div>' +
+            '<div class="row"><input type="text" id="pin-new" placeholder="New PIN (4 or 6 digits)" inputmode="numeric" maxlength="6" /><button type="button" id="pin-go">Set PIN</button></div>' +
+          '</div>' +
+          '<div class="error" id="tool-error"></div>' +
+          // ---- the numbers ----
+          '<div class="w-nums">' +
+            '<div><span>Balance</span><b>' + money(w.balanceCents) + '</b>' + (w.heldCents ? '<small>+ ' + money(w.heldCents) + ' in a game</small>' : '') + '</div>' +
+            '<div><span>Sent you</span><b>' + money(w.loadedCents) + '</b><small>' + num(w.loadCount >= 99 ? 0 : w.loadCount) + ' loads of $20+</small></div>' +
+            '<div><span>Played</span><b>' + money(w.spentCents) + '</b><small>' + num(d.perGame.reduce(function(s, g) { return s + (g.n || 0); }, 0)) + ' games</small></div>' +
+            '<div><span>Nudges</span><b>' + num(d.nudges.length) + '</b><small>' + (d.nudges[0] ? esc(d.nudges[0].response === 'promise' ? 'last: “I’ll do better”' : d.nudges[0].response === 'break' ? 'last: took a break' : d.nudges[0].closed_at ? 'last: closed' : d.nudges[0].seen_at ? 'last: seen' : 'last: not seen') : 'none yet') + '</small></div>' +
+          '</div>' +
+          // ---- notes + details ----
+          '<div class="split w-split">' +
             '<div class="tool notes"><h3>My notes <span class="muted" style="font-weight:400">(only you see these)</span></h3>' +
               (d.notes.length ? '<ul class="note-list">' + d.notes.map(function(n) {
                 return '<li data-id="' + n.id + '"><div><span class="txt">' + esc(n.note) + '</span><span class="meta">' + esc(when(n.created_at)) + (n.updated_at !== n.created_at ? ' · edited ' + esc(when(n.updated_at)) : '') + '</span></div>' +
@@ -955,45 +1270,15 @@
               '<textarea id="note-new" maxlength="2000" placeholder="Add a note: their Telegram, what they like, anything"></textarea>' +
               '<div class="row" style="justify-content:flex-end;margin-top:6px"><button type="button" id="note-add">Add note</button></div>' +
             '</div>' +
-            '</div>' +
-            '<div class="tools">' +
-              '<div class="tool">' +
-                '<h3>Money</h3>' +
-                '<div class="seg" id="adj-kind"><button type="button" data-k="load" class="on">Add money they sent</button><button type="button" data-k="adjust">Adjust balance</button><button type="button" data-k="set">Set exact balance</button></div>' +
-                '<p class="help" id="adj-help"></p>' +
-                '<div class="row"><input type="text" id="adj-amt" inputmode="decimal" /></div>' +
-                '<div class="row"><input type="text" id="adj-note" maxlength="300" placeholder="Note (optional)" /></div>' +
-                '<div class="row" style="justify-content:space-between"><span class="muted">Who sees the note?</span><div class="seg vis" id="adj-vis"><button type="button" data-v="0" class="on">Only me</button><button type="button" data-v="1">Show them</button></div></div>' +
-                '<button type="button" class="wide" id="adj-go">Apply</button>' +
-              '</div>' +
-              '<div class="tool">' +
-                '<h3>Nudge to add money</h3>' +
-                '<p class="help">Shows a banner at the top of their wallet until they close it.</p>' +
-                (w.onBreakSince ? '<p class="help" style="color:var(--accent)">They&rsquo;re on a financial break, so nudges are paused.</p>' : '') +
-                '<div class="row"><input type="text" id="nudge-msg" maxlength="140" value="Your wallet will be closed if it stays at $0! Add funds to keep your wallet." aria-label="Nudge message" /><button type="button" id="nudge-go"' + (w.status !== 'active' || w.onBreakSince ? ' disabled' : '') + '>Send nudge</button></div>' +
-                '<div class="nudge-stats">' + nudgeStats(d.nudges) + '</div>' +
-                (d.nudges.length ? '<ul class="nudge-list">' + d.nudges.slice(0, 5).map(nudgeRow).join('') + '</ul>' : '') +
-              '</div>' +
-              '<div class="tool">' +
-                '<h3>Name, PIN &amp; usernames</h3>' +
-                '<div class="row"><input type="text" id="c-tg" maxlength="41" placeholder="Telegram username" value="' + esc(w.telegram ? '@' + w.telegram : '') + '" /><input type="text" id="c-th" maxlength="40" placeholder="Throne username" value="' + esc(w.throneName || '') + '" /><button type="button" id="c-go">Save</button></div>' +
-                '<div class="row"><input type="text" id="ren-name" maxlength="24" placeholder="New leaderboard name" /><button type="button" id="ren-go">Rename</button></div>' +
-                '<div class="row"><button type="button" class="ghost small" id="ren-anon">Make anonymous</button></div>' +
-                '<div class="row"><input type="text" id="pin-new" placeholder="New PIN (4 or 6 digits)" inputmode="numeric" maxlength="6" /><button type="button" id="pin-go">Set PIN</button></div>' +
-              '</div>' +
-              '<div class="tool account">' +
-                '<h3>Account</h3>' +
-                '<div class="row" style="margin-top:8px">' +
-                  (w.locked ? '<button type="button" class="ghost small" id="unlock-go">Unlock</button>' : '') +
-                  (w.twoFactor ? '<button type="button" class="ghost small" id="tf-go">Turn off their 2FA</button>' : '') +
-                  '<button type="button" class="ghost small" id="out-go">Sign out everywhere</button>' +
-                  '<button type="button" class="ghost small" id="code-go">Give new code</button>' +
-                  (w.status !== 'closed' ? '<button type="button" class="ghost small danger" id="ban-go">' + (w.status === 'banned' ? 'Unban' : 'Ban') + '</button>' : '') +
-                  '<button type="button" class="ghost small danger" id="close-go">' + (w.status === 'closed' ? 'Reopen wallet' : 'Close wallet') + '</button>' +
-                '</div>' +
-              '</div>' +
-              '<div class="error" id="tool-error"></div>' +
-            '</div>' +
+            '<div class="tool"><h3>Details</h3><dl class="w-dl">' +
+              '<dt>PIN</dt><dd>' + (w.hasPin ? w.pinLength + ' digits' : 'not set') + (w.failedPins ? ' · ' + w.failedPins + ' wrong tries' : '') + '</dd>' +
+              '<dt>Authenticator</dt><dd>' + (w.twoFactor ? 'On' : 'Off') + '</dd>' +
+              '<dt>Devices</dt><dd>' + num(d.devices) + (d.lastSignIn ? ' · latest ' + esc(when(d.lastSignIn)) : '') + '</dd>' +
+              '<dt>Telegram</dt><dd>' + (w.telegram ? '@' + esc(w.telegram) : '<span class="muted">—</span>') + '</dd>' +
+              '<dt>Throne</dt><dd>' + (w.throneName ? esc(w.throneName) : '<span class="muted">—</span>') + '</dd>' +
+              '<dt>Color</dt><dd><span class="swatch" style="background:' + esc(COLOR_HEX[w.color] || COLOR_HEX.purple) + '"></span>' + esc(w.color) + '</dd>' +
+              '<dt>Terms</dt><dd>' + (w.termsCurrent ? 'Agreed' : '<span class="tag needs_review">not agreed yet</span>') + (d.agreements.length ? ' <span class="muted">· ' + esc(when(d.agreements[0].created_at)) + '</span>' : '') + '</dd>' +
+            '</dl></div>' +
           '</div>' +
           '<h3>Account history <span class="muted" style="font-weight:400">(what they see in their wallet, plus your private notes)</span></h3><div class="table-wrap"><table id="wl-statement"></table></div>' +
           '<h3>Loads</h3><div class="table-wrap"><table id="wl-loads"></table></div>' +
@@ -1001,12 +1286,13 @@
           '<div><h3>Duels</h3><div class="table-wrap"><table id="wl-duels"></table></div></div></div>' +
           '<h3>Activity</h3><div class="table-wrap"><table id="wl-events"></table></div>';
 
-        table($('wl-statement'), [{ t: 'When' }, { t: 'What' }, { t: 'Amount', num: 1 }, { t: 'Balance after', num: 1 }, { t: 'Note' }], d.statement.slice(0, 100).map(function(r) {
-          return '<tr><td>' + esc(when(r.at)) + '</td><td>' + esc(r.label) + (r.detail ? '<br><span class="muted">' + esc(r.detail) + '</span>' : '') + '</td>' +
-            '<td class="num">' + (r.cents > 0 ? '+' : '') + money(r.cents) + '</td><td class="num">' + money(r.balanceAfter) + '</td>' +
-            '<td>' + (r.adjId ? (r.note ? esc(r.note) + ' ' : '<span class="muted">no note</span> ') +
-              '<button type="button" class="ghost small" data-adj="' + r.adjId + '" data-pub="' + (r.notePublic ? 1 : 0) + '" data-note="' + esc(r.note || '') + '" title="Click to ' + (r.notePublic ? 'hide it from them' : 'show it to them') + '">' + (r.notePublic ? 'Shown to them' : 'Private') + '</button>' +
-              ' <button type="button" class="ghost small" data-adj-edit="' + r.adjId + '" data-pub="' + (r.notePublic ? 1 : 0) + '" data-note="' + esc(r.note || '') + '">Edit</button>' : '') + '</td></tr>';
+        var hist = d.statement.slice(0, 100);
+        table($('wl-statement'), [{ t: 'When' }, { t: 'What' }, { t: 'Amount', num: 1 }, { t: 'Balance after', num: 1 }, { t: 'Note' }, { t: '' }], hist.map(function(r, i) {
+          var editable = r.loadId || r.adjId;
+          return '<tr><td class="muted">' + esc(when(r.at)) + '</td><td>' + esc(r.label) + (r.detail ? '<br><span class="muted">' + esc(r.detail) + '</span>' : '') + '</td>' +
+            '<td class="num' + (r.cents > 0 ? ' plus' : '') + '">' + (r.cents > 0 ? '+' : '') + money(r.cents) + '</td><td class="num">' + money(r.balanceAfter) + '</td>' +
+            '<td class="h-note">' + (r.adjId && r.note ? esc(r.note) + ' <span class="vis ' + (r.notePublic ? 'shown' : 'private') + '">' + (r.notePublic ? '&#128065; shown' : '&#128274; private') + '</span>' : '') + '</td>' +
+            '<td class="num">' + (editable ? '<button type="button" class="ghost small" data-hist="' + i + '">Edit</button>' : '') + '</td></tr>';
         }), 'Nothing yet.');
         table($('wl-loads'), [{ t: 'When' }, { t: 'From' }, { t: 'Amount', num: 1 }, { t: 'Status' }, { t: 'Message' }], d.loads.map(function(l) {
           return '<tr><td>' + esc(when(l.created_at)) + '</td><td>' + plat(l.platform) + (l.gifter ? '<br><span class="muted">' + esc(l.gifter) + '</span>' : '') + '</td><td class="num">' + money(l.amount_cents) + '</td><td><span class="tag ' + esc(l.status) + '">' + esc(STATUS[l.status] || l.status) + '</span></td><td class="muted">' + esc((l.message || '').slice(0, 80)) + '</td></tr>';
@@ -1025,14 +1311,62 @@
 
         var err = $('tool-error');
         async function act(path, body, confirmText) {
-          if (confirmText && !confirm(confirmText)) return;
+          if (confirmText && !await uiConfirm(confirmText)) return;
           try { await api('POST', path, Object.assign({ code: w.code }, body)); showWallet(w.code); refresh(); }
           catch (x) { err.textContent = x.message; }
         }
         $('w-close').addEventListener('click', function() { $('wallet-card').hidden = true; });
+        // Action row: tools open below the row, one at a time
+        document.querySelectorAll('[data-tool]').forEach(function(b) {
+          b.addEventListener('click', function() {
+            var t = b.dataset.tool, panel = document.querySelector('[data-panel-tool="' + t + '"]'), open = panel.hidden;
+            document.querySelectorAll('[data-panel-tool]').forEach(function(p) { p.hidden = true; });
+            document.querySelectorAll('[data-tool]').forEach(function(x) { x.classList.remove('on'); });
+            panel.hidden = !open; b.classList.toggle('on', open);
+          });
+        });
+        $('nudge-pick').addEventListener('change', function() { if (this.value) $('nudge-msg').value = this.value; else { $('nudge-msg').value = ''; $('nudge-msg').focus(); } });
+        $('colors-go').addEventListener('click', function() { act('hq/unlock-colors', { all: !w.colorsUnlocked }, w.colorsUnlocked ? 'Take away the extra color unlocks?' : 'Unlock every color for ' + w.name + '?'); });
+        $('spoof-go').addEventListener('click', function() {
+          act('hq/spoof', { on: !w.spoof }, w.spoof ? 'Make ' + w.name + ' a normal wallet again?' : 'Make ' + w.name + ' a spoof wallet?\n\nIt’s left out of all your statistics, gets every color, and real players who put in the spoof amount always rank above it. Fans never see that it’s a spoof.');
+        });
+        if ($('delete-go')) $('delete-go').addEventListener('click', async function() {
+          if (!await uiConfirm('Delete ' + w.name + '’s wallet for good? It was never used. This can’t be undone.')) return;
+          try { await api('POST', 'hq/delete', { code: w.code }); $('wallet-card').hidden = true; refresh(); } catch (x) { err.textContent = x.message; }
+        });
+        document.querySelectorAll('[data-hist]').forEach(function(b) {
+          b.addEventListener('click', async function() {
+            var r = hist[+b.dataset.hist], opts = [];
+            if (r.loadId) opts.push(['load', 'Change the amount or order #']);
+            if (r.adjId) {
+              opts.push(['note', r.note ? 'Edit the note' : 'Add a note']);
+              if (r.note) opts.push(['vis', r.notePublic ? 'Make the note private' : 'Show the note to them']);
+              if (r.cents > 0 && (r.adjKind === 'load' || r.adjKind === 'adjust')) opts.push(['convert', 'Make it a Throne load']);
+            }
+            var pick = await uiChoose(r.label + ' · ' + (r.cents > 0 ? '+' : '') + money(r.cents), opts);
+            if (!pick) return;
+            if (pick === 'load') {
+              var amt = await uiPrompt('Throne amount for this load ($):', (r.cents / 100).toFixed(2)); if (amt == null) return;
+              var order = await uiPrompt('Throne order number (optional):', r.order || ''); if (order == null) return;
+              act('hq/edit-load', { id: r.loadId, cents: cents(amt), order: order });
+            } else if (pick === 'note') {
+              var t = await uiPrompt('Note for this balance change:', r.note || ''); if (t == null) return;
+              act('hq/adjustment-note', { id: r.adjId, note: t, public: !!r.notePublic });
+            } else if (pick === 'vis') {
+              act('hq/adjustment-note', { id: r.adjId, note: r.note, public: !r.notePublic });
+            } else if (pick === 'convert') {
+              var total = r.cents;
+              var a2 = await uiPrompt('This added ' + money(total) + '. How much of it was the Throne load ($)? The rest becomes a bonus.', (total / 100).toFixed(2)); if (a2 == null) return;
+              var load = cents(a2); if (isNaN(load) || load < 0 || load > total) { err.textContent = 'The load has to be between $0 and ' + money(total) + '.'; return; }
+              var o2 = await uiPrompt('Throne order number (optional):', ''); if (o2 == null) return;
+              act('hq/adjustment-to-load', { id: r.adjId, cents: load, bonus: total - load, order: o2 },
+                'Record ' + money(load) + ' as a Throne load' + (total - load ? ' and ' + money(total - load) + ' as a bonus' : '') + '? Their balance stays the same.');
+            }
+          });
+        });
         var kind = 'load', vis = 0;
         var HELP = {
-          load: ['Adds to their balance and counts as money they sent you.', 'How much they sent, e.g. 20'],
+          load: ['Money they sent you on Throne. It counts in your Money stats, and they see it (and any bonus) as a correction.', 'Throne amount, e.g. 20'],
           adjust: ['Adds or removes without counting as money sent. Use a minus sign to remove, e.g. -5.', 'Amount, e.g. 10 or -5'],
           set: ['Replaces their balance with this exact amount. It’s ' + money(w.balanceCents) + ' now.', 'New balance, e.g. 50']
         };
@@ -1041,6 +1375,8 @@
           document.querySelectorAll('#adj-vis button').forEach(function(b) { b.classList.toggle('on', +b.dataset.v === vis); });
           $('adj-help').textContent = HELP[kind][0];
           $('adj-amt').placeholder = HELP[kind][1];
+          document.querySelectorAll('.only-load').forEach(function(x) { x.hidden = kind !== 'load'; });
+          document.querySelectorAll('.not-load').forEach(function(x) { x.hidden = kind === 'load'; });
         }
         document.querySelectorAll('#adj-kind button').forEach(function(b) { b.addEventListener('click', function() { kind = b.dataset.k; paintMoney(); }); });
         document.querySelectorAll('#adj-vis button').forEach(function(b) { b.addEventListener('click', function() { vis = +b.dataset.v; paintMoney(); }); });
@@ -1048,6 +1384,14 @@
         $('adj-go').addEventListener('click', function() {
           var c = cents($('adj-amt').value), note = $('adj-note').value.trim();
           err.textContent = '';
+          if (kind === 'load') {
+            var bonus = $('adj-bonus').value ? cents($('adj-bonus').value) : 0, order = $('adj-order').value.trim();
+            if (!$('adj-amt').value) c = 0;
+            if (isNaN(c) || isNaN(bonus) || c < 0 || bonus < 0 || c + bonus <= 0) { err.textContent = 'Enter the Throne amount (and any bonus).'; return; }
+            act('hq/record-load', { cents: c, order: order, bonus: bonus },
+              'Record ' + money(c) + ' from Throne' + (order ? ' (order #' + order + ')' : '') + (bonus ? ' + ' + money(bonus) + ' bonus' : '') + ' for ' + w.name + '?');
+            return;
+          }
           if (isNaN(c) || (kind !== 'set' && !c)) { err.textContent = 'Enter an amount.'; return; }
           if (kind === 'load' && c < 0) { err.textContent = 'Use “Adjust balance” to remove money.'; return; }
           if (kind === 'set' && c < 0) { err.textContent = 'A balance can’t be below $0.'; return; }
@@ -1062,9 +1406,9 @@
           act('hq/note', { note: t });
         });
         document.querySelectorAll('[data-note-edit]').forEach(function(b) {
-          b.addEventListener('click', function() {
+          b.addEventListener('click', async function() {
             var n = d.notes.filter(function(x) { return x.id === +b.dataset.noteEdit; })[0];
-            var t = prompt('Edit your note:', n.note);
+            var t = await uiPrompt('Edit your note:', n.note);
             if (t != null && t.trim()) act('hq/note', { id: n.id, note: t });
           });
         });
@@ -1072,18 +1416,6 @@
           b.addEventListener('click', function() { act('hq/note-delete', { id: +b.dataset.noteDel }, 'Delete this note?'); });
         });
         $('c-go').addEventListener('click', function() { act('hq/contacts', { telegram: $('c-tg').value, throne: $('c-th').value }); });
-        document.querySelectorAll('[data-adj]').forEach(function(b) {
-          b.addEventListener('click', function() {
-            var show = b.dataset.pub !== '1';
-            act('hq/adjustment-note', { id: +b.dataset.adj, note: b.dataset.note, public: show }, show ? 'Show this note to them in their account activity?' : 'Hide this note from them?');
-          });
-        });
-        document.querySelectorAll('[data-adj-edit]').forEach(function(b) {
-          b.addEventListener('click', function() {
-            var t = prompt('Note for this balance change:', b.dataset.note);
-            if (t != null) act('hq/adjustment-note', { id: +b.dataset.adjEdit, note: t, public: b.dataset.pub === '1' });
-          });
-        });
         $('nudge-go').addEventListener('click', function() {
           act('hq/nudge', { message: $('nudge-msg').value }, 'Send ' + w.name + ' a nudge to add money?');
         });
@@ -1097,8 +1429,8 @@
         if ($('tf-go')) $('tf-go').addEventListener('click', function() { act('hq/2fa-off', {}, 'Turn off this fan’s authenticator app? Do this only if they lost their phone and you’ve confirmed it’s really them.'); });
         $('out-go').addEventListener('click', function() { act('hq/signout-all', {}, 'Sign this wallet out on every device?'); });
         $('code-go').addEventListener('click', async function() {
-          if (!confirm('Give ' + w.name + ' a brand-new wallet code? Their old code stops working right away.')) return;
-          try { var res = await api('POST', 'hq/new-code', { code: w.code }); alert('New code: ' + res.code + '\n\nIt’s already in their wallet.'); showWallet(res.code); refresh(); } catch (x) { err.textContent = x.message; }
+          if (!await uiConfirm('Give ' + w.name + ' a brand-new wallet code? Their old code stops working right away.')) return;
+          try { var res = await api('POST', 'hq/new-code', { code: w.code }); await uiAlert('New code: ' + res.code + '\n\nIt’s already in their wallet.'); showWallet(res.code); refresh(); } catch (x) { err.textContent = x.message; }
         });
         if ($('ban-go')) $('ban-go').addEventListener('click', function() {
           act('hq/status', { status: w.status === 'banned' ? 'active' : 'banned' }, w.status === 'banned' ? 'Unban this wallet?' : 'Ban this wallet? They’ll be signed out and can’t play.');
