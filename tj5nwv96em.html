@@ -121,6 +121,13 @@
     .side .tabs button { text-align: left; padding: 10px 14px; font-size: 14px; background: transparent; border-color: transparent; display: flex; align-items: center; gap: 10px; }
     .side .tabs button:hover { background: var(--card); }
     .side .tabs button.on { background: rgba(255, 95, 162, 0.16); color: #fff; border-color: rgba(255, 95, 162, 0.4); }
+    .tabs button[draggable="true"] { cursor: grab; position: relative; }
+    .tabs button .grip { margin-left: auto; opacity: 0; font-size: 13px; letter-spacing: -2px; color: var(--muted); transition: opacity 0.15s; }
+    .tabs button:hover .grip { opacity: 0.8; }
+    .tabs button.dragging { opacity: 0.35; }
+    .tabs button.drop-before { box-shadow: 0 -3px 0 var(--accent); }
+    .tabs button.drop-after { box-shadow: 0 3px 0 var(--accent); }
+    .tab-saved { font-size: 11px; color: var(--muted); text-align: center; min-height: 14px; margin-top: -10px; }
     .side .tabs .badge { margin-left: auto; }
     .side .ico { width: 22px; text-align: center; font-size: 16px; }
     .side-foot { display: flex; flex-direction: column; gap: 6px; padding-top: 14px; border-top: 1px solid var(--border); }
@@ -201,6 +208,33 @@
     .split-grid input { width: 100%; }
     .split-grid .full { grid-column: 1 / -1; }
     .split-err { color: #ff6b8a; font-size: 13px; min-height: 18px; margin: 0 0 8px; }
+    /* Site tab: homepage ticker editor */
+    .tk-preview { position: relative; overflow: hidden; white-space: nowrap; border-radius: 10px; padding: 9px 0; background: rgba(255, 95, 162, 0.08); border: 1px solid rgba(255, 95, 162, 0.2); color: var(--accent); font-size: 12px; margin: 4px 0 14px; }
+    .tk-preview-track { display: inline-flex; animation: tk-scroll 40s linear infinite; }
+    .tk-preview:hover .tk-preview-track { animation-play-state: paused; }
+    @keyframes tk-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .tk-preview u { text-decoration-color: rgba(255, 95, 162, 0.45); text-underline-offset: 2px; }
+    .tk-preview .sep { margin: 0 14px; opacity: 0.45; }
+    .tk-preview .new { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 9px; font-weight: 700; }
+    .tk-preview .glow { text-shadow: 0 0 9px rgba(255, 95, 162, 0.95); }
+    .tk-list { display: flex; flex-direction: column; gap: 10px; }
+    .tk-item { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: start; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255, 255, 255, 0.02); }
+    .tk-item.off { opacity: 0.5; }
+    .tk-move { display: flex; flex-direction: column; gap: 4px; }
+    .tk-move button { padding: 3px 0; font-size: 11px; line-height: 1; }
+    .tk-fields { display: grid; grid-template-columns: 1fr 200px; gap: 8px; }
+    .tk-fields input, .tk-fields select { width: 100%; }
+    .tk-fields .tk-text { grid-column: 1 / 2; }
+    .tk-fields .tk-extra { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .tk-fields .tk-extra:empty { display: none; }
+    .tk-side { display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 110px; }
+    .tk-side select { width: 100%; }
+    .tk-on { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+    .tk-hint { font-size: 12px; color: var(--muted); margin: 2px 0 0; grid-column: 1 / -1; }
+    .tk-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+    .tk-bar .grow { flex: 1; }
+    .tk-saved { color: #6ee7a8; font-size: 13px; }
+    @media (max-width: 760px) { .tk-item { grid-template-columns: 30px 1fr; } .tk-side { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; } .tk-fields { grid-template-columns: 1fr; } .tk-fields .tk-extra { grid-template-columns: 1fr; } }
     td.plus { color: var(--good); }
     .h-note { color: var(--body); max-width: 320px; }
     .vis { display: inline-block; margin-left: 4px; padding: 0 7px; border-radius: 999px; font-size: 11px; white-space: nowrap; }
@@ -261,6 +295,7 @@
       <aside class="side">
         <nav class="tabs" id="tabs">
           <button type="button" data-tab="overview" class="on"><span class="ico">&#127968;</span> Home</button>
+          <button type="button" data-tab="site"><span class="ico">&#127760;</span> Site</button>
           <button type="button" data-tab="money"><span class="ico">&#128184;</span> Money</button>
           <button type="button" data-tab="games"><span class="ico">&#127922;</span> Games</button>
           <button type="button" data-tab="wallets"><span class="ico">&#128091;</span> Wallets</button>
@@ -402,7 +437,7 @@
         <section class="card">
           <div class="row" style="justify-content:space-between;margin-bottom:8px">
             <h2 style="margin:0">Leaderboards (with amounts, only you see these)</h2>
-            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Dice Duel wins against Gnomie</option><option value="too-far">Don&rsquo;t Bust</option><option value="too-far-wins">Don&rsquo;t Bust wins against Gnomie</option><option value="spin-the-bottle">Spin the Bottle</option><option value="mancala">Mancala</option><option value="mancala-wins">Mancala wins against Gnomie</option><option value="five-in-a-row">5 in a Row</option><option value="five-in-a-row-wins">5 in a Row wins against Gnomie</option></select>
+            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Dice Duel wins against Gnomie</option><option value="too-far">Don&rsquo;t Bust</option><option value="too-far-wins">Don&rsquo;t Bust wins against Gnomie</option><option value="spin-the-bottle">Spin the Bottle</option><option value="mancala">Mancala</option><option value="mancala-wins">Mancala wins against Gnomie</option><option value="five-in-a-row">5 in a Row</option><option value="five-in-a-row-wins">5 in a Row wins against Gnomie</option><option value="dots-and-boxes">Dots &amp; Boxes</option><option value="dots-and-boxes-wins">Dots &amp; Boxes wins against Gnomie</option></select>
           </div>
           <p class="muted spoof-rule">&#127917; Spoof rule: real players who put in at least <input type="text" id="spoof-th" inputmode="decimal" style="width:70px" /> rank above every spoof wallet. <button type="button" class="ghost small" id="spoof-th-go">Save</button></p>
           <div class="table-wrap"><table id="lb"></table></div>
@@ -428,8 +463,35 @@
       </div>
 
       <!-- ACTIVITY -->
+      <!-- SITE -->
+      <div data-panel="site" hidden>
+        <section class="card">
+          <div class="row" style="justify-content:space-between;align-items:baseline">
+            <h2 style="margin:0">Homepage ticker</h2>
+            <span class="muted" style="font-size:12px">The scrolling bar at the top of your homepage</span>
+          </div>
+          <p class="muted" style="margin:6px 0 4px">Preview (hover to pause):</p>
+          <div class="tk-preview"><div class="tk-preview-track" id="tk-preview"></div></div>
+          <div class="tk-list" id="tk-list"></div>
+          <div class="tk-bar">
+            <button type="button" class="ghost" id="tk-add">+ Add a message</button>
+            <span class="muted">Speed</span>
+            <div class="seg vis" id="tk-speed"><button type="button" data-s="slow">Slow</button><button type="button" data-s="normal">Normal</button><button type="button" data-s="fast">Fast</button></div>
+            <span class="grow"></span>
+            <span class="tk-saved" id="tk-saved"></span>
+            <button type="button" class="ghost" id="tk-undo">Undo changes</button>
+            <button type="button" id="tk-save">Save ticker</button>
+          </div>
+          <div class="error" id="tk-error"></div>
+          <p class="help" style="margin-top:10px">It loops with no gaps on every screen size. Saved changes show on your homepage within a minute.</p>
+        </section>
+        <section class="card">
+          <h2>Coming next for the site</h2>
+          <p class="muted" style="margin:0">Adopt a Bill, the Menu, Telegram prices, then the Links page &mdash; each gets its own editor here.</p>
+        </section>
+      </div>
+
       <div data-panel="activity" hidden>
-        <section class="card"><h2>Event counts</h2><div class="table-wrap"><table id="event-counts"></table></div></section>
         <section class="card">
           <div class="row" style="justify-content:space-between;margin-bottom:8px">
             <h2 style="margin:0">Everything that happened</h2>
@@ -438,6 +500,7 @@
           <div class="table-wrap"><table id="events"></table></div>
           <div class="more"><button type="button" class="ghost small" id="events-more">Load more</button></div>
         </section>
+        <section class="card"><h2>Event counts</h2><div class="table-wrap"><table id="event-counts"></table></div></section>
       </div>
       </div>
     </div>
@@ -494,7 +557,11 @@
         terms_agreed: 'Fan agreed to updated terms', pin_changed: 'Fan changed their PIN', pin_change_failed: 'Wrong PIN while changing it',
         issue_reported: 'Fan reported a game problem', new_code_requested: 'Fan asked for a new code', backstage_new_code: 'You gave a new code',
         backstage_request_done: 'You handled a request', backstage_request_declined: 'You declined a request',
-        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note'
+        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note',
+        backstage_spoof_on: 'You made a spoof wallet', backstage_spoof_off: 'You made a spoof wallet normal again', backstage_colors: 'You changed color unlocks',
+        backstage_deleted: 'You deleted an unused wallet', wallet_deleted: 'Fan deleted their unused wallet', backstage_recorded_load: 'You recorded a Throne load',
+        backstage_edited_load: 'You edited a load', backstage_split: 'You split an entry (Throne + credit)', backstage_ticker: 'You changed the homepage ticker',
+        youpay_gift: 'YouPay gift (not a load)'
       };
       var NUDGES = [
         'It’s been a while… 👀',
@@ -679,6 +746,121 @@
         catch (x) { $('lock-error').textContent = x.message; }
       });
 
+      // ---------- Site: homepage ticker editor ----------
+      var TK_KINDS = [
+        ['text', 'Plain text (no link)'], ['link', 'Opens a link'], ['adult', 'Opens a link (18+ check first)'],
+        ['telegram', 'Telegram offer popup'], ['dm', 'DM Me popup'], ['copy', 'Copies a code'],
+        ['pay', 'Payment options popup'], ['jump', 'Goes to a page or section']
+      ];
+      var TK_SPOTS = [
+        ['#about', 'Homepage: About'], ['#gallery', 'Homepage: Teasers'], ['#adopt', 'Homepage: Adopt a Bill'], ['#reviews', 'Homepage: Reviews'],
+        ['games.html', 'Games page'], ['adopt-a-bill.html', 'Adopt a Bill page'], ['adopt-a-bill.html#reimbursement', 'Reimbursements'],
+        ['menu.html', 'Menu page'], ['gallery.html', 'Gallery page'], ['links.html', 'Links page']
+      ];
+      var TK_SPEED_PX = { slow: 26, normal: 40, fast: 60 };
+      var tk = null, tkSaved = null;
+      function tkClone(o) { return JSON.parse(JSON.stringify(o)); }
+      async function loadTicker() {
+        $('tk-error').textContent = '';
+        try { var d = await api('GET', 'hq/ticker'); tk = tkClone(d.ticker); tkSaved = tkClone(d.ticker); paintTicker(); }
+        catch (x) { $('tk-error').textContent = x.message; }
+      }
+      function tkDirty() { return JSON.stringify(tk) !== JSON.stringify(tkSaved); }
+      function tkPreview() {
+        var items = tk.items.filter(function(i) { return i.on !== false; });
+        var one = items.map(function(i) {
+          var t = esc(i.text || (i.kind === 'telegram' ? '50% OFF LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees)' : ''));
+          var body = i.kind === 'text' ? t : '<u>' + t + '</u>';
+          return (i.highlight === 'new' ? '<span class="new">NEW</span>' : '') + '<span class="' + (i.highlight === 'glow' ? 'glow' : '') + '">' + body + '</span>' +
+            (i.after && i.kind !== 'text' ? esc(i.after) : '') + '<span class="sep">&#12539;</span>';
+        }).join('');
+        var track = $('tk-preview');
+        track.innerHTML = one ? '<span>' + one + '</span><span>' + one + '</span>' : '<span class="muted">Nothing turned on.</span>';
+        var w = track.firstChild.getBoundingClientRect ? track.firstChild.getBoundingClientRect().width : 600;
+        track.style.animationDuration = Math.max(6, w / (TK_SPEED_PX[tk.speed] || 40)).toFixed(1) + 's';
+      }
+      function tkExtraHTML(i) {
+        var after = '<input type="text" data-f="after" maxlength="200" placeholder="Plain text right after it (optional)" value="' + esc(i.after || '') + '" />';
+        if (i.kind === 'link' || i.kind === 'adult') return '<input type="text" data-f="url" placeholder="https://… or a page like games.html" value="' + esc(i.url || '') + '" />' + after;
+        if (i.kind === 'jump') {
+          var known = TK_SPOTS.some(function(s) { return s[0] === i.url; });
+          return '<select data-f="url">' + (known || !i.url ? '' : '<option value="' + esc(i.url) + '" selected>' + esc(i.url) + '</option>') +
+            TK_SPOTS.map(function(s) { return '<option value="' + s[0] + '"' + (s[0] === i.url ? ' selected' : '') + '>' + s[1] + '</option>'; }).join('') + '</select>' + after;
+        }
+        if (i.kind === 'copy') return '<input type="text" data-f="code" maxlength="80" placeholder="The code they copy, e.g. GNOMIE10" value="' + esc(i.code || '') + '" />' + after;
+        if (i.kind === 'text') return '';
+        return after;
+      }
+      var TK_HINT = {
+        text: 'Just words. Nothing happens when tapped.',
+        link: 'Opens the link. Outside sites open in a new tab.',
+        adult: 'Asks for their birthdate first, then opens the link. Use this for OnlyFans and other 18+ links.',
+        telegram: 'Birthdate check, then your Uncensored Telegram offer popup. Leave the message blank to use the automatic wording that follows your sale week.',
+        dm: 'Birthdate check, then the Contact Me popup.',
+        copy: 'Tapping it copies the code and flashes “Copied!”.',
+        pay: 'Opens a popup with all your payment options.',
+        jump: 'Takes them to that page or homepage section.'
+      };
+      function paintTicker() {
+        document.querySelectorAll('#tk-speed button').forEach(function(b) { b.classList.toggle('on', b.dataset.s === tk.speed); });
+        $('tk-list').innerHTML = tk.items.map(function(i, n) {
+          return '<div class="tk-item' + (i.on === false ? ' off' : '') + '" data-n="' + n + '">' +
+            '<div class="tk-move"><button type="button" class="ghost" data-mv="-1" title="Move up"' + (n ? '' : ' disabled') + '>&#9650;</button>' +
+              '<button type="button" class="ghost" data-mv="1" title="Move down"' + (n < tk.items.length - 1 ? '' : ' disabled') + '>&#9660;</button></div>' +
+            '<div class="tk-fields">' +
+              '<input type="text" class="tk-text" data-f="text" maxlength="200" placeholder="' + (i.kind === 'telegram' ? 'Blank = automatic sale wording' : 'Message') + '" value="' + esc(i.text || '') + '" />' +
+              '<select data-f="kind">' + TK_KINDS.map(function(k) { return '<option value="' + k[0] + '"' + (k[0] === i.kind ? ' selected' : '') + '>' + k[1] + '</option>'; }).join('') + '</select>' +
+              '<div class="tk-extra">' + tkExtraHTML(i) + '</div>' +
+              '<p class="tk-hint">' + TK_HINT[i.kind] + '</p>' +
+            '</div>' +
+            '<div class="tk-side">' +
+              '<label class="tk-on"><input type="checkbox" data-f="on"' + (i.on === false ? '' : ' checked') + ' /> Showing</label>' +
+              '<select data-f="highlight" title="Make it stand out"><option value="none">No highlight</option><option value="glow"' + (i.highlight === 'glow' ? ' selected' : '') + '>Glow</option><option value="new"' + (i.highlight === 'new' ? ' selected' : '') + '>NEW tag</option></select>' +
+              '<button type="button" class="ghost small danger" data-del>Remove</button>' +
+            '</div></div>';
+        }).join('');
+        tkPreview();
+        $('tk-saved').textContent = tkDirty() ? 'Unsaved changes' : '';
+        $('tk-saved').style.color = tkDirty() ? 'var(--accent)' : '';
+      }
+      $('tk-list').addEventListener('input', function(e) {
+        var f = e.target.dataset.f, row = e.target.closest('.tk-item'); if (!f || !row) return;
+        var it = tk.items[+row.dataset.n];
+        if (f === 'on') { it.on = e.target.checked; row.classList.toggle('off', !it.on); }
+        else it[f] = e.target.value;
+        if (f === 'kind') {
+          if (it.kind === 'jump' && !TK_SPOTS.some(function(s) { return s[0] === it.url; })) it.url = TK_SPOTS[0][0];
+          paintTicker();
+          var again = document.querySelector('.tk-item[data-n="' + row.dataset.n + '"] [data-f="kind"]'); if (again) again.focus();
+          return;
+        }
+        tkPreview();
+        $('tk-saved').textContent = tkDirty() ? 'Unsaved changes' : ''; $('tk-saved').style.color = 'var(--accent)';
+      });
+      $('tk-list').addEventListener('click', async function(e) {
+        var row = e.target.closest('.tk-item'); if (!row) return;
+        var n = +row.dataset.n, mv = e.target.closest('[data-mv]');
+        if (mv) { var m = n + +mv.dataset.mv; var t = tk.items[n]; tk.items[n] = tk.items[m]; tk.items[m] = t; paintTicker(); return; }
+        if (e.target.closest('[data-del]')) {
+          if (!await uiConfirm('Remove “' + (tk.items[n].text || 'this message') + '” from the ticker?')) return;
+          tk.items.splice(n, 1); paintTicker();
+        }
+      });
+      $('tk-add').addEventListener('click', function() {
+        tk.items.push({ text: '', kind: 'text', on: true, highlight: 'none' }); paintTicker();
+        var last = document.querySelector('.tk-item:last-child .tk-text'); if (last) last.focus();
+      });
+      $('tk-speed').addEventListener('click', function(e) { var b = e.target.closest('button'); if (!b) return; tk.speed = b.dataset.s; paintTicker(); });
+      $('tk-undo').addEventListener('click', function() { tk = tkClone(tkSaved); $('tk-error').textContent = ''; paintTicker(); });
+      $('tk-save').addEventListener('click', async function() {
+        $('tk-error').textContent = '';
+        try {
+          var d = await api('POST', 'hq/ticker', tk);
+          tk = tkClone(d.ticker); tkSaved = tkClone(d.ticker); paintTicker();
+          $('tk-saved').textContent = 'Saved \u2713'; $('tk-saved').style.color = '';
+        } catch (x) { $('tk-error').textContent = x.message; }
+      });
+
       // ---------- tabs ----------
       var tab = 'overview';
       $('tabs').addEventListener('click', function(e) {
@@ -690,6 +872,7 @@
         if (tab === 'games' && !loaded.games) { loadDrops(true); loadDuels(true); loadBoard(); loaded.games = true; }
         if (tab === 'wallets' && !loaded.wallets) { loadWallets(); loaded.wallets = true; }
         if (tab === 'activity' && !loaded.events) loadEvents(true);
+        if (tab === 'site' && !loaded.site) { loadTicker(); loaded.site = true; }
       });
       var loaded = {};
 
@@ -756,7 +939,7 @@
         if (wb) wb.remove();
         if (s.closeRequests) $('tabs').querySelector('[data-tab=wallets]').insertAdjacentHTML('beforeend', '<span class="badge" title="Asked to close">' + s.closeRequests + '</span>');
 
-        var GAME_NAMES = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala' };
+        var GAME_NAMES = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row', 'dots-and-boxes': 'Dots & Boxes' };
         table($('popular'), [{ t: 'Game' }, { t: 'Plays (period)', num: 1 }, { t: 'Taken (period)', num: 1 }, { t: 'Plays (all time)', num: 1 }, { t: 'Players', num: 1 }, { t: 'Taken (all time)', num: 1 }],
           (s.popular || []).map(function(g) {
             return '<tr><td>' + esc(GAME_NAMES[g.game] || g.game) + '</td><td class="num">' + num(g.plays_period || 0) + '</td><td class="num">' + money(g.cents_period || 0) + '</td><td class="num">' + num(g.plays) + '</td><td class="num">' + num(g.players) + '</td><td class="num">' + money(g.cents) + '</td></tr>';
@@ -769,7 +952,7 @@
           { label: 'Loaded, all time', value: money(m.loaded), sub: num(credited.n) + ' loads' },
           { label: 'Spent in games', value: money(m.spent), sub: 'all time' },
           { label: 'Sitting in wallets', value: money(m.balances) },
-          { label: 'Set aside in duels', value: money(m.held) },
+          { label: 'Held for games in progress', value: money(m.held) },
           { label: 'Wallets', value: num(w.total), sub: num(w.new_7d || 0) + ' new this week' },
           { label: 'Active this week', value: num(m.active_7d), sub: 'played or loaded' },
           { label: 'Wallets with money', value: num(w.with_balance) },
@@ -878,7 +1061,7 @@
         var hr = new Date().getHours();
         $('hello').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Gnomie';
         var fav = (s.popular || [])[0];
-        var GN = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust (31)', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row' };
+        var GN = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust (31)', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row', 'dots-and-boxes': 'Dots & Boxes' };
         $('home-nums').innerHTML =
           '<div><span>Sent this week</span><b>' + money(credited.d7) + '</b></div>' +
           '<div><span>Played this week</span><b>' + money((s.series || []).slice(-7).reduce(function(t, d) { return t + (d.spent || 0); }, 0)) + '</b></div>' +
@@ -1190,7 +1373,7 @@
         table($('wallets'), [{ t: 'Wallet' }, { t: 'Balance', num: 1 }, { t: 'Loaded', num: 1 }, { t: 'Spent', num: 1 }, { t: 'Status' }, { t: 'Activity (30 days)', num: 1 }, { t: 'Last active' }, { t: 'Joined' }],
           walletRows.map(function(w) {
             return '<tr class="click" data-code="' + esc(w.code) + '"><td>' + esc(w.name) + '<br><span class="muted">' + esc(w.code) + (w.telegram ? ' · @' + esc(w.telegram) : '') + '</span></td><td class="num">' + money(w.balanceCents) +
-              (w.heldCents ? '<br><span class="muted">+ ' + money(w.heldCents) + ' in duel</span>' : '') + '</td><td class="num">' + money(w.loadedCents) + '</td><td class="num">' + money(w.spentCents) + '</td>' +
+              (w.heldCents ? '<br><span class="muted"' + (w.heldFor && w.heldFor.length ? ' title="' + esc(w.heldFor.join(', ')) + '"' : '') + '>Idle game &middot; ' + money(w.heldCents) + ' held</span>' : '') + '</td><td class="num">' + money(w.loadedCents) + '</td><td class="num">' + money(w.spentCents) + '</td>' +
               '<td><span class="tag ' + esc(w.status) + '">' + esc(w.status) + '</span>' + (w.locked ? ' <span class="tag banned">locked</span>' : '') + (w.hasPin ? '' : ' <span class="tag">no PIN</span>') +
               (w.closeRequestedAt ? ' <span class="tag needs_review">asked to close</span>' : '') + (w.onBreakSince ? ' <span class="tag break">&#127769; on a break</span>' : '') + (w.spoof ? ' <span class="tag spoof">spoof</span>' : '') + '</td>' +
               '<td class="num">' + num(w.activity30d || 0) + '</td><td class="muted">' + esc(ago(w.lastActive)) + '</td><td class="muted">' + esc(when(w.createdAt)) + '</td></tr>';
@@ -1293,7 +1476,7 @@
           '<div class="error" id="tool-error"></div>' +
           // ---- the numbers ----
           '<div class="w-nums">' +
-            '<div><span>Balance</span><b>' + money(w.balanceCents) + '</b>' + (w.heldCents ? '<small>+ ' + money(w.heldCents) + ' in a game</small>' : '') + '</div>' +
+            '<div><span>Balance</span><b>' + money(w.balanceCents) + '</b>' + (w.heldCents ? '<small>Idle game' + (w.heldFor && w.heldFor.length ? ' (' + esc(w.heldFor.join(', ')) + ')' : '') + ' &middot; ' + money(w.heldCents) + ' held</small>' : '') + '</div>' +
             '<div><span>Sent you</span><b>' + money(w.loadedCents) + '</b><small>' + num(w.loadCount >= 99 ? 0 : w.loadCount) + ' loads of $20+</small></div>' +
             '<div><span>Played</span><b>' + money(w.spentCents) + '</b><small>' + num(d.perGame.reduce(function(s, g) { return s + (g.n || 0); }, 0)) + ' games</small></div>' +
             '<div><span>Nudges</span><b>' + num(d.nudges.length) + '</b><small>' + (d.nudges[0] ? esc(d.nudges[0].response === 'promise' ? 'last: “I’ll do better”' : d.nudges[0].response === 'break' ? 'last: took a break' : d.nudges[0].closed_at ? 'last: closed' : d.nudges[0].seen_at ? 'last: seen' : 'last: not seen') : 'none yet') + '</small></div>' +
@@ -1491,7 +1674,58 @@
       $('refresh').addEventListener('click', refresh);
       $('days').addEventListener('change', refresh);
 
-      function start() { $('login').hidden = true; hideLoginForms(); $('app').hidden = false; refresh(); }
+      // ---------- side menu: drag to reorder (saved, so it's the same on every device) ----------
+      var tabsEl = $('tabs');
+      tabsEl.insertAdjacentHTML('afterend', '<p class="tab-saved" id="tab-saved"></p>');
+      tabsEl.querySelectorAll('button[data-tab]').forEach(function(b) {
+        b.draggable = true; b.title = 'Drag to reorder';
+        b.insertAdjacentHTML('beforeend', '<span class="grip" aria-hidden="true">&#8942;&#8942;</span>');
+      });
+      function applyTabOrder(order) {
+        (order || []).forEach(function(t) { var b = tabsEl.querySelector('button[data-tab="' + t + '"]'); if (b) tabsEl.appendChild(b); });
+        // any tab added later (not in the saved order) keeps its spot at the end
+      }
+      var dragTab = null;
+      function clearDrop() { tabsEl.querySelectorAll('.drop-before, .drop-after').forEach(function(x) { x.classList.remove('drop-before', 'drop-after'); }); }
+      function dropSide(b, e) {
+        var r = b.getBoundingClientRect(), row = getComputedStyle(tabsEl).flexDirection === 'row';
+        return row ? (e.clientX > r.left + r.width / 2 ? 'after' : 'before') : (e.clientY > r.top + r.height / 2 ? 'after' : 'before');
+      }
+      tabsEl.addEventListener('dragstart', function(e) {
+        dragTab = e.target.closest('button[data-tab]'); if (!dragTab) return;
+        dragTab.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', dragTab.dataset.tab); } catch (x) {}
+      });
+      tabsEl.addEventListener('dragover', function(e) {
+        var b = e.target.closest('button[data-tab]'); if (!dragTab || !b) return;
+        e.preventDefault(); clearDrop();
+        if (b !== dragTab) b.classList.add('drop-' + dropSide(b, e));
+      });
+      tabsEl.addEventListener('dragleave', function(e) { if (!tabsEl.contains(e.relatedTarget)) clearDrop(); });
+      tabsEl.addEventListener('drop', async function(e) {
+        var b = e.target.closest('button[data-tab]'); if (!dragTab || !b) return;
+        e.preventDefault();
+        if (b !== dragTab) tabsEl.insertBefore(dragTab, dropSide(b, e) === 'after' ? b.nextSibling : b);
+        clearDrop();
+        var order = Array.prototype.map.call(tabsEl.querySelectorAll('button[data-tab]'), function(x) { return x.dataset.tab; });
+        try { await api('POST', 'hq/tab-order', { order: order }); $('tab-saved').textContent = 'Menu order saved'; }
+        catch (x) { $('tab-saved').textContent = x.message; }
+        setTimeout(function() { $('tab-saved').textContent = ''; }, 2000);
+      });
+      tabsEl.addEventListener('dragend', function() { if (dragTab) dragTab.classList.remove('dragging'); dragTab = null; clearDrop(); });
+
+      var savedTabOrder = [];
+      function start() {
+        $('login').hidden = true; hideLoginForms(); $('app').hidden = false;
+        refresh();
+        // Put the menu in your saved order and open whichever tab is first
+        api('GET', 'hq/session').then(function(s) { savedTabOrder = s.tabOrder || savedTabOrder; }, function() {}).then(function() {
+          applyTabOrder(savedTabOrder);
+          var first = tabsEl.querySelector('button[data-tab]');
+          if (first && first.dataset.tab !== 'overview') first.click();
+        });
+      }
 
       api('GET', 'hq/session').then(function(s) {
         if (!s.ready) { $('login').hidden = false; $('login-form').hidden = true; $('not-ready').hidden = false; return; }
@@ -1499,6 +1733,7 @@
         // Until 2FA is connected, only the password is needed (no code box)
         $('otp').hidden = !s.twoFactor;
         $('forgot-open').hidden = !s.twoFactor;
+        savedTabOrder = s.tabOrder || [];
         if (s.signedIn && s.mustChange) showExpired(true); else if (s.signedIn) start(); else showLogin();
       }, function() { showLogin(); });
     })();

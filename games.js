@@ -182,6 +182,8 @@
   }
   // 5 IN A ROW: 8 columns x 7 rows, decided on the server
   var FIVE = { COLS: 8, ROWS: 7, AMOUNTS: [100, 1000, 2000], PAY: { win: 1, tie: 1.5, lose: 2 } };
+  // DOTS & BOXES: board sizes the fan can pick, decided on the server
+  var DOTS = { SIZES: [[3, 'Small'], [4, 'Medium'], [5, 'Large']], PAY: { win: 1, tie: 1.5, lose: 2 } };
   var BOTTLE = {
     sweet:  { name: 'Sweet',  unlockCents: 1000,  slices: [25, 500, 50, 300, 75, 200, 100, 150] },
     spicy:  { name: 'Spicy',  unlockCents: 4000,  slices: [100, 2000, 200, 1200, 300, 800, 400, 500] },
@@ -501,6 +503,9 @@
     fiveState: async function() { return (await call('GET', 'five')).game; },
     fiveStart: async function(amountCents) { return call('POST', 'five/start', { amount: amountCents }); },
     fiveMove: async function(col) { return call('POST', 'five/move', { col: col }); },
+    dotsState: async function() { return (await call('GET', 'dots')).game; },
+    dotsStart: async function(size, amountCents) { return call('POST', 'dots/start', { size: size, amount: amountCents }); },
+    dotsMove: async function(line) { return call('POST', 'dots/move', { line: line }); },
     bottleSpin: async function(boardKey, pick) { return call('POST', 'bottle/spin', { board: boardKey, pick: pick }); },
     leaderboard: async function(boardKey) { return (await call('GET', 'leaderboard?board=' + encodeURIComponent(boardKey))).rows; },
     statement: async function() { return (await call('GET', 'statement')).rows; },
@@ -1269,7 +1274,7 @@
       }
       if (kind === 'issue') {
         var reqs = [];
-        var GAMES = ['Drop the Ball', 'Dice Duel', 'Don’t Bust', 'Spin the Bottle', 'Something else'];
+        var GAMES = ['Drop the Ball', 'Dice Duel', 'Don’t Bust', 'Spin the Bottle', 'Mancala', '5 in a Row', 'Dots & Boxes', 'Something else'];
         var intro2 = el('p', { class: 'wl-modal-lead' }, 'Did a game freeze, glitch, or charge you the wrong amount? Tell Gnomie what happened and she&rsquo;ll look into it.');
         var tw2 = twoWays('Send Gnomie an alert',
           '<label class="wl-field"><span>Which game?</span><select name="game">' + GAMES.map(function(g) { return '<option>' + g + '</option>'; }).join('') + '</select></label>' +
@@ -1511,7 +1516,7 @@
   }
 
   window.Games = {
-    TOOFAR: TOOFAR, BOTTLE: BOTTLE, MANCALA: MANCALA, mancalaSow: mancalaSow, FIVE: FIVE,
+    TOOFAR: TOOFAR, BOTTLE: BOTTLE, MANCALA: MANCALA, mancalaSow: mancalaSow, FIVE: FIVE, DOTS: DOTS,
     DUEL: DUEL, columnScore: columnScore, boardScore: boardScore,
     placeDie: placeDie, cloneBoard: cloneBoard, emptyBoard: emptyBoard, renderGameActivity: renderGameActivity, celebrate: celebrate, autoPass: autoPass,
     amountBoxHTML: amountBoxHTML, amountProblem: amountProblem, wireAmountBox: wireAmountBox,

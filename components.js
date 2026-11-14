@@ -316,6 +316,7 @@
             '<a href="spin-the-bottle.html">Spin the Bottle <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
             '<a href="mancala.html">Mancala <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
             '<a href="five-in-a-row.html">5 in a Row <span class="nav-new" data-new-until="2026-12-05">NEW</span></a>' +
+            '<a href="dots-and-boxes.html">Dots &amp; Boxes <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
           '</div>' +
         '</div>' +
         '<div class="nav-dropdown">' +
@@ -367,6 +368,7 @@
         '<a href="spin-the-bottle.html">Spin the Bottle <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
         '<a href="mancala.html">Mancala <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
         '<a href="five-in-a-row.html">5 in a Row <span class="nav-new" data-new-until="2026-12-05">NEW</span></a>' +
+            '<a href="dots-and-boxes.html">Dots &amp; Boxes <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
       '</div>' +
       '<a href="#" class="drawer-services-toggle" id="drawer-expenses-toggle">Expenses &#9662;</a>' +
       '<div class="drawer-services-sub" id="drawer-expenses-sub">' +
@@ -560,6 +562,94 @@
         ? '50% OFF LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees)'
         : 'LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees) • 50% off returns soon!';
     });
+  }
+
+  // ==========================================
+  // HOMEPAGE TICKER (edited in Backstage)
+  // Loads the messages Gnomie saved, then fills the bar with enough copies
+  // that it loops with no gaps at any screen width. The scroll speed is the
+  // same however long the messages are.
+  // ==========================================
+  var TICKER_PX_PER_SEC = { slow: 26, normal: 40, fast: 60 };
+  var tickerData = null;
+  function tickerEsc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function tickerItemHTML(it) {
+    var text = tickerEsc(it.text), cls = it.highlight === 'glow' ? ' ticker-glow' : '';
+    var pill = it.highlight === 'new' ? '<span class="ticker-new">NEW</span>' : '';
+    var url = tickerEsc(it.url || ''), external = /^https?:/i.test(it.url || '');
+    var tab = external ? ' target="_blank" rel="noopener"' : '';
+    var el;
+    switch (it.kind) {
+      case 'link': case 'jump': el = '<a href="' + url + '" class="' + cls.trim() + '"' + tab + '>' + text + '</a>'; break;
+      case 'adult': el = '<a href="' + url + '" class="age-gated' + cls + '"' + tab + '>' + text + '</a>'; break;
+      case 'telegram': el = '<a href="#" class="age-gated' + cls + '" data-age-action="uncensored"' + (it.text ? '' : ' data-offer-text') + '>' + (text || '50% OFF LIFETIME ACCESS to my UNCENSORED Telegram channel (NO Monthly Fees)') + '</a>'; break;
+      case 'dm': el = '<a href="#" class="age-gated' + cls + '" data-age-action="contact">' + text + '</a>'; break;
+      case 'copy': el = '<a href="#" class="ticker-copy' + cls + '" data-copy="' + tickerEsc(it.code) + '" title="Tap to copy">' + text + '</a>'; break;
+      case 'pay': el = '<a href="#" class="ticker-pay' + cls + '">' + text + '</a>'; break;
+      default: el = '<span class="ticker-text' + cls + '">' + text + '</span>';
+    }
+    return pill + el + (it.after && it.kind !== 'text' ? tickerEsc(it.after) : '') + '<span class="ticker-sep">&#12539;</span>';
+  }
+  function layoutTicker() {
+    var track = document.getElementById('ticker-track');
+    if (!track || !tickerData || !tickerData.items.length) return;
+    var one = '<span class="ticker-content">' + tickerData.items.map(tickerItemHTML).join('') + '</span>';
+    track.style.animation = 'none';
+    track.innerHTML = one;
+    var w = track.firstChild.getBoundingClientRect().width;
+    var bar = track.parentNode.getBoundingClientRect().width;
+    if (w < 2 || bar < 2) { track.innerHTML = one + one; updateUncensoredLinks(); return; }   // hidden (e.g. behind the age gate): measure once it shows
+    var copies = Math.max(1, Math.ceil(bar / w));          // one half must cover the whole bar
+    var half = new Array(copies + 1).join(one);
+    track.innerHTML = half + half;                           // scroll by exactly one half: seamless
+    var secs = (w * copies) / (TICKER_PX_PER_SEC[tickerData.speed] || TICKER_PX_PER_SEC.normal);
+    void track.offsetWidth;
+    track.style.animation = 'ticker-scroll ' + secs.toFixed(1) + 's linear infinite';
+    updateUncensoredLinks();
+  }
+  function openTickerPay() {
+    var old = document.getElementById('ticker-pay-overlay'); if (old) old.remove();
+    var div = document.createElement('div');
+    div.id = 'ticker-pay-overlay';
+    div.className = 'modal-overlay active';
+    div.innerHTML = '<div class="modal"><button class="modal-close" aria-label="Close">&times;</button>' +
+      '<div class="modal-title">Payment Options</div><div class="modal-desc">Pick whichever is easiest for you.</div><div class="modal-links" id="ticker-pay-links"></div></div>';
+    document.body.appendChild(div);
+    document.body.style.overflow = 'hidden';
+    window.PaymentOptions.render(div.querySelector('#ticker-pay-links'), {});
+    function close() { div.remove(); document.body.style.overflow = ''; }
+    div.querySelector('.modal-close').addEventListener('click', close);
+    div.addEventListener('click', function(e) { if (e.target === div) close(); });
+  }
+  function initTicker() {
+    var track = document.getElementById('ticker-track');
+    if (!track) return;
+    track.parentNode.addEventListener('click', function(e) {
+      var c = e.target.closest('.ticker-copy');
+      if (c) {
+        e.preventDefault();
+        var code = c.getAttribute('data-copy'), label = c.textContent;
+        var done = function() { c.textContent = 'Copied!'; setTimeout(function() { c.textContent = label; }, 1200); };
+        if (navigator.clipboard) navigator.clipboard.writeText(code).then(done, done); else done();
+        return;
+      }
+      if (e.target.closest('.ticker-pay')) { e.preventDefault(); openTickerPay(); }
+    });
+    fetch('/api/site/ticker').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+      if (!d || !d.items || !d.items.length) return;   // keep the built-in messages
+      tickerData = d;
+      layoutTicker();
+      // Lay it out again whenever the bar's width changes (rotating a phone, or
+      // the bar first showing after the age gate)
+      var t, lastW = -1, relayout = function() {
+        var bw = track.parentNode.getBoundingClientRect().width;
+        if (Math.abs(bw - lastW) < 1) return;
+        lastW = bw; clearTimeout(t); t = setTimeout(layoutTicker, 120);
+      };
+      if (window.ResizeObserver) new ResizeObserver(relayout).observe(track.parentNode);
+      window.addEventListener('resize', relayout);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutTicker);   // text width changes once the font loads
+    }).catch(function() {});
   }
 
   // ==========================================
@@ -785,6 +875,7 @@
     initUncensoredPopup();
     updateUncensoredLinks();
     initSharedAgeVerify();
+    initTicker();
   });
 
   // ==========================================

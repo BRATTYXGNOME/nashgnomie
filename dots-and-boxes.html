@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dots &amp; Boxes | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261114d" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <main class="section duel-page dx-page games-lock">
+    <a class="games-back" href="games.html">&larr; All Games</a>
+    <h1 class="section-title games-heading">Dots &amp; Boxes</h1>
+
+    <div class="gallery-age-gate" id="games-gate">
+      <div>
+        <h3>18+ GAMES</h3>
+        <p class="gate-rule">You <strong>MUST</strong> be 18 or older<br />to participate in this feature.<br /><span class="gate-pref">21+ preferred.</span></p>
+        <form id="games-gate-form" autocomplete="off">
+          <label class="gate-label" for="games-gate-birthdate">Your birthdate</label>
+          <input type="date" id="games-gate-birthdate" name="birthdate" required />
+          <div id="games-gate-error" class="age-error" aria-live="polite"></div>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="games-content">
+      <section id="wallet-root"></section>
+
+      <details class="duel-how">
+        <summary>How to play</summary>
+        <ul>
+          <li><strong>Pick a board</strong> (Small, Medium or Large) and type how much you want to play for.</li>
+          <li><strong>A coin flip</strong> decides who goes first.</li>
+          <li><strong>Take turns drawing one line</strong> between two dots next to each other.</li>
+          <li><strong>Draw the 4th side of a box</strong> and it&rsquo;s yours, and you go again.</li>
+          <li><strong>Don&rsquo;t hand her a box:</strong> drawing the 3rd side lets the next player take it.</li>
+          <li><strong>When every line is drawn,</strong> whoever has more boxes wins. Only Medium can end in a tie.</li>
+        </ul>
+      </details>
+
+      <section class="duel-card dx-card" id="dx-root"></section>
+
+      <details class="game-activity" id="game-activity" data-label="Dots &amp; Boxes" data-ready="1" hidden></details>
+
+      <section class="lb-card">
+        <h2 class="lb-title">Dots &amp; Boxes Leaderboard</h2>
+        <p class="lb-sub">This game only &middot; <a href="games.html">See the overall board</a></p>
+        <div id="lb-game"></div>
+      </section>
+
+      <p class="duel-wins" id="lb-wins"></p>
+    </div>
+  </main>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <script src="components.js?v=20261114d"></script>
+  <script src="games.js?v=20261114d"></script>
+  <script src="dots-and-boxes.js?v=20261114d"></script>
+</body>
+</html>
