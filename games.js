@@ -282,6 +282,7 @@
 
     setPin: async function(pin) {
       if (!/^(\d{4}|\d{6})$/.test(pin)) throw new Error('Your PIN must be 4 or 6 digits.');
+      if (easyPin(pin)) throw new Error('That PIN is too easy to guess. Pick a different one.');
       var s = readStore(), w = currentWallet(s);
       if (!w) throw new Error('No wallet found.');
       w.pin_hash = await sha256(w.code + ':' + pin); w.pin_length = pin.length; writeStore(s);
@@ -473,6 +474,7 @@
     createWallet: async function(agreed) { return (await call('POST', 'wallet', { agreed: agreed === true })).wallet; },
     setPin: async function(pin) { return (await call('POST', 'pin', { pin: pin })).wallet; },
     setName: async function(name, anonymous) { return (await call('POST', 'name', { name: name, anonymous: !!anonymous })).wallet; },
+    codeSaved: async function() { return (await call('POST', 'code-saved', {})).wallet; },
     signIn: async function(code, pin, otp) { return (await call('POST', 'signin', { code: code, pin: pin, otp: otp || '', agreed: true })).wallet; },
     closeRequest: async function() { return (await call('POST', 'close-request', { agreed: true })).wallet; },
     closeRequestCancel: async function() { return (await call('POST', 'close-request/cancel', {})).wallet; },
@@ -672,6 +674,7 @@
       setTimeout(function() { (input || wrap.querySelector('[data-ok]')).focus(); if (input) input.select(); }, 20);
     });
   }
+  function easyPin(pin) { return pin === '1234' || pin === '123456' || /^(\d)\1+$/.test(pin); }
   function uiConfirm(msg) { return uiDialog(msg, { cancel: true, ok: 'Yes' }); }
   // GIVE UP: ends a game in progress as a loss. The player sees exactly what
   // comes off their balance first and can cancel.
@@ -911,12 +914,24 @@
           e.preventDefault();
           var err = pform.querySelector('.wl-error');
           var pin = pins[0].value.trim();
-          if (!pform.querySelector('.wl-saved-box').checked) { err.textContent = 'Save your wallet code first, then check the box.'; return; }
+          var savedBox = pform.querySelector('.wl-saved-box');
+          if (!savedBox.checked && !state.codeWarned) {
+            // Warn once; pressing Save again continues anyway (a reminder stays in their wallet)
+            state.codeWarned = true;
+            err.innerHTML = '&#9888; We recommend saving your wallet code somewhere safe. Screenshot it or paste it into your notes, then check the box. Or press <strong>Save &amp; Continue</strong> again to skip for now.';
+            savedBox.closest('.wl-saved').classList.add('wl-saved-nudge');
+            return;
+          }
           if (!new RegExp('^\\d{' + state.pinLen + '}$').test(pin)) { err.textContent = 'Your PIN must be ' + state.pinLen + ' digits.'; return; }
           if (pin !== pins[1].value.trim()) { err.textContent = "Those PINs don't match."; return; }
+          if (!(state.wallet && state.wallet.hasPin) && easyPin(pin)) { err.textContent = 'That PIN is too easy to guess. Pick a different one (not 1234, 123456 or the same digit over and over).'; return; }
           try {
-            await GamesAPI.setPin(pin);
-            state.wallet = await GamesAPI.setName(nameInput.value, anon.checked);
+            // The PIN is saved once. If the name step fails (taken or blocked), pressing
+            // Save again just retries the name instead of getting stuck on the PIN.
+            if (!(state.wallet && state.wallet.hasPin)) state.wallet = await GamesAPI.setPin(pin);
+            try { state.wallet = await GamesAPI.setName(nameInput.value, anon.checked || !nameInput.value.trim()); }
+            catch (nx) { err.textContent = 'Your PIN is saved. ' + nx.message; return; }
+            if (savedBox.checked) { try { state.wallet = await GamesAPI.codeSaved(); } catch (sx) {} }
             state.view = 'ready'; render(); emit(state.wallet);
           } catch (x) {
             // Wallet was removed for sitting unfinished too long: start over
@@ -929,6 +944,15 @@
       }
 
       // 4) Ready: balance, code, load
+      if (w.hasPin && w.codeSaved === false) {
+        var rem = el('label', { class: 'wl-code-reminder' },
+          '<input type="checkbox" /> <span>&#9888; Save your wallet code somewhere safe (it&rsquo;s below), then check this: I <strong>saved my wallet code</strong> somewhere safe.</span>');
+        rem.querySelector('input').addEventListener('change', async function() {
+          if (!this.checked) return;
+          try { state.wallet = await GamesAPI.codeSaved(); render(); emit(state.wallet); } catch (x) { this.checked = false; }
+        });
+        container.appendChild(rem);
+      }
       if (w.nudge) {
         var nudge = el('div', { class: 'wl-nudge', role: 'status' },
           '<p class="wl-nudge-text">' + (w.nudge.message ? esc(w.nudge.message) : 'Your wallet will be closed if it stays at $0! Add funds to keep your wallet.') + '</p>' +
@@ -1596,6 +1620,52 @@
       if (w && w.hasPin && !w.needsTerms && ((w.balanceCents || 0) > 0 || (w.heldCents || 0) > 0)) { try { window.AgeGate.setVerified(); } catch (e) {} start(); }
     } catch (x) {}
   }
+
+  // ==========================================
+  // REPORT A PROBLEM: a small flag on every game page (every wallet,
+  // spoof wallets too). Reports land in Gnomie's Backstage Inbox.
+  // ==========================================
+  (function reportFlag() {
+    var ga = document.getElementById('game-activity');
+    var heading = document.querySelector('.games-heading');
+    if (!ga || !heading) return;
+    var game = ga.getAttribute('data-label') || heading.textContent.trim();
+    var flag = el('button', { type: 'button', class: 'game-report-flag', title: 'Tell Gnomie about a problem with this game' }, '&#9873; Report a problem with this game');
+    var card = ga.previousElementSibling && ga.previousElementSibling.classList.contains('duel-card') ? ga.previousElementSibling : document.querySelector('.games-content .duel-card, .games-content .drain-card');
+    if (card) card.insertAdjacentElement('afterend', flag); else ga.insertAdjacentElement('beforebegin', flag);
+    flag.addEventListener('click', function() {
+      var wrap = el('div', { class: 'dlg-wrap' });
+      wrap.innerHTML = '<div class="dlg game-report-dlg" role="dialog" aria-modal="true">' +
+        '<p class="dlg-title">&#9873; Report a problem</p>' +
+        '<p class="dlg-msg">Something wrong with <strong>' + esc(game) + '</strong>? A glitch, a freeze, or the wrong amount taken? Tell Gnomie what happened and she&rsquo;ll look into it.</p>' +
+        '<textarea class="dlg-input game-report-note" rows="4" maxlength="1000" placeholder="What happened? e.g. the board froze after my third move"></textarea>' +
+        '<p class="game-report-msg" aria-live="polite"></p>' +
+        '<div class="dlg-btns"><button type="button" class="ghost" data-x>Cancel</button><button type="button" data-ok>Send report</button></div></div>';
+      var note = wrap.querySelector('.game-report-note'), msg = wrap.querySelector('.game-report-msg'), ok = wrap.querySelector('[data-ok]');
+      function close() { wrap.remove(); document.removeEventListener('keydown', key); }
+      function key(e) { if (e.key === 'Escape') close(); }
+      wrap.querySelector('[data-x]').addEventListener('click', close);
+      wrap.addEventListener('click', function(e) { if (e.target === wrap) close(); });
+      document.addEventListener('keydown', key);
+      ok.addEventListener('click', async function() {
+        msg.className = 'game-report-msg';
+        if (note.value.trim().length < 4) { msg.textContent = 'Tell Gnomie what happened.'; msg.classList.add('err'); note.focus(); return; }
+        ok.disabled = true;
+        try {
+          await GamesAPI.sendRequest('issue', game, note.value.trim());
+          wrap.querySelector('.dlg').innerHTML = '<p class="dlg-title">&#10003; Report sent</p><p class="dlg-msg">Thanks! Gnomie will look into it. You can see your reports under Wallet settings.</p><div class="dlg-btns"><button type="button" data-x>Close</button></div>';
+          wrap.querySelector('[data-x]').addEventListener('click', close);
+        } catch (x) {
+          ok.disabled = false; msg.classList.add('err');
+          msg.innerHTML = /wallet/i.test(x.message)
+            ? 'Set up or sign in to your wallet above to send a report, or <a class="wl-tg-link" href="https://t.me/nashgnomie" target="_blank" rel="noopener">message Gnomie on Telegram</a>.'
+            : esc(x.message);
+        }
+      });
+      document.body.appendChild(wrap);
+      setTimeout(function() { note.focus(); }, 30);
+    });
+  })();
 
   window.Games = {
     giveUpHTML: giveUpHTML, wireGiveUp: wireGiveUp, suggestedAmounts: suggestedAmounts,

@@ -5433,3 +5433,27 @@ body.wl-modal-open { overflow: hidden; }
 .wl-spoof .wl-fine { text-align: center; margin: 4px 0 14px; line-height: 1.45; }
 .wl-spoof .wl-load-head { justify-content: center; }
 .wl-spoof .wl-spoof-msg:empty { display: none; }
+
+/* Report a problem: small flag under each game's title */
+.game-report-flag { display: block; margin: 4px auto 16px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--accent-border); background: rgba(255, 95, 162, 0.06); color: var(--accent); font: 600 13px var(--font-body); cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.game-report-flag:hover { background: rgba(255, 95, 162, 0.14); border-color: var(--accent); }
+.game-report-dlg .dlg-title { margin: 0 0 6px; font: 700 16px var(--font-body); color: var(--text-light); }
+.game-report-dlg textarea { width: 100%; resize: vertical; min-height: 84px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--accent-border); background: var(--bg); color: var(--text-light); font: 14px var(--font-body); }
+.game-report-msg { min-height: 16px; margin: 6px 0 0; font-size: 12.5px; }
+.game-report-msg.err { color: #ff6b8a; }
+
+/* On-page popups (Give up, confirmations, Report a problem). The in-app
+   browser blocks the browser's own pop-ups, so the site draws its own. */
+.dlg-wrap { position: fixed; inset: 0; z-index: 10000; background: rgba(5, 5, 8, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.dlg { width: 100%; max-width: 420px; background: var(--bg-card); border: 1px solid var(--accent-dim); border-radius: 16px; padding: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); color: var(--text-body); }
+.dlg-msg { margin: 0 0 14px; color: var(--text-light); white-space: pre-line; line-height: 1.55; font-size: 14px; }
+.dlg-input { width: 100%; margin-bottom: 4px; }
+.dlg-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.dlg-btns button { padding: 9px 16px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent); color: #fff; font: 600 13px var(--font-body); cursor: pointer; }
+.dlg-btns button.ghost { background: transparent; color: var(--accent); border-color: var(--accent-border); }
+.dlg-btns button:disabled { opacity: 0.5; cursor: default; }
+
+/* "I saved my wallet code" nudge and reminder */
+.wl-saved.wl-saved-nudge { border-color: #f5b942; background: rgba(245, 185, 66, 0.08); animation: rm-shake 0.35s; }
+.wl-code-reminder { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; border: 1px dashed #f5b942; background: rgba(245, 185, 66, 0.08); font-size: 13px; color: var(--text-light); cursor: pointer; line-height: 1.45; }
+.wl-code-reminder input { margin-top: 2px; accent-color: var(--accent); width: 16px; height: 16px; flex: none; }

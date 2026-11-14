@@ -163,6 +163,8 @@ async function ensureSchema(db) {
   // Region gets its own column in the event log (fails harmlessly if it's already there)
   try { await db.prepare('ALTER TABLE admin_log ADD COLUMN region TEXT').run(); } catch (e) {}
   try { await db.prepare('ALTER TABLE nudges ADD COLUMN response TEXT').run(); } catch (e) {}
+  // When the fan confirmed they saved their wallet code (a reminder shows until then)
+  try { await db.prepare('ALTER TABLE wallets ADD COLUMN code_saved_at INTEGER').run(); } catch (e) {}
   await carryOverOldAdjustments(db);
   schemaReady = true;
 }
@@ -263,7 +265,7 @@ function publicWallet(w) {
     ...(w.spoof ? { spoof: true, spoofWait: Math.max(0, Math.ceil(((w.spoof_last || 0) + 30000 - Date.now()) / 1000)) } : {}),
     unfinished: heldGames(w).map(h => h.game).concat(w.mind_active ? ['read-my-mind'] : []),
     nudge: w.nudge_id && !w.break_since ? { id: w.nudge_id, message: w.nudge_message || '' } : null,
-    closeRequested: !!w.close_requested_at, onBreak: !!w.break_since,
+    closeRequested: !!w.close_requested_at, onBreak: !!w.break_since, codeSaved: !!w.code_saved_at,
     color: colorOf(w), loadCount: w.load_count || 0, telegram: w.telegram || '', throneName: w.throne_name || ''
   };
 }
@@ -335,11 +337,22 @@ routes['POST wallet'] = async (env, request) => {
   throw new Oops('Something went wrong. Please try again.', 500);
 };
 
+// PINs that are too easy to guess: 1234, 123456, or one digit repeated (0000, 111111...)
+function easyPin(pin) { return pin === '1234' || pin === '123456' || /^(\d)\1+$/.test(pin); }
+const EASY_PIN_MSG = 'That PIN is too easy to guess. Pick a different one (not 1234, 123456 or the same digit over and over).';
+// The fan ticked "I saved my wallet code somewhere safe"
+routes['POST code-saved'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  if (!w.code_saved_at) await env.DB.prepare('UPDATE wallets SET code_saved_at = ? WHERE id = ?').bind(Date.now(), w.id).run();
+  return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
 routes['POST pin'] = async (env, request) => {
   const w = await needWallet(env, request);
   const { pin } = await readJson(request);
   if (!/^(\d{4}|\d{6})$/.test(String(pin || ''))) throw new Oops('Your PIN must be 4 or 6 digits.');
   if (w.pin_hash) throw new Oops('Your PIN is already set.');
+  if (easyPin(String(pin))) throw new Oops(EASY_PIN_MSG);
   const salt = randomHex(16);
   await env.DB.prepare('UPDATE wallets SET pin_hash = ?, pin_salt = ?, pin_length = ? WHERE id = ? AND pin_hash IS NULL')
     .bind(await pinHash(pin, salt), salt, pin.length, w.id).run();
@@ -356,7 +369,7 @@ routes['POST name'] = async (env, request) => {
   const w = await needWallet(env, request);
   const body = await readJson(request);
   let name = String(body.name || '').replace(/[\u0000-\u001f\u007f<>]/g, '').trim().replace(/\s+/g, ' ');
-  if (body.anonymous) name = null;
+  if (body.anonymous || !name) name = null;   // no name = Anonymous #N
   else {
     if (name.length < 2 || name.length > 24) throw new Oops('Names need 2–24 characters.');
     if (/^anonymous|gnomie/i.test(name) || nameBlocked(name)) throw new Oops('Please pick a different name.');
@@ -421,6 +434,7 @@ routes['POST signin'] = async (env, request) => {
   await env.DB.prepare('UPDATE wallets SET failed_pin_count = 0, locked_until = 0 WHERE id = ?').bind(w.id).run();
   const cookie = await newSession(env.DB, w.id);
   await recordAgreement(env.DB, w.id, 'sign-in');
+  if (!byName && !w.code_saved_at) await env.DB.prepare('UPDATE wallets SET code_saved_at = ? WHERE id = ?').bind(Date.now(), w.id).run();
   await logEvent(env, request, 'signin_ok', w.id, (byName ? 'Name' : 'Code') + ' + PIN' + (tf ? ' + app code' : '') + ' · agreed to the wallet terms');
   return json({ wallet: publicWallet(await walletById(env.DB, w.id)) }, 200, { 'set-cookie': cookie });
 };
@@ -681,6 +695,7 @@ routes['POST pin/change'] = async (env, request) => {
   }
   const next = String(b.next || '');
   if (!/^(\d{4}|\d{6})$/.test(next)) throw new Oops('Your new PIN must be 4 or 6 digits.');
+  if (easyPin(next)) throw new Oops(EASY_PIN_MSG);
   const salt = randomHex(16);
   await env.DB.prepare('UPDATE wallets SET pin_hash = ?, pin_salt = ?, pin_length = ? WHERE id = ?').bind(await pinHash(next, salt), salt, next.length, w.id).run();
   await logEvent(env, request, 'pin_changed', w.id, next.length + ' digits');
