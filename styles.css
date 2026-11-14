@@ -5298,9 +5298,10 @@ body.wl-modal-open { overflow: hidden; }
 .menu-agree-form .menu-star { font-size: 16px; }
 .pay-agree[hidden] { display: none; }
 /* Menu: the $15 minimum, right under the title */
-.menu-minimum { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 6px auto 18px; }
+.menu-minimum { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: -6px auto 22px; }
 .menu-minimum-amt { display: inline-block; padding: 7px 18px; border-radius: 999px; background: var(--accent); color: #fff; font: 800 17px var(--font-body); letter-spacing: 0.03em; box-shadow: 0 4px 16px rgba(255, 95, 162, 0.3); }
 .menu-minimum-sub { font-size: 12.5px; color: var(--text-muted); }
+.menu-minimum-sub a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 .menu-rules li.menu-rule-key strong { color: var(--accent); }
 
 /* DM / Contact: the agreement inside the shared age popup */
@@ -5368,11 +5369,63 @@ body.wl-modal-open { overflow: hidden; }
 @media (max-width: 420px) { .sk-piece i { width: 18px; height: 18px; } .sk-sea { gap: 2px; padding: 6px; } }
 /* Games page card art */
 .game-card-ships { display: grid; place-items: center; background: radial-gradient(circle at 50% 0%, #1d2a3b, #0d121a 75%); }
-.gc-ships { display: grid; grid-template-columns: repeat(8, 14px); gap: 2px; padding: 6px; border-radius: 10px; border: 1px solid rgba(120, 170, 255, 0.25); }
-.gc-ships i { width: 14px; height: 14px; border-radius: 3px; background: rgba(120, 170, 255, 0.08); display: grid; place-items: center; }
+.gc-ships { display: grid; grid-template-columns: repeat(8, 10px); gap: 2px; padding: 4px; border-radius: 10px; border: 1px solid rgba(120, 170, 255, 0.25); }
+.gc-ships i { width: 10px; height: 10px; border-radius: 2px; background: rgba(120, 170, 255, 0.08); display: grid; place-items: center; }
 .gc-ships i.s { background: #a78bfa; }
 .gc-ships i.h { background: rgba(255, 95, 162, 0.35); }
-.gc-ships i.h::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: radial-gradient(circle, #fff 0 20%, #ffd36b 35%, #ff5fa2 70%); }
-.gc-ships i.m::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(220, 235, 255, 0.5); }
-@media (max-width: 520px) { .gc-ships { grid-template-columns: repeat(8, 10px); } .gc-ships i { width: 10px; height: 10px; } }
+.gc-ships i.h::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle, #fff 0 20%, #ffd36b 35%, #ff5fa2 70%); }
+.gc-ships i.m::after { content: ''; width: 3px; height: 3px; border-radius: 50%; background: rgba(220, 235, 255, 0.5); }
+@media (max-width: 520px) { .gc-ships { grid-template-columns: repeat(8, 8px); padding: 3px; } .gc-ships i { width: 8px; height: 8px; } .gc-ships i.h::after { width: 5px; height: 5px; } }
 .sk-card { overflow-anchor: none; }
+
+/* =========================================
+   SPELL IT OUT (spell-it-out.html)
+   ========================================= */
+.so-intro { display: flex; align-items: center; gap: 14px; justify-content: center; margin: 0 0 16px; }
+.so-intro .so-figure { width: 70px; flex: none; }
+.so-intro p { margin: 0; max-width: 300px; font-size: 13.5px; color: var(--text-body); }
+.so-stage { display: flex; align-items: center; gap: 18px; justify-content: center; margin: 8px 0 6px; flex-wrap: wrap; }
+.so-fig-wrap { width: 130px; flex: none; }
+.so-figure { width: 100%; height: auto; display: block; overflow: visible; }
+.so-skin { fill: #f7d6c6; }
+.so-hair { fill: #5e3f2d; }
+.so-shine { fill: none; stroke: #8c6249; stroke-width: 1.6; stroke-linecap: round; opacity: 0.8; }
+.so-iris { fill: #5b3820; }
+.so-glint { fill: #fff; }
+.so-lash { fill: none; stroke: #241319; stroke-width: 1.4; stroke-linecap: round; }
+.so-lips { fill: #e3557f; }
+.so-blush circle { fill: rgba(255, 95, 162, 0.42); }
+.so-bra path, .so-panties { fill: #1b1117; stroke: #ff5fa2; stroke-width: 1.4; }
+.so-bra .so-strap { fill: none; stroke: #1b1117; stroke-width: 1.8; }
+.so-fishnets .so-lace { fill: #ff8fc0; }
+.so-skirt { fill: #ff5fa2; }
+.so-shirt { fill: #f6f1f7; }
+.so-roots { fill: #3d2a20; }
+.so-boots { fill: #ff5fa2; }
+.so-boots .so-sole { fill: #8c1f52; }
+.so-boots .so-lace-line { fill: none; stroke: #fff; stroke-width: 1.2; stroke-linecap: round; }
+.so-jacket { fill: #231d27; }
+.so-shades { fill: #1b1117; }
+.so-piece.on { animation: so-on 0.8s cubic-bezier(.3, 1.2, .5, 1) both; transform-box: fill-box; transform-origin: center; }
+@keyframes so-on { 0% { transform: translate(60px, -70px) rotate(70deg); opacity: 0; } 55% { opacity: 1; } 100% { transform: translate(0, 0) rotate(0); opacity: 1; } }
+.so-board { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; flex: 1 1 260px; }
+.so-cat { display: inline-block; padding: 3px 12px; border-radius: 999px; border: 1px solid var(--accent-border); color: var(--accent); font: 700 11px var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; }
+.so-word { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.so-tile { width: 32px; height: 40px; display: grid; place-items: center; border-bottom: 3px solid rgba(255, 255, 255, 0.35); font: 800 22px var(--font-body); color: var(--text-light); }
+.so-tile.got { border-bottom-color: var(--you); }
+.so-tile.just { animation: rm-pop 0.25s ease-out; color: var(--you); }
+.so-tile.reveal { color: #ff5fa2; border-bottom-color: #ff5fa2; }
+.so-gap { width: 16px; }
+.so-dash { width: 14px; display: grid; place-items: center; font: 800 22px var(--font-body); color: var(--text-muted); }
+.so-misses { margin: 0; font-size: 13px; color: var(--text-body); text-align: center; min-height: 18px; }
+.so-key:disabled { cursor: default; }
+.so-key.m-x { text-decoration: line-through; }
+.so-again-row { margin: 4px 0 10px; }
+@media (max-width: 520px) { .so-fig-wrap { width: 96px; } .so-tile { width: 26px; height: 34px; font-size: 18px; } .so-stage { gap: 10px; } }
+/* Games page card art */
+.game-card-spell { display: grid; place-items: center; align-content: center; gap: 8px; background: radial-gradient(circle at 50% 120%, rgba(167, 139, 250, 0.25), transparent 60%), var(--bg); }
+.gc-spell { display: flex; gap: 5px; }
+.gc-spell i { width: 20px; height: 26px; display: grid; place-items: center; border-bottom: 3px solid #a78bfa; font: 800 16px/1 Inter, sans-serif; font-style: normal; color: #fff; }
+.gc-spell i.e { border-bottom-color: rgba(255, 255, 255, 0.35); }
+.gc-spell-cat { padding: 2px 10px; border-radius: 999px; border: 1px solid rgba(255, 95, 162, 0.45); color: #ff5fa2; font: 700 9px/1.4 Inter, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; }
+@media (max-width: 520px) { .gc-spell i { width: 15px; height: 20px; font-size: 12px; } }

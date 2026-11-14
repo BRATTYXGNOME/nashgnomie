@@ -203,6 +203,41 @@
     .dlg-btns { display: flex; justify-content: flex-end; gap: 8px; }
     .dlg-choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
     .dlg-choice { text-align: left; padding: 11px 14px; font-size: 14px; }
+    .so-figure { width: 100%; height: auto; display: block; overflow: visible; }
+    .so-skin { fill: #f7d6c6; }
+    .so-hair { fill: #5e3f2d; }
+    .so-shine { fill: none; stroke: #8c6249; stroke-width: 1.6; stroke-linecap: round; opacity: 0.8; }
+    .so-iris { fill: #5b3820; }
+    .so-glint { fill: #fff; }
+    .so-lash { fill: none; stroke: #241319; stroke-width: 1.4; stroke-linecap: round; }
+    .so-lips { fill: #e3557f; }
+    .so-blush circle { fill: rgba(255, 95, 162, 0.42); }
+    .so-bra path, .so-panties { fill: #1b1117; stroke: #ff5fa2; stroke-width: 1.4; }
+    .so-bra .so-strap { fill: none; stroke: #1b1117; stroke-width: 1.8; }
+    .so-fishnets .so-lace { fill: #ff8fc0; }
+    .so-skirt { fill: #ff5fa2; }
+    .so-shirt { fill: #f6f1f7; }
+    .so-roots { fill: #3d2a20; }
+    .so-boots { fill: #ff5fa2; }
+    .so-boots .so-sole { fill: #8c1f52; }
+    .so-boots .so-lace-line { fill: none; stroke: #fff; stroke-width: 1.2; stroke-linecap: round; }
+    .so-jacket { fill: #231d27; }
+    .so-shades { fill: #1b1117; }
+    /* Site tab: your look */
+    .look-wrap { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; margin: 10px 0 4px; }
+    .look-preview { width: 150px; flex: none; padding: 10px; border-radius: 14px; background: radial-gradient(circle at 50% 30%, #2a1b24, #140d12 75%); border: 1px solid var(--border); }
+    .look-tools { flex: 1; min-width: 240px; }
+    .look-label { margin: 10px 0 6px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .look-label:first-child { margin-top: 0; }
+    .look-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+    .look-sw { width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.15); cursor: pointer; }
+    .look-sw.on { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+    .look-custom { position: relative; width: 30px; height: 30px; border-radius: 50%; padding: 3px; cursor: pointer; background: conic-gradient(#ff3b3b, #ffb13b, #ffe83b, #3bd16f, #3bb8ff, #6b5bff, #d13bff, #ff3b9d, #ff3b3b); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12); transition: transform 0.15s; }
+    .look-custom:hover { transform: scale(1.08); }
+    .look-custom.on { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent); }
+    .look-custom-dot { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: var(--card); color: #fff; font: 700 15px/1 var(--font-body, sans-serif); }
+    .look-custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+    .look-check { display: inline-flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; cursor: pointer; }
     .split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 12px; }
     .split-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
     .split-grid input { width: 100%; }
@@ -437,7 +472,7 @@
         <section class="card">
           <div class="row" style="justify-content:space-between;margin-bottom:8px">
             <h2 style="margin:0">Leaderboards (with amounts, only you see these)</h2>
-            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Dice Duel wins against Gnomie</option><option value="too-far">Don&rsquo;t Bust</option><option value="too-far-wins">Don&rsquo;t Bust wins against Gnomie</option><option value="spin-the-bottle">Spin the Bottle</option><option value="mancala">Mancala</option><option value="mancala-wins">Mancala wins against Gnomie</option><option value="five-in-a-row">5 in a Row</option><option value="five-in-a-row-wins">5 in a Row wins against Gnomie</option><option value="dots-and-boxes">Dots &amp; Boxes</option><option value="dots-and-boxes-wins">Dots &amp; Boxes wins against Gnomie</option><option value="read-my-mind">Read My Mind</option><option value="read-my-mind-wins">Read My Mind solved</option><option value="sink-my-ship">Sink My Ship</option><option value="sink-my-ship-wins">Sink My Ship wins against Gnomie</option></select>
+            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Dice Duel wins against Gnomie</option><option value="too-far">Don&rsquo;t Bust</option><option value="too-far-wins">Don&rsquo;t Bust wins against Gnomie</option><option value="spin-the-bottle">Spin the Bottle</option><option value="mancala">Mancala</option><option value="mancala-wins">Mancala wins against Gnomie</option><option value="five-in-a-row">5 in a Row</option><option value="five-in-a-row-wins">5 in a Row wins against Gnomie</option><option value="dots-and-boxes">Dots &amp; Boxes</option><option value="dots-and-boxes-wins">Dots &amp; Boxes wins against Gnomie</option><option value="read-my-mind">Read My Mind</option><option value="read-my-mind-wins">Read My Mind solved</option><option value="sink-my-ship">Sink My Ship</option><option value="sink-my-ship-wins">Sink My Ship wins against Gnomie</option><option value="spell-it-out">Spell It Out</option><option value="spell-it-out-wins">Spell It Out words spelled</option></select>
           </div>
           <p class="muted spoof-rule">&#127917; Spoof rule: real players who put in at least <input type="text" id="spoof-th" inputmode="decimal" style="width:70px" /> rank above every spoof wallet. <button type="button" class="ghost small" id="spoof-th-go">Save</button></p>
           <div class="table-wrap"><table id="lb"></table></div>
@@ -501,6 +536,52 @@
           <div class="error" id="mw-error"></div>
         </section>
         <section class="card">
+          <div class="row" style="justify-content:space-between;align-items:baseline">
+            <h2 style="margin:0">Your look in Spell It Out</h2>
+            <span class="muted" style="font-size:12px">How your little cartoon looks to players</span>
+          </div>
+          <div class="look-wrap">
+            <div class="look-preview" id="look-preview"></div>
+            <div class="look-tools">
+              <p class="look-label">Hair color</p>
+              <div class="look-swatches" id="look-hair"></div>
+              <p class="look-label">Hair length</p>
+              <div class="seg vis" id="look-length"><button type="button" data-v="long">Long</button><button type="button" data-v="medium">Shoulder</button><button type="button" data-v="short">Short bob</button></div>
+              <p class="look-label">Lips</p>
+              <div class="look-swatches" id="look-lips"></div>
+              <p class="look-label">Preview with</p>
+              <div class="seg vis" id="look-dress"><button type="button" data-v="0">Lingerie</button><button type="button" data-v="3">Half dressed</button><button type="button" data-v="6">Fully dressed</button></div>
+            </div>
+          </div>
+          <div class="tk-bar">
+            <button type="button" class="ghost" id="look-reset">Back to my default (long brown wig)</button>
+            <span class="grow"></span>
+            <span class="tk-saved" id="look-saved"></span>
+            <button type="button" id="look-save">Save look</button>
+          </div>
+          <div class="error" id="look-error"></div>
+        </section>
+        <section class="card">
+          <div class="row" style="justify-content:space-between;align-items:baseline">
+            <h2 style="margin:0">Spell It Out words</h2>
+            <span class="muted" style="font-size:12px" id="sw-count"></span>
+          </div>
+          <p class="muted" style="margin:6px 0 10px">Its own list, separate from Read My Mind. One per line: the word, a <strong>|</strong>, then the hint players see, e.g. <code>FOOT WORSHIP | Kink</code>. Spaces and dashes are fine. Players never get the same word twice until they&rsquo;ve had them all.</p>
+          <div class="row" style="gap:8px;margin-bottom:8px">
+            <input type="text" id="sw-new" maxlength="30" placeholder="New word, e.g. GOOD BOY" style="flex:2;min-width:160px;text-transform:uppercase" />
+            <input type="text" id="sw-cat" maxlength="24" placeholder="Hint, e.g. Rules" style="flex:1;min-width:110px" />
+            <button type="button" class="ghost" id="sw-add">+ Add</button>
+          </div>
+          <textarea id="sw-words" rows="10" spellcheck="false" style="width:100%;font-family:ui-monospace,Consolas,monospace;font-size:13px"></textarea>
+          <div class="tk-bar">
+            <button type="button" class="ghost" id="sw-reset">Go back to the starting list</button>
+            <span class="grow"></span>
+            <span class="tk-saved" id="sw-saved"></span>
+            <button type="button" id="sw-save">Save words</button>
+          </div>
+          <div class="error" id="sw-error"></div>
+        </section>
+        <section class="card">
           <h2>Coming next for the site</h2>
           <p class="muted" style="margin:0">Adopt a Bill, the Menu, Telegram prices, then the Links page &mdash; each gets its own editor here.</p>
         </section>
@@ -523,6 +604,7 @@
   <div class="tip" id="tip" hidden></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="gnomie-figure.js?v=20261114l"></script>
   <script>
     (function() {
       'use strict';
@@ -572,7 +654,7 @@
         terms_agreed: 'Fan agreed to updated terms', pin_changed: 'Fan changed their PIN', pin_change_failed: 'Wrong PIN while changing it',
         issue_reported: 'Fan reported a game problem', new_code_requested: 'Fan asked for a new code', backstage_new_code: 'You gave a new code',
         backstage_request_done: 'You handled a request', backstage_request_declined: 'You declined a request',
-        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note', game_given_up: 'Fan gave up a game', backstage_mind_words: 'You changed the Read My Mind words', backstage_count_loss: 'You counted an idle game as a loss',
+        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note', game_given_up: 'Fan gave up a game', backstage_mind_words: 'You changed the Read My Mind words', backstage_spell_words: 'You changed the Spell It Out words', backstage_look: 'You changed your Spell It Out look', backstage_count_loss: 'You counted an idle game as a loss',
         backstage_spoof_on: 'You made a spoof wallet', backstage_spoof_off: 'You made a spoof wallet normal again', backstage_colors: 'You changed color unlocks',
         backstage_deleted: 'You deleted an unused wallet', wallet_deleted: 'Fan deleted their unused wallet', backstage_recorded_load: 'You recorded a Throne load',
         backstage_edited_load: 'You edited a load', backstage_split: 'You split an entry (Throne + credit)', backstage_ticker: 'You changed the homepage ticker',
@@ -896,6 +978,66 @@
         catch (x) { $('mw-error').textContent = x.message; }
       });
 
+      // ---------- Site: Gnomie's look in Spell It Out ----------
+      var HAIRS = [['#5e3f2d', 'Brown (wig)'], ['#3a2419', 'Dark brown'], ['#c99a3e', 'Blonde'], ['#b8101c', 'Red'], ['#ff4f9a', 'Pink'], ['#4b1689', 'Purple'], ['#1f3c8f', 'Blue'], ['#1b1117', 'Black']];
+      var LIPS = [['#e3557f', 'Pink'], ['#c8102e', 'Red'], ['#9c2f5e', 'Berry'], ['#d98c8c', 'Nude']];
+      var look = null, lookSaved = null, lookDress = 0;
+      function lookPaint() {
+        $('look-preview').innerHTML = window.GnomieFigure ? window.GnomieFigure.html(lookDress, { look: look }) : '';
+        $('look-hair').innerHTML = HAIRS.map(function(h) { return '<button type="button" class="look-sw' + (look.hair === h[0] ? ' on' : '') + '" data-c="' + h[0] + '" title="' + h[1] + '" style="background:' + h[0] + '"></button>'; }).join('') +
+          (function() { var custom = !HAIRS.some(function(h) { return h[0] === look.hair; });
+            return '<label class="look-custom' + (custom ? ' on' : '') + '" title="Pick any color"><span class="look-custom-dot" style="' + (custom ? 'background:' + look.hair : '') + '">' + (custom ? '' : '+') + '</span>' +
+              '<input type="color" id="look-hair-custom" value="' + look.hair + '" /></label>'; })();
+        $('look-lips').innerHTML = LIPS.map(function(h) { return '<button type="button" class="look-sw' + (look.lips === h[0] ? ' on' : '') + '" data-c="' + h[0] + '" title="' + h[1] + '" style="background:' + h[0] + '"></button>'; }).join('');
+        document.querySelectorAll('#look-length button').forEach(function(b) { b.classList.toggle('on', b.dataset.v === look.length); });
+        document.querySelectorAll('#look-dress button').forEach(function(b) { b.classList.toggle('on', +b.dataset.v === lookDress); });
+        var dirty = JSON.stringify(look) !== JSON.stringify(lookSaved);
+        $('look-saved').textContent = dirty ? 'Unsaved changes' : ''; $('look-saved').style.color = dirty ? 'var(--accent)' : '';
+      }
+      async function loadLook() {
+        try { look = await api('GET', 'hq/look'); lookSaved = JSON.parse(JSON.stringify(look)); lookPaint(); } catch (x) { $('look-error').textContent = x.message; }
+      }
+      $('look-hair').addEventListener('click', function(e) { var b = e.target.closest('button[data-c]'); if (!b) return; look.hair = b.dataset.c; lookPaint(); });
+      $('look-hair').addEventListener('input', function(e) { if (e.target.id === 'look-hair-custom') { look.hair = e.target.value; $('look-preview').innerHTML = window.GnomieFigure.html(lookDress, { look: look }); $('look-saved').textContent = 'Unsaved changes'; $('look-saved').style.color = 'var(--accent)'; } });
+      $('look-hair').addEventListener('change', function(e) { if (e.target.id === 'look-hair-custom') lookPaint(); });
+      $('look-lips').addEventListener('click', function(e) { var b = e.target.closest('button[data-c]'); if (!b) return; look.lips = b.dataset.c; lookPaint(); });
+      $('look-length').addEventListener('click', function(e) { var b = e.target.closest('button'); if (!b) return; look.length = b.dataset.v; lookPaint(); });
+      $('look-dress').addEventListener('click', function(e) { var b = e.target.closest('button'); if (!b) return; lookDress = +b.dataset.v; lookPaint(); });
+      $('look-reset').addEventListener('click', function() { look = { hair: '#5e3f2d', length: 'long', roots: false, lips: '#e3557f' }; lookPaint(); });
+      $('look-save').addEventListener('click', async function() {
+        $('look-error').textContent = '';
+        try { var d = await api('POST', 'hq/look', look); look = d.look; lookSaved = JSON.parse(JSON.stringify(look)); lookPaint(); $('look-saved').textContent = 'Saved \u2713'; }
+        catch (x) { $('look-error').textContent = x.message; }
+      });
+
+      // ---------- Site: Spell It Out word list (separate from Read My Mind) ----------
+      function swPaint(words, custom) {
+        $('sw-words').value = words.map(function(x) { return x[0] + ' | ' + x[1]; }).join('\n');
+        $('sw-count').textContent = words.length + ' words' + (custom ? ' (your list)' : ' (starting list)');
+      }
+      function swDirty() { $('sw-saved').textContent = 'Unsaved changes'; $('sw-saved').style.color = 'var(--accent)'; }
+      async function loadSpellWords() {
+        try { var d = await api('GET', 'hq/spell-words'); swPaint(d.words, d.custom); } catch (x) { $('sw-error').textContent = x.message; }
+      }
+      $('sw-words').addEventListener('input', swDirty);
+      $('sw-add').addEventListener('click', function() {
+        var w = $('sw-new').value.trim().toUpperCase(), c = $('sw-cat').value.trim() || 'Kink';
+        if (!w) { $('sw-new').focus(); return; }
+        $('sw-words').value = (w + ' | ' + c) + ($('sw-words').value.trim() ? '\n' + $('sw-words').value : '');
+        $('sw-new').value = ''; $('sw-new').focus(); swDirty();
+      });
+      $('sw-new').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); $('sw-add').click(); } });
+      $('sw-save').addEventListener('click', async function() {
+        $('sw-error').textContent = '';
+        try { var d = await api('POST', 'hq/spell-words', { words: $('sw-words').value }); swPaint(d.words, true); $('sw-saved').textContent = 'Saved \u2713'; $('sw-saved').style.color = ''; }
+        catch (x) { $('sw-error').textContent = x.message; }
+      });
+      $('sw-reset').addEventListener('click', async function() {
+        if (!await uiConfirm('Replace your Spell It Out list with the starting list?')) return;
+        try { var d = await api('POST', 'hq/spell-words', { reset: true }); swPaint(d.words, false); $('sw-saved').textContent = 'Back to the starting list'; $('sw-saved').style.color = ''; }
+        catch (x) { $('sw-error').textContent = x.message; }
+      });
+
       // ---------- tabs ----------
       var tab = 'overview';
       $('tabs').addEventListener('click', function(e) {
@@ -907,7 +1049,7 @@
         if (tab === 'games' && !loaded.games) { loadDrops(true); loadDuels(true); loadBoard(); loaded.games = true; }
         if (tab === 'wallets' && !loaded.wallets) { loadWallets(); loaded.wallets = true; }
         if (tab === 'activity' && !loaded.events) loadEvents(true);
-        if (tab === 'site' && !loaded.site) { loadTicker(); loadMindWords(); loaded.site = true; }
+        if (tab === 'site' && !loaded.site) { loadTicker(); loadMindWords(); loadSpellWords(); loadLook(); loaded.site = true; }
       });
       var loaded = {};
 
@@ -974,7 +1116,7 @@
         if (wb) wb.remove();
         if (s.closeRequests) $('tabs').querySelector('[data-tab=wallets]').insertAdjacentHTML('beforeend', '<span class="badge" title="Asked to close">' + s.closeRequests + '</span>');
 
-        var GAME_NAMES = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row', 'dots-and-boxes': 'Dots & Boxes', 'read-my-mind': 'Read My Mind', 'sink-my-ship': 'Sink My Ship' };
+        var GAME_NAMES = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row', 'dots-and-boxes': 'Dots & Boxes', 'read-my-mind': 'Read My Mind', 'sink-my-ship': 'Sink My Ship', 'spell-it-out': 'Spell It Out' };
         table($('popular'), [{ t: 'Game' }, { t: 'Plays (period)', num: 1 }, { t: 'Taken (period)', num: 1 }, { t: 'Plays (all time)', num: 1 }, { t: 'Players', num: 1 }, { t: 'Taken (all time)', num: 1 }],
           (s.popular || []).map(function(g) {
             return '<tr><td>' + esc(GAME_NAMES[g.game] || g.game) + '</td><td class="num">' + num(g.plays_period || 0) + '</td><td class="num">' + money(g.cents_period || 0) + '</td><td class="num">' + num(g.plays) + '</td><td class="num">' + num(g.players) + '</td><td class="num">' + money(g.cents) + '</td></tr>';
@@ -1096,7 +1238,7 @@
         var hr = new Date().getHours();
         $('hello').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Gnomie';
         var fav = (s.popular || [])[0];
-        var GN = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust (31)', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row', 'dots-and-boxes': 'Dots & Boxes', 'read-my-mind': 'Read My Mind', 'sink-my-ship': 'Sink My Ship' };
+        var GN = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust (31)', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row', 'dots-and-boxes': 'Dots & Boxes', 'read-my-mind': 'Read My Mind', 'sink-my-ship': 'Sink My Ship', 'spell-it-out': 'Spell It Out' };
         $('home-nums').innerHTML =
           '<div><span>Sent this week</span><b>' + money(credited.d7) + '</b></div>' +
           '<div><span>Played this week</span><b>' + money((s.series || []).slice(-7).reduce(function(t, d) { return t + (d.spent || 0); }, 0)) + '</b></div>' +

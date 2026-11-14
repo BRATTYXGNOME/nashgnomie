@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spell It Out | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261114l" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <main class="section duel-page so-page games-lock">
+    <a class="games-back" href="games.html">&larr; All Games</a>
+    <h1 class="section-title games-heading">Spell It Out</h1>
+
+    <div class="gallery-age-gate" id="games-gate">
+      <div>
+        <h3>18+ GAMES</h3>
+        <p class="gate-rule">You <strong>MUST</strong> be 18 or older<br />to participate in this feature.<br /><span class="gate-pref">21+ preferred.</span></p>
+        <form id="games-gate-form" autocomplete="off">
+          <label class="gate-label" for="games-gate-birthdate">Your birthdate</label>
+          <input type="date" id="games-gate-birthdate" name="birthdate" required />
+          <div id="games-gate-error" class="age-error" aria-live="polite"></div>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="games-content">
+      <section id="wallet-root"></section>
+
+      <details class="duel-how">
+        <summary>How to play</summary>
+        <ul>
+          <li><strong>Type how much each wrong letter costs.</strong> Pennies are fine. The most a round can cost (6 misses) is set aside, and whatever you don&rsquo;t use comes back.</li>
+          <li><strong>Gnomie picks a word</strong> and shows you a hint, like &ldquo;Gear&rdquo; or &ldquo;Findom&rdquo;.</li>
+          <li><strong>Guess one letter at a time.</strong> Right letters are free and fill in the blanks.</li>
+          <li><strong>Each wrong letter costs your amount</strong>, and Gnomie puts a piece of clothing back on. She starts in her lingerie&hellip; six misses and she&rsquo;s fully dressed.</li>
+          <li><strong>Spell the word</strong> before 6 misses. You won&rsquo;t get the same word twice until you&rsquo;ve had them all.</li>
+        </ul>
+      </details>
+
+      <section class="duel-card so-card" id="so-root"></section>
+
+      <details class="game-activity" id="game-activity" data-label="Spell It Out" data-ready="1" hidden></details>
+
+      <section class="lb-card">
+        <h2 class="lb-title">Spell It Out Leaderboard</h2>
+        <p class="lb-sub">This game only &middot; <a href="games.html">See the overall board</a></p>
+        <div id="lb-game"></div>
+      </section>
+
+      <p class="duel-wins" id="lb-wins"></p>
+    </div>
+  </main>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <script src="components.js?v=20261114l"></script>
+  <script src="games.js?v=20261114l"></script>
+  <script src="gnomie-figure.js?v=20261114l"></script>
+  <script src="spell-it-out.js?v=20261114l"></script>
+</body>
+</html>

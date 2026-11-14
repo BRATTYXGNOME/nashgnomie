@@ -592,3 +592,41 @@ export function gnomieShipShot(view, loose) {
   const pool = checker.length ? checker : open;
   return pool[randomBelow(pool.length)];
 }
+
+// ---------- Spell It Out (guess Gnomie's word one letter at a time) ----------
+// The player types an amount. Each wrong letter costs that amount; right letters
+// are free. Six wrong letters and the round is over. The most a round can cost
+// (6x) is set aside at the start; whatever isn't used goes back.
+export const SPELL = { MISSES: 6 };
+// Starting list: WORD | Category. Gnomie can edit it in Backstage.
+export const SPELL_WORDS = [
+  ['COLLAR', 'Gear'], ['LEASH', 'Gear'], ['HANDCUFFS', 'Gear'], ['BLINDFOLD', 'Gear'], ['LATEX', 'Gear'],
+  ['LEATHER', 'Gear'], ['CORSET', 'Gear'], ['STILETTOS', 'Gear'], ['FLOGGER', 'Gear'], ['PADDLE', 'Gear'],
+  ['RIDING CROP', 'Gear'], ['HARNESS', 'Gear'], ['FISHNETS', 'Gear'], ['THIGH HIGHS', 'Gear'], ['GARTER BELT', 'Gear'],
+  ['BONDAGE', 'Kink'], ['SPANKING', 'Kink'], ['FOOT WORSHIP', 'Kink'], ['TEASING', 'Kink'], ['EDGING', 'Kink'],
+  ['SHIBARI', 'Kink'], ['ROLEPLAY', 'Kink'], ['VOYEUR', 'Kink'], ['DENIAL', 'Kink'], ['CHASTITY', 'Kink'],
+  ['TRIBUTE', 'Findom'], ['FINDOM', 'Findom'], ['PAYPIG', 'Findom'], ['ALLOWANCE', 'Findom'], ['SPOIL ME', 'Findom'],
+  ['WISHLIST', 'Findom'], ['CASH MEET', 'Findom'], ['TAXES', 'Findom'], ['GIFT CARD', 'Findom'],
+  ['BRAT', 'Roles'], ['DOMME', 'Roles'], ['SUBMISSIVE', 'Roles'], ['GODDESS', 'Roles'], ['PRINCESS', 'Roles'],
+  ['SWITCH', 'Roles'], ['PET', 'Roles'], ['SAFEWORD', 'Rules'], ['AFTERCARE', 'Rules'], ['OBEY', 'Rules'],
+  ['PRAISE', 'Rules'], ['GOOD BOY', 'Rules'], ['KNEEL', 'Rules'], ['BEG', 'Rules']
+];
+// Letters A-Z are guessed; spaces and dashes are shown from the start
+export function spellMask(word, guessed) {
+  return word.split('').map(ch => /[A-Z]/.test(ch) ? (guessed.indexOf(ch) !== -1 ? ch : null) : ch);
+}
+export function spellSolved(word, guessed) { return spellMask(word, guessed).every(x => x !== null); }
+export function spellMisses(word, guessed) { return guessed.filter(l => word.indexOf(l) === -1).length; }
+// Clean a Backstage word list: "WORD | Category" per line
+export function spellParse(text) {
+  const out = [], bad = [], seen = {};
+  String(text || '').split(/\r?\n/).forEach(line => {
+    const t = line.trim(); if (!t) return;
+    const [w, cat] = t.split('|').map(x => (x || '').trim());
+    const word = w.toUpperCase().replace(/\s+/g, ' ');
+    if (!/^[A-Z][A-Z \-]{1,28}[A-Z]$/.test(word) || word.replace(/[^A-Z]/g, '').length < 3) { bad.push(w); return; }
+    if (seen[word]) return; seen[word] = 1;
+    out.push([word, (cat || 'Kink').replace(/[<>]/g, '').slice(0, 24)]);
+  });
+  return { words: out, bad };
+}

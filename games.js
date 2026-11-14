@@ -513,6 +513,9 @@
     shipsState: async function() { return (await call('GET', 'ships')).game; },
     shipsStart: async function(amountCents, ships) { return call('POST', 'ships/start', { amount: amountCents, ships: ships }); },
     shipsFire: async function(r, c) { return call('POST', 'ships/fire', { r: r, c: c }); },
+    spellState: async function() { return (await call('GET', 'spell')).game; },
+    spellStart: async function(amountCents) { return call('POST', 'spell/start', { amount: amountCents }); },
+    spellGuess: async function(letter) { return call('POST', 'spell/guess', { letter: letter }); },
     bottleSpin: async function(boardKey, pick) { return call('POST', 'bottle/spin', { board: boardKey, pick: pick }); },
     leaderboard: async function(boardKey) { return (await call('GET', 'leaderboard?board=' + encodeURIComponent(boardKey))).rows; },
     statement: async function() { return (await call('GET', 'statement')).rows; },
@@ -1302,7 +1305,7 @@
       }
       if (kind === 'issue') {
         var reqs = [];
-        var GAMES = ['Drop the Ball', 'Dice Duel', 'Don’t Bust', 'Spin the Bottle', 'Mancala', '5 in a Row', 'Dots & Boxes', 'Read My Mind', 'Sink My Ship', 'Something else'];
+        var GAMES = ['Drop the Ball', 'Dice Duel', 'Don’t Bust', 'Spin the Bottle', 'Mancala', '5 in a Row', 'Dots & Boxes', 'Read My Mind', 'Sink My Ship', 'Spell It Out', 'Something else'];
         var intro2 = el('p', { class: 'wl-modal-lead' }, 'Did a game freeze, glitch, or charge you the wrong amount? Tell Gnomie what happened and she&rsquo;ll look into it.');
         var tw2 = twoWays('Send Gnomie an alert',
           '<label class="wl-field"><span>Which game?</span><select name="game">' + GAMES.map(function(g) { return '<option>' + g + '</option>'; }).join('') + '</select></label>' +
