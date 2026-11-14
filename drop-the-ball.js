@@ -14,7 +14,6 @@
   var page = document.querySelector('.drain-page');
   var canvas = document.getElementById('drain-canvas');
   var ctx = canvas.getContext('2d');
-  var aimInput = document.getElementById('drain-aim');
   var dropBtn = document.getElementById('drain-drop');
   var resultEl = document.getElementById('drain-result');
   var chanceEl = document.getElementById('drain-chance');
@@ -22,7 +21,7 @@
   var boardsEl = document.getElementById('drain-boards');
   var statusEl = document.getElementById('drain-status');
 
-  var state = { wallet: null, board: 'sweet', aim: 0, ball: null, busy: false, flash: {}, selected: null };
+  var state = { wallet: null, board: 'sweet', aim: 0, ball: null, busy: false, flash: {}, selected: null, dragging: false, demo: false };
   var geo = {};
 
   // ---------- 18+ gate ----------
@@ -48,10 +47,20 @@
     G.mountWallet(document.getElementById('wallet-root'), { compact: true });
     document.addEventListener('wallet:change', function(e) { state.wallet = e.detail; refresh(); });
     window.addEventListener('resize', function() { layout(); draw(); });
-    aimInput.addEventListener('input', function() { state.aim = +aimInput.value; refresh(); });
-    canvas.addEventListener('click', onCanvasTap);
+    // Aim: drag the ball along the top, or tap anywhere above the slots
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', function() { state.dragging = false; });
+    canvas.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); setAim(state.aim + (e.key === 'ArrowLeft' ? -1 : 1)); }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); drop(); }
+    });
+    canvas.tabIndex = 0;
     dropBtn.addEventListener('click', drop);
+    document.getElementById('drain-demo').addEventListener('click', function() { if (!state.demo) runDemo(); });
     G.renderLeaderboard(document.getElementById('lb-game'), GAME);
+    G.renderGameActivity(document.getElementById('game-activity'), 'Drop the Ball');
     layout(); refresh(); requestAnimationFrame(loop);
   }
 
@@ -97,10 +106,12 @@
     var g = geo, now = performance.now();
     ctx.clearRect(0, 0, g.w, g.h);
 
-    // aim marker
-    var ax = xAt(12 + 2 * state.aim);
-    ctx.fillStyle = '#ff5fa2';
-    ctx.beginPath(); ctx.moveTo(ax - 7, 8); ctx.lineTo(ax + 7, 8); ctx.lineTo(ax, 18); ctx.closePath(); ctx.fill();
+    // aim guide: a faint line from the waiting ball to the first peg
+    if (!state.ball || !state.ball.anim) {
+      var ax = xAt(12 + 2 * state.aim);
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(ax, 22); ctx.lineTo(ax, yAt(0) - 4); ctx.stroke(); ctx.setLineDash([]);
+    }
 
     // pegs
     for (var r = 0; r < 12; r++) {
@@ -136,14 +147,29 @@
     if (state.ball) {
       var b = state.ball, rad = Math.max(6, g.half * 0.55), spin = b.spin || 0;
       var hx = b.x - rad * 0.35 + Math.sin(spin) * rad * 0.15, hy = b.y - rad * 0.4 + Math.cos(spin) * rad * 0.08;
-      var grad = ctx.createRadialGradient(hx, hy, rad * 0.1, b.x, b.y, rad);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.25, '#ffc2dd');
-      grad.addColorStop(0.6, '#ff5fa2');
-      grad.addColorStop(1, '#7a1846');
-      ctx.beginPath(); ctx.arc(b.x, b.y, rad, 0, Math.PI * 2);
-      ctx.fillStyle = grad; ctx.fill();
+      drawBall(b.x, b.y, rad, hx, hy, 1);
+    } else {
+      // Waiting ball at the top, where it will drop from
+      var r0 = Math.max(6, g.half * 0.55), bx = xAt(12 + 2 * state.aim), by = 14;
+      drawBall(bx, by, r0 * (state.dragging ? 1.15 : 1), bx - r0 * 0.35, by - r0 * 0.4, 1);
     }
+  }
+  // Metallic ball in the player's colour
+  function shade(hex, t) { // t < 0 darker, t > 0 lighter
+    var n = parseInt(hex.slice(1), 16), r = n >> 16, gg = (n >> 8) & 255, bb = n & 255;
+    var f = function(c) { return Math.round(t < 0 ? c * (1 + t) : c + (255 - c) * t); };
+    return 'rgb(' + f(r) + ',' + f(gg) + ',' + f(bb) + ')';
+  }
+  function youColor() { return (getComputedStyle(document.documentElement).getPropertyValue('--you') || '#4ade80').trim(); }
+  function drawBall(x, y, rad, hx, hy) {
+    var c = youColor();
+    var grad = ctx.createRadialGradient(hx, hy, rad * 0.1, x, y, rad);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.25, shade(c, 0.55));
+    grad.addColorStop(0.6, c);
+    grad.addColorStop(1, shade(c, -0.6));
+    ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2);
+    ctx.fillStyle = grad; ctx.fill();
   }
   function roundRect(x, y, w, h, r) {
     ctx.beginPath();
@@ -202,10 +228,10 @@
 
   async function drop() {
     if (state.busy) return;
-    if (!state.wallet || !state.wallet.hasPin || balance() <= 0) return;
+    if (!state.demo && (!state.wallet || !state.wallet.hasPin || balance() <= 0)) return;
     state.busy = true; dropBtn.disabled = true; resultEl.textContent = '';
     try {
-      var res = await G.api.drop(GAME, state.board, state.aim);
+      var res = state.demo ? fakeDrop() : await G.api.drop(GAME, state.board, state.aim);
       state.pending = res;
       state.ball = makeBall(res.path);
     } catch (x) {
@@ -217,7 +243,12 @@
   function landed() {
     var res = state.pending;
     state.flash[res.slot] = performance.now();
-    resultEl.innerHTML = '<span class="drain-loss">' + G.money(-res.lossCents) + '</span>';
+    resultEl.innerHTML = '<span class="drain-loss drain-loss-pop">' + G.money(-res.lossCents) + '</span>';
+    // Every drop ends with a big moment
+    if (res.slot === 0 || res.slot === 12) G.celebrate('lose', 'Ouch!', 'The edge: ' + G.money(-res.lossCents));
+    else if (res.slot >= 5 && res.slot <= 7) G.celebrate('win', 'Lucky!', G.money(-res.lossCents));
+    else G.celebrate('tie', 'Dropped!', G.money(-res.lossCents));
+    if (state.demo) { setTimeout(function() { state.busy = false; refresh(); }, 250); return; }
     document.dispatchEvent(new CustomEvent('wallet:change', { detail: res.wallet }));
     G.renderLeaderboard(document.getElementById('lb-game'), GAME);
     setTimeout(function() { state.busy = false; refresh(); }, 250);
@@ -261,17 +292,76 @@
     }).join('');
 
     var bal = balance();
+    if (state.demo) { dropBtn.disabled = true; draw(); return; }
     if (!state.wallet || !state.wallet.hasPin) { statusEl.textContent = 'Set up your wallet above to play.'; dropBtn.disabled = true; }
     else if (bal <= 0) { statusEl.textContent = 'Your wallet is empty. Load it to play.'; dropBtn.disabled = true; }
     else { statusEl.textContent = ''; dropBtn.disabled = state.busy; }
     draw();
   }
 
-  function onCanvasTap(e) {
-    var rect = canvas.getBoundingClientRect();
-    var x = e.clientX - rect.left, y = e.clientY - rect.top;
-    if (y < geo.drainY - 30) return;
-    var k = Math.round((x - geo.pad) / (2 * geo.half));
-    if (k >= 0 && k <= 12) { state.selected = k; refresh(); }
+  // ---------- aiming: drag the ball, or tap above the slots ----------
+  function aimFromX(x) { return Math.max(-6, Math.min(6, Math.round(((x - geo.pad) / geo.half - 12) / 2))); }
+  function setAim(a) {
+    a = Math.max(-6, Math.min(6, a));
+    if (a === state.aim) return;
+    state.aim = a; state.selected = null; refresh();
+  }
+  function canAim() { return !state.busy && !state.demo; }
+  function pointIn(e) { var r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+  function onPointerDown(e) {
+    var p = pointIn(e);
+    if (p.y >= geo.drainY - 30) { // tapped the slot row: show how often balls land there
+      var k = Math.round((p.x - geo.pad) / (2 * geo.half));
+      if (k >= 0 && k <= 12) { state.selected = k; refresh(); }
+      return;
+    }
+    if (!canAim()) return;
+    state.dragging = true;
+    try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
+    setAim(aimFromX(p.x));
+  }
+  function onPointerMove(e) {
+    var p = pointIn(e);
+    canvas.style.cursor = p.y < geo.drainY - 30 && canAim() ? (state.dragging ? 'grabbing' : 'pointer') : 'default';
+    if (state.dragging) setAim(aimFromX(p.x));
+  }
+  function onPointerUp() { state.dragging = false; draw(); }
+
+  // ---------- demo: pretend drops with captions (no money) ----------
+  function fakeDrop() {
+    var r = G.dropPath(state.aim);
+    return { path: r.path, slot: r.slot, lossCents: G.drainValue(state.board, r.slot, 1000000).cents };
+  }
+  var demoRun = 0;
+  function wait(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+  async function runDemo() {
+    var run = ++demoRun;
+    state.demo = true; state.selected = null; resultEl.textContent = '';
+    var demoBtn = document.getElementById('drain-demo');
+    demoBtn.textContent = 'End demo';
+    demoBtn.onclick = function(e) { if (state.demo) { e.stopImmediatePropagation(); demoRun++; stopDemo(); } };
+    var say = function(t) { statusEl.innerHTML = '<span class="game-demo-cap">Demo &middot; ' + t + '</span>'; };
+    var steps = [
+      function() { setAimDemo(0); say('Drag the ball (or tap) to choose where it drops.'); }, 2200,
+      function() { setAimDemo(-3); say('Aim left&hellip;'); }, 1000,
+      function() { setAimDemo(3); say('&hellip;or right. The middle slots are cheaper, the edges cost the most.'); }, 2600,
+      function() { setAimDemo(0); say('Press <strong>Drop</strong>. The ball bounces down the pegs&hellip;'); state.busy = false; drop(); }, 4200,
+      function() { say('&hellip;and the slot it lands in is what you lose.'); }, 2400,
+      function() { setAimDemo(-6); say('Aiming at the edge makes the big slots more likely.'); state.busy = false; drop(); }, 4400,
+      function() { say('That&rsquo;s it! Bigger boards unlock as your wallet grows.'); }, 2400
+    ];
+    for (var i = 0; i < steps.length; i += 2) {
+      if (run !== demoRun) return;
+      steps[i]();
+      await wait(steps[i + 1]);
+    }
+    if (run === demoRun) stopDemo();
+  }
+  function setAimDemo(a) { state.aim = a; draw(); }
+  function stopDemo() {
+    state.demo = false; state.busy = false; state.ball = null; resultEl.textContent = '';
+    var demoBtn = document.getElementById('drain-demo');
+    demoBtn.innerHTML = '&#9654; Watch a demo'; demoBtn.onclick = null;
+    refresh();
   }
 })();

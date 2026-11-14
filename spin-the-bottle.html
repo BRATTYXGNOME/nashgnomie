@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spin the Bottle | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261114a" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <main class="section drain-page stb-page games-lock">
+    <a class="games-back" href="games.html">&larr; All Games</a>
+    <h1 class="section-title games-heading">Spin the Bottle</h1>
+
+    <div class="gallery-age-gate" id="games-gate">
+      <div>
+        <h3>18+ GAMES</h3>
+        <p class="gate-rule">You <strong>MUST</strong> be 18 or older<br />to participate in this feature.<br /><span class="gate-pref">21+ preferred.</span></p>
+        <form id="games-gate-form" autocomplete="off">
+          <label class="gate-label" for="games-gate-birthdate">Your birthdate</label>
+          <input type="date" id="games-gate-birthdate" name="birthdate" required />
+          <div id="games-gate-error" class="age-error" aria-live="polite"></div>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="games-content">
+      <section id="wallet-root"></section>
+
+      <details class="duel-how">
+        <summary>How to play</summary>
+        <ul>
+          <li><strong>Pick a wedge.</strong> The amounts are hidden and shuffled every spin, so every wedge is a blind pick.</li>
+          <li><strong>Lock in &amp; Spin.</strong> All the amounts are revealed and the bottle spins. Once it&rsquo;s spinning, there&rsquo;s no backing out.</li>
+          <li><strong>The bottle lands on another wedge:</strong> you lose that wedge&rsquo;s amount.</li>
+          <li><strong>The bottle lands on YOUR wedge:</strong> you lose <strong>double</strong> your wedge.</li>
+          <li><strong>Every wedge is equally likely</strong> (1 in 8). Your wallet needs to cover the worst case: double the biggest wedge.</li>
+        </ul>
+      </details>
+
+      <section class="drain-game stb-game">
+        <div class="drain-boards" id="stb-boards" role="group" aria-label="Board"></div>
+        <div class="stb-wheel-wrap">
+          <svg class="stb-wheel" id="stb-wheel" viewBox="0 0 320 320" aria-label="Spin the Bottle circle"></svg>
+        </div>
+        <p class="stb-status" id="stb-status" aria-live="polite"></p>
+        <button type="button" class="btn btn-primary drain-drop" id="stb-spin">Lock in &amp; Spin</button>
+        <button type="button" class="wl-link game-demo-btn" id="stb-demo">&#9654; Watch a demo</button>
+      </section>
+
+      <details class="game-activity" id="game-activity" data-label="Spin the Bottle" data-ready="1" hidden></details>
+
+      <section class="lb-card">
+        <h2 class="lb-title">Spin the Bottle Leaderboard</h2>
+        <p class="lb-sub">This game only &middot; <a href="games.html">See the overall board</a></p>
+        <div id="lb-game"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <script src="components.js?v=20261114a"></script>
+  <script src="games.js?v=20261114a"></script>
+  <script src="spin-the-bottle.js?v=20261114a"></script>
+</body>
+</html>

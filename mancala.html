@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mancala | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261114a" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <main class="section duel-page mc-page games-lock">
+    <a class="games-back" href="games.html">&larr; All Games</a>
+    <h1 class="section-title games-heading">Mancala</h1>
+
+    <div class="gallery-age-gate" id="games-gate">
+      <div>
+        <h3>18+ GAMES</h3>
+        <p class="gate-rule">You <strong>MUST</strong> be 18 or older<br />to participate in this feature.<br /><span class="gate-pref">21+ preferred.</span></p>
+        <form id="games-gate-form" autocomplete="off">
+          <label class="gate-label" for="games-gate-birthdate">Your birthdate</label>
+          <input type="date" id="games-gate-birthdate" name="birthdate" required />
+          <div id="games-gate-error" class="age-error" aria-live="polite"></div>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="games-content">
+      <section id="wallet-root"></section>
+
+      <details class="duel-how">
+        <summary>How to play</summary>
+        <ul>
+          <li><strong>Pick a pit on your side</strong> (the bottom row). All its beads are scooped up and dropped one at a time into the next pits, going right and around the board.
+          </li>
+          <li><strong>Your store is on the right.</strong> Beads you drop there are yours to keep. You skip Gnomie&rsquo;s store.</li>
+          <li><strong>Last bead lands in your store?</strong> You get another turn.</li>
+          <li><strong>Last bead lands in an empty pit on your side?</strong> You capture it plus every bead in Gnomie&rsquo;s pit straight across.</li>
+          <li><strong>When one side runs out,</strong> each player keeps what&rsquo;s left on their own side. Most beads in your store wins.</li>
+        </ul>
+      </details>
+
+      <section class="duel-card mc-card" id="mc-root"></section>
+
+      <details class="game-activity" id="game-activity" data-label="Mancala" data-ready="1" hidden></details>
+
+      <section class="lb-card">
+        <h2 class="lb-title">Mancala Leaderboard</h2>
+        <p class="lb-sub">This game only &middot; <a href="games.html">See the overall board</a></p>
+        <div id="lb-game"></div>
+      </section>
+
+      <p class="duel-wins" id="lb-wins"></p>
+    </div>
+  </main>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <script src="components.js?v=20261114a"></script>
+  <script src="games.js?v=20261114a"></script>
+  <script src="mancala.js?v=20261114a"></script>
+</body>
+</html>

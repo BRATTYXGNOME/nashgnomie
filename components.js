@@ -306,6 +306,9 @@
             '<a href="games.html" class="nav-all-games">All Games</a>' +
             '<a href="drop-the-ball.html">Drop the Ball</a>' +
             '<a href="dice-duel.html">Dice Duel</a>' +
+            '<a href="too-far.html">Too Far (31) <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
+            '<a href="spin-the-bottle.html">Spin the Bottle <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
+            '<a href="mancala.html">Mancala <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
           '</div>' +
         '</div>' +
         '<div class="nav-dropdown">' +
@@ -353,6 +356,9 @@
         '<a href="games.html" class="nav-all-games">All Games</a>' +
         '<a href="drop-the-ball.html">Drop the Ball</a>' +
         '<a href="dice-duel.html">Dice Duel</a>' +
+        '<a href="too-far.html">Too Far (31) <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
+        '<a href="spin-the-bottle.html">Spin the Bottle <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
+        '<a href="mancala.html">Mancala <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
       '</div>' +
       '<a href="#" class="drawer-services-toggle" id="drawer-expenses-toggle">Expenses &#9662;</a>' +
       '<div class="drawer-services-sub" id="drawer-expenses-sub">' +
@@ -682,6 +688,14 @@
   // ==========================================
   // INJECT ALL COMPONENTS
   // ==========================================
+  // "NEW" tags take themselves down after their date (data-new-until="YYYY-MM-DD")
+  function dropOldNew() {
+    var today = new Date().toISOString().slice(0, 10);
+    document.querySelectorAll('[data-new-until]').forEach(function(t) { if (today > t.getAttribute('data-new-until')) t.remove(); });
+  }
+  document.addEventListener('DOMContentLoaded', function() { setTimeout(dropOldNew, 0); });
+  window.addEventListener('load', dropOldNew);
+
   document.addEventListener('DOMContentLoaded', function() {
     var navTarget = document.getElementById('nav-inject');
     var footerTarget = document.getElementById('footer-inject');

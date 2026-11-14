@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Games | NASH | Gnomie</title>
   <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261112a" />
+  <link rel="stylesheet" href="styles.css?v=20261114a" />
 </head>
 <body>
   <div id="nav-inject"></div>
@@ -40,6 +40,38 @@
             <span class="btn btn-primary game-card-play">Play</span>
           </div>
         </a>
+        <a class="game-card" href="too-far.html">
+          <span class="game-card-new" data-new-until="2026-11-28">NEW</span>
+          <div class="game-card-art game-card-tf" aria-hidden="true">
+            <span class="gc-card gc-card-a">11</span>
+            <span class="gc-card gc-card-m">9</span>
+            <span class="gc-card gc-card-b">11</span>
+          </div>
+          <div class="game-card-body">
+            <h2 class="game-card-title">Too Far (31)</h2>
+            <span class="btn btn-primary game-card-play">Play</span>
+          </div>
+        </a>
+        <a class="game-card" href="spin-the-bottle.html">
+          <span class="game-card-new" data-new-until="2026-11-28">NEW</span>
+          <div class="game-card-art game-card-stb" aria-hidden="true">
+            <span class="gc-wheel"><span class="gc-bottle"></span></span>
+          </div>
+          <div class="game-card-body">
+            <h2 class="game-card-title">Spin the Bottle</h2>
+            <span class="btn btn-primary game-card-play">Play</span>
+          </div>
+        </a>
+        <a class="game-card" href="mancala.html">
+          <span class="game-card-new" data-new-until="2026-11-28">NEW</span>
+          <div class="game-card-art game-card-mc" aria-hidden="true">
+            <span class="gc-mc"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><b></b><b></b></span>
+          </div>
+          <div class="game-card-body">
+            <h2 class="game-card-title">Mancala</h2>
+            <span class="btn btn-primary game-card-play">Play</span>
+          </div>
+        </a>
       </section>
 
       <!-- Leaderboard across every game -->
@@ -54,8 +86,8 @@
   <div id="footer-inject"></div>
   <div id="contact-popup-inject"></div>
 
-  <script src="components.js?v=20261112a"></script>
-  <script src="games.js?v=20261112a"></script>
+  <script src="components.js?v=20261114a"></script>
+  <script src="games.js?v=20261114a"></script>
   <script>
     // No birthdate gate on this page; each game has its own.
     Games.mountWallet(document.getElementById('wallet-root'));

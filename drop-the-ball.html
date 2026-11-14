@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Drop the Ball | NASH | Gnomie</title>
   <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261112a" />
+  <link rel="stylesheet" href="styles.css?v=20261114a" />
 </head>
 <body>
   <div id="nav-inject"></div>
@@ -17,8 +17,9 @@
     <div class="gallery-age-gate" id="games-gate">
       <div>
         <h3>18+ GAMES</h3>
-        <p>This contains adult content (18+).<br />Please confirm your birthdate:</p>
+        <p class="gate-rule">You <strong>MUST</strong> be 18 or older<br />to participate in this feature.<br /><span class="gate-pref">21+ preferred.</span></p>
         <form id="games-gate-form" autocomplete="off">
+          <label class="gate-label" for="games-gate-birthdate">Your birthdate</label>
           <input type="date" id="games-gate-birthdate" name="birthdate" required />
           <div id="games-gate-error" class="age-error" aria-live="polite"></div>
           <button type="submit" class="btn btn-primary">Continue</button>
@@ -40,20 +41,16 @@
         </div>
         <p class="drain-chance" id="drain-chance"></p>
 
-        <!-- Aim -->
-        <div class="drain-aim">
-          <span>Left</span>
-          <input type="range" id="drain-aim" min="-6" max="6" step="1" value="0" aria-label="Aim" />
-          <span>Right</span>
-        </div>
+        <p class="drain-aim-hint" id="drain-aim-hint">Drag the ball, or tap where you want to drop it.</p>
 
         <button type="button" class="btn btn-primary drain-drop" id="drain-drop">Drop</button>
         <p class="drain-status" id="drain-status" aria-live="polite"></p>
+        <button type="button" class="wl-link game-demo-btn" id="drain-demo">&#9654; Watch a demo</button>
 
         <ul class="drain-how">
           <li><strong>Every drop counts</strong> the second you let go.</li>
           <li><strong>You can&rsquo;t lose more</strong> than what&rsquo;s in your wallet.</li>
-          <li><strong>Aim changes your chances.</strong> Slide left or right before you drop.</li>
+          <li><strong>Aim changes your chances.</strong> Drag the ball (or tap above the pegs) before you drop.</li>
         </ul>
 
         <!-- A little info, no numbers -->
@@ -63,6 +60,8 @@
           <p class="drain-likely-note">Changes with your aim.</p>
         </details>
       </section>
+
+      <details class="game-activity" id="game-activity" data-label="Drop the Ball" data-ready="1" hidden></details>
 
       <section class="lb-card">
         <h2 class="lb-title">Drop the Ball Leaderboard</h2>
@@ -75,8 +74,8 @@
   <div id="footer-inject"></div>
   <div id="contact-popup-inject"></div>
 
-  <script src="components.js?v=20261112a"></script>
-  <script src="games.js?v=20261112a"></script>
-  <script src="drop-the-ball.js?v=20261112a"></script>
+  <script src="components.js?v=20261114a"></script>
+  <script src="games.js?v=20261114a"></script>
+  <script src="drop-the-ball.js?v=20261114a"></script>
 </body>
 </html>

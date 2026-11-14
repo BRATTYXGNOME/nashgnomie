@@ -19,7 +19,7 @@
 
   // view: what's on screen right now (boards can differ from the server
   // state for a moment while a move is being shown)
-  var state = { wallet: null, duel: null, chosen: null, busy: false, result: null, error: '', view: null };
+  var state = { wallet: null, duel: null, chosen: null, busy: false, result: null, error: '', view: null, finalView: null, demo: false };
 
   // ---------- 18+ gate ----------
   (function gate() {
@@ -52,6 +52,7 @@
   function boards() {
     G.renderLeaderboard(document.getElementById('lb-game'), GAME);
     renderWins();
+    G.renderGameActivity(document.getElementById('game-activity'), 'Dice Duel');
   }
 
   // Small, low-key "Most wins against Gnomie" strip (top 5 + your win count)
@@ -116,10 +117,12 @@
       '<h2 class="duel-title">Play for</h2>' +
       amountsHTML() +
       (state.chosen ? payTable(state.chosen) : '') +
-      '<p class="duel-double">If Gnomie wins, you pay <strong>DOUBLE</strong>.</p>' +
+      '<p class="duel-double">If Gnomie wins, you lose <strong>DOUBLE</strong>.</p>' +
       '<button type="button" class="btn btn-primary duel-start" id="duel-start"' + (state.chosen ? '' : ' disabled') + '>' +
         (state.chosen ? 'Start for ' + money(state.chosen) : 'Pick an amount') + '</button>' +
-      '<p class="duel-status">' + (state.error || (!ready ? 'Set up your wallet above to play.' : bal <= 0 ? 'Load your wallet to play.' : '')) + '</p>';
+      '<p class="duel-status">' + (state.error || (!ready ? 'Set up your wallet above to play.' : bal <= 0 ? 'Load your wallet to play.' : '')) + '</p>' +
+      '<button type="button" class="wl-link game-demo-btn" id="duel-demo">&#9654; Watch a demo</button>';
+    document.getElementById('duel-demo').addEventListener('click', runDemo);
 
     root.querySelectorAll('.duel-amount').forEach(function(b) {
       b.addEventListener('click', function() { state.chosen = +b.dataset.amt; state.error = ''; render(); });
@@ -140,9 +143,9 @@
   function payTable(a, small) {
     var p = pays(a);
     return '<div class="duel-pays' + (small ? ' duel-pays-small' : '') + '">' +
-      '<div class="win"><span>' + (small ? 'Win' : 'You Won') + '</span><strong>pay ' + money(p.win) + '</strong></div>' +
-      '<div class="tie"><span>Tie</span><strong>pay ' + money(p.tie) + '</strong></div>' +
-      '<div class="lose"><span>' + (small ? 'Lose' : 'Gnomie Won') + '</span><strong>pay ' + money(p.lose) + '</strong></div>' +
+      '<div class="win"><span>' + (small ? 'Win' : 'If You Win') + '</span><strong>' + money(-p.win) + '</strong></div>' +
+      '<div class="tie"><span>' + (small ? 'Tie' : 'If We Tie') + '</span><strong>' + money(-p.tie) + '</strong></div>' +
+      '<div class="lose"><span>' + (small ? 'Lose' : 'If Gnomie Wins') + '</span><strong>' + money(-p.lose) + '</strong></div>' +
     '</div>';
   }
 
@@ -179,8 +182,8 @@
 
   function renderGame() {
     var d = state.duel, v = state.view, p = pays(d.amount);
-    var yourTurnToRoll = !state.busy && !v.yourDie && !state.result;
-    var canPlace = !state.busy && !!v.yourDie;
+    var yourTurnToRoll = !state.busy && !v.yourDie && !state.result && !state.demo;
+    var canPlace = !state.busy && !!v.yourDie && !state.demo;
     root.innerHTML =
       payTable(d.amount, true) +
       // Gnomie's corner: pic, name, total, then her roll
@@ -196,7 +199,10 @@
         trayHTML(v.yourDie, v.rolling === 'you') +
         '<button type="button" class="btn btn-primary duel-roll-btn" id="duel-roll"' + (yourTurnToRoll ? '' : ' disabled') + '>Roll</button>' +
         '<span class="duel-who"><span class="duel-name">You</span><span class="duel-total">' + G.boardScore(v.player) + '</span></span>' +
-      '</div>';
+      '</div>' +
+      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : '');
+    var stop = document.getElementById('demo-stop');
+    if (stop) stop.addEventListener('click', endDemo);
 
     var rollBtn = document.getElementById('duel-roll');
     if (rollBtn) rollBtn.addEventListener('click', roll);
@@ -261,6 +267,9 @@
         state.duel = res.final;
         show({ player: res.final.player, gnome: res.final.gnome, knock: null, newAt: null, status: 'Board full!' });
         await wait(1000);
+        state.finalView = { player: res.final.player, gnome: res.final.gnome, yourDie: null, gnomieDie: null };
+        var oc = res.result.outcome;
+        G.celebrate(oc === 'win' ? 'win' : oc === 'tie' ? 'tie' : 'lose', oc === 'win' ? 'You Won!' : oc === 'tie' ? 'Tie!' : 'Gnomie Wins!', money(-res.result.paidCents));
         state.result = res.result; state.duel = null; state.view = null;
         boards();
       } else {
@@ -274,36 +283,70 @@
     }
   }
 
-  // 3) Result
+  // 3) Result: the final board stays on screen under the result
   function renderResult() {
-    var r = state.result;
+    var r = state.result, fv = state.finalView;
     if (state.chosen == null) state.chosen = r.amount;
     var title = r.outcome === 'win' ? 'You Won!' : r.outcome === 'tie' ? 'It&rsquo;s a tie' : 'Gnomie Won!';
-    var note = r.outcome === 'win' ? 'You pay ' + money(r.paidCents) + '.' :
-               r.outcome === 'tie' ? 'Half a win each, so you pay ' + money(r.paidCents) + '.' :
-               'You pay double: ' + money(r.paidCents) + '.';
+    var note = r.outcome === 'win' ? money(-r.paidCents) :
+               r.outcome === 'tie' ? 'Half a win each: ' + money(-r.paidCents) :
+               'Double: ' + money(-r.paidCents);
     root.innerHTML =
       '<div class="duel-result duel-result-' + r.outcome + '">' +
-        '<img class="duel-pfp duel-pfp-big" src="' + PFP + '" alt="" />' +
         '<h2 class="duel-result-title">' + title + '</h2>' +
         '<p class="duel-result-score">You <strong>' + r.you + '</strong> &middot; Gnomie <strong>' + r.gnomie + '</strong></p>' +
         '<p class="duel-result-pay">' + note + '</p>' +
       '</div>' +
-      '<h3 class="duel-again-title">Play again for</h3>' +
-      amountsHTML() +
+      (fv ?
+        '<div class="game-final">' +
+          '<div class="duel-player duel-player-gnomie"><span class="duel-who"><img class="duel-pfp" src="' + PFP + '" alt="" /><span class="duel-name">Gnomie</span><span class="duel-total">' + r.gnomie + '</span></span></div>' +
+          boardHTML(fv.gnome, 'gnomie', false, fv) +
+          '<p class="duel-status-line">Final board</p>' +
+          boardHTML(fv.player, 'you', false, fv) +
+          '<div class="duel-player duel-player-you"><span class="duel-who"><span class="duel-name">You</span><span class="duel-total">' + r.you + '</span></span></div>' +
+        '</div>' : '') +
       '<div class="duel-result-actions">' +
-        '<button type="button" class="btn btn-primary" id="duel-again"' + (state.chosen ? '' : ' disabled') + '>' +
-          (state.chosen ? 'Start for ' + money(state.chosen) : 'Pick an amount') + '</button>' +
+        '<button type="button" class="btn btn-primary" id="duel-again">Clear Board &amp; Play Again</button>' +
         '<a class="btn btn-outline" href="games.html">All Games</a>' +
       '</div>';
-    root.querySelectorAll('.duel-amount').forEach(function(b) {
-      b.addEventListener('click', function() { state.chosen = +b.dataset.amt; render(); });
-    });
     document.getElementById('duel-again').addEventListener('click', function() {
-      if (!state.chosen) return;
-      state.result = null; render();
-      var startBtn = document.getElementById('duel-start');
-      if (startBtn) startBtn.click();
+      state.result = null; state.finalView = null; render();
+      root.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
+
+  // ---------- demo: a pretend round with captions (no money, no server) ----------
+  var demoRun = 0;
+  function endDemo() { demoRun++; state.demo = false; state.duel = null; state.view = null; state.busy = false; render(); }
+  async function runDemo() {
+    var run = ++demoRun;
+    state.demo = true; state.busy = true; state.result = null;
+    state.duel = { amount: state.chosen || 100 };
+    var e = function() { return G.emptyBoard(); };
+    state.view = { player: e(), gnome: e(), yourDie: null, gnomieDie: null, rolling: null, status: '' };
+    var P = state.view.player, Gn = state.view.gnome;
+    var steps = [
+      [{ status: 'You and Gnomie each get a 3 &times; 3 board.' }, 2200],
+      [{ rolling: 'you', status: 'Press <strong>Roll</strong> to roll your die&hellip;' }, 1300],
+      [{ rolling: null, yourDie: { v: 5 }, status: 'You rolled a 5. Tap a column to place it.' }, 1800],
+      [function() { P[0].push({ v: 5 }); return { yourDie: null, newAt: { who: 'you', col: 0 }, status: 'Placed in the left column.' }; }, 1600],
+      [{ rolling: 'gnomie', newAt: null, status: 'Now it&rsquo;s Gnomie&rsquo;s turn&hellip;' }, 1200],
+      [function() { Gn[2].push({ v: 3 }); return { rolling: null, newAt: { who: 'gnomie', col: 2 }, status: 'Gnomie placed a 3.' }; }, 1600],
+      [{ rolling: 'you', newAt: null, status: 'Your turn again&hellip;' }, 1000],
+      [function() { P[0].push({ v: 5 }); return { rolling: null, newAt: { who: 'you', col: 0 }, status: '<strong>Two 5s in one column light up</strong> and count double!' }; }, 2600],
+      [{ rolling: 'gnomie', newAt: null, status: 'Gnomie rolls&hellip;' }, 1100],
+      [function() { Gn[0].push({ v: 5 }); return { rolling: null, newAt: { who: 'gnomie', col: 0 }, knock: { who: 'you', col: 0, v: 5 }, status: 'Gnomie put a 5 across from yours: <strong>your 5s are knocked out!</strong>' }; }, 2600],
+      [function() { P[0] = []; return { knock: null, newAt: null, status: 'When a board fills up, the bigger total wins. Win, tie or lose, the boxes show what you lose.' }; }, 3400],
+      [{ status: 'That&rsquo;s it! Pick an amount to play for real.' }, 2200]
+    ];
+    for (var i = 0; i < steps.length; i++) {
+      if (run !== demoRun) return;
+      var st = steps[i][0], ch = typeof st === 'function' ? st() : st;
+      ch.player = P; ch.gnome = Gn;
+      show(ch);
+      await wait(steps[i][1]);
+    }
+    if (run === demoRun) endDemo();
+  }
 })();
+

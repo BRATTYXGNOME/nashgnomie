@@ -69,6 +69,7 @@
     .fair div { position: relative; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
     .fair .act { width: 70%; background: var(--accent); border-radius: 2px 2px 0 0; }
     .fair .exp { position: absolute; left: 6%; right: 6%; border-top: 2px dashed var(--accent2); }
+    .fair.fair8, .fair-labels.fair8 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
     .fair-labels { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; font-size: 10px; color: var(--muted); text-align: center; margin-top: 3px; }
     .login { max-width: 380px; margin: 40px auto; }
     .login input { width: 100%; margin-bottom: 8px; }
@@ -78,6 +79,37 @@
     details summary { cursor: pointer; }
     code { white-space: pre-wrap; word-break: break-all; font-size: 11px; color: var(--body); }
     .more { margin-top: 10px; text-align: center; }
+    .lock-card { border-color: rgba(255, 95, 111, 0.45); }
+    .lock-card h2 { color: var(--bad); }
+    button.danger-fill { background: var(--bad); }
+    .tag.closed { background: rgba(255,255,255,0.06); color: var(--muted); }
+    .notes { margin-top: 12px; }
+    .notes textarea { width: 100%; min-height: 60px; resize: vertical; background: var(--bg); color: var(--light); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; }
+    .note-list { list-style: none; margin: 0 0 10px; padding: 0; }
+    .note-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .note-list .txt { color: var(--light); white-space: pre-wrap; word-break: break-word; }
+    .note-list .meta { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .note-list .btns { display: flex; gap: 6px; flex: none; align-items: flex-start; }
+    .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 50%; vertical-align: -1px; margin-right: 5px; }
+    .region { color: var(--muted); white-space: nowrap; }
+    .tools { display: flex; flex-direction: column; gap: 10px; }
+    .tool { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+    .tool h3 { margin: 0 0 4px; font-size: 13.5px; }
+    .tool .help { margin: 0 0 10px; color: var(--muted); font-size: 12px; min-height: 18px; }
+    .tool .row + .row { margin-top: 8px; }
+    .tool.account { border-color: rgba(255, 95, 111, 0.25); }
+    .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 6px; }
+    .seg button { flex: 1; background: transparent; color: var(--body); border-radius: 0; padding: 7px 6px; font-weight: 600; font-size: 12px; }
+    .seg button + button { border-left: 1px solid var(--border); }
+    .seg button.on { background: var(--accent); color: #fff; }
+    .seg.vis { display: inline-flex; margin: 0; }
+    .seg.vis button { flex: none; padding: 6px 12px; }
+    button.wide { width: 100%; margin-top: 10px; }
+    .nudge-stats { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .nudge-stats span { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 11.5px; color: var(--muted); }
+    .nudge-stats b { color: var(--light); }
+    .nudge-list { margin: 8px 0 0; padding: 0; list-style: none; font-size: 12px; }
+    .nudge-list li { padding: 5px 0; border-top: 1px solid var(--border); display: flex; justify-content: space-between; gap: 8px; }
     @media (max-width: 700px) { .split { grid-template-columns: 1fr; } }
     [hidden] { display: none !important; }
   </style>
@@ -94,6 +126,28 @@
         <input type="text" id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code from your authenticator app" />
         <button type="submit">Sign in</button>
         <div class="error" id="login-error"></div>
+        <p style="text-align:center;margin:6px 0 0"><button type="button" class="ghost small" id="forgot-open" hidden>Forgot your password?</button></p>
+      </form>
+      <form id="forgot-form" hidden autocomplete="off">
+        <h2>Reset your password</h2>
+        <p class="muted">Open your authenticator app. Type the code it shows now, <strong>wait for it to change</strong>, then type the new code.</p>
+        <input type="text" id="fg-1" inputmode="numeric" maxlength="6" placeholder="Code now" required />
+        <input type="text" id="fg-2" inputmode="numeric" maxlength="6" placeholder="Next code (after it changes)" required />
+        <input type="password" id="fg-pw" autocomplete="new-password" placeholder="New password (12+ characters)" required />
+        <input type="password" id="fg-pw2" autocomplete="new-password" placeholder="Type it again" required />
+        <button type="submit">Reset password</button>
+        <div class="error" id="forgot-error"></div>
+        <p style="text-align:center;margin:6px 0 0"><button type="button" class="ghost small" id="forgot-back">Back to sign in</button></p>
+      </form>
+      <form id="expired-form" hidden autocomplete="off">
+        <h2>Time for a new password</h2>
+        <p class="muted" id="expired-why">Your Backstage password is a month old. Choose a new one to keep going.</p>
+        <input type="password" id="ex-cur" autocomplete="current-password" placeholder="Current password" required />
+        <input type="password" id="ex-pw" autocomplete="new-password" placeholder="New password (12+ characters)" required />
+        <input type="password" id="ex-pw2" autocomplete="new-password" placeholder="Type it again" required />
+        <button type="submit">Save new password</button>
+        <div class="error" id="expired-error"></div>
+        <p style="text-align:center;margin:6px 0 0"><button type="button" class="ghost small" id="expired-cancel" hidden>Cancel</button></p>
       </form>
       <form id="setup-form" hidden>
         <h2>Connect your authenticator app</h2>
@@ -115,10 +169,23 @@
           <select id="days"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last year</option></select>
           <button type="button" class="ghost small" id="refresh">Refresh</button>
           <button type="button" class="ghost small" id="logout">Sign out</button>
+          <button type="button" class="ghost small" id="pw-change">Change password</button>
           <button type="button" class="ghost small" id="signout-all">Sign out everywhere</button>
           <button type="button" class="ghost small danger" id="lockdown">Lock Backstage</button>
         </span>
       </div>
+      <section class="card lock-card" id="lock-card" hidden>
+        <h2>Lock Backstage</h2>
+        <p class="muted">Everyone is signed out and <strong>no one</strong> can sign in, not even with the right password and code. The games, wallets and payments keep working.</p>
+        <p class="muted">To unlock later: Cloudflare &rarr; D1 &rarr; nashgnomie-games &rarr; Console, then run<br><code>DELETE FROM backstage WHERE key = 'lockdown'</code></p>
+        <form id="lock-form" class="row" autocomplete="off">
+          <input type="password" id="lock-pw" placeholder="Your Backstage password" autocomplete="current-password" required />
+          <input type="text" id="lock-otp" inputmode="numeric" maxlength="6" placeholder="Authenticator code" autocomplete="one-time-code" />
+          <button type="submit" class="danger-fill">Lock Backstage</button>
+          <button type="button" class="ghost" id="lock-cancel">Cancel</button>
+        </form>
+        <div class="error" id="lock-error"></div>
+      </section>
       <nav class="tabs" id="tabs">
         <button type="button" data-tab="overview" class="on">Overview</button>
         <button type="button" data-tab="money">Money</button>
@@ -134,7 +201,18 @@
           <p class="muted">These payments came in but the wallet code or amount wasn&rsquo;t clear. Credit them to the right wallet, or keep them as a gift.</p>
           <div id="review"></div>
         </section>
+        <section class="card" id="reports-card" hidden>
+          <h2>&ldquo;My load didn&rsquo;t show up&rdquo; reports</h2>
+          <p class="muted">Fans who say they sent a load that never reached their wallet. Check your Throne orders, then add it or say you couldn&rsquo;t find it.</p>
+          <div id="reports"></div>
+        </section>
+        <section class="card" id="requests-card" hidden>
+          <h2>Requests from fans</h2>
+          <p class="muted">Game problems and new-code requests. Handle them here; the fan sees your answer in their wallet.</p>
+          <div id="requests"></div>
+        </section>
         <section class="card"><div class="tiles" id="ov-tiles"></div></section>
+        <section class="card"><h2>Most popular games</h2><div class="table-wrap"><table id="popular"></table></div></section>
         <section class="card">
           <h2>Loaded per day</h2>
           <div class="legend"><span><i style="background:var(--accent2)"></i>Throne</span></div>
@@ -190,14 +268,30 @@
           <div class="table-wrap"><table id="duel-amounts"></table></div>
         </section>
         <section class="card">
+          <h2>Too Far</h2>
+          <div class="tiles" id="tf-tiles"></div>
+          <h3>By amount</h3>
+          <div class="table-wrap"><table id="tf-amounts"></table></div>
+        </section>
+        <section class="card">
+          <h2>Spin the Bottle</h2>
+          <div class="tiles" id="spin-tiles"></div>
+          <h3>By board</h3>
+          <div class="table-wrap"><table id="spin-boards"></table></div>
+          <h3>Fairness check</h3>
+          <p class="muted">How often the bottle landed on each wedge (pink bars). Every wedge should come up about 1 in 8 (dashed line). The amounts are shuffled into the wedges every spin.</p>
+          <div class="row"><select id="spin-fair-board"><option value="sweet">Sweet</option><option value="spicy">Spicy</option><option value="savage">Savage</option></select><span class="muted" id="spin-fair-n"></span></div>
+          <div class="fair fair8" id="spin-fair"></div><div class="fair-labels fair8" id="spin-fair-labels"></div>
+        </section>
+        <section class="card">
           <div class="row" style="justify-content:space-between;margin-bottom:8px">
             <h2 style="margin:0">Leaderboards (with amounts, only you see these)</h2>
-            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Wins against Gnomie</option></select>
+            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Dice Duel wins against Gnomie</option><option value="too-far">Too Far</option><option value="too-far-wins">Too Far wins against Gnomie</option><option value="spin-the-bottle">Spin the Bottle</option><option value="mancala">Mancala</option><option value="mancala-wins">Mancala wins against Gnomie</option></select>
           </div>
           <div class="table-wrap"><table id="lb"></table></div>
         </section>
         <div class="split">
-          <section class="card"><h2>Latest drops</h2><div class="table-wrap"><table id="drops"></table></div><div class="more"><button type="button" class="ghost small" id="drops-more">Load more</button></div></section>
+          <section class="card"><h2>Latest balls &amp; spins</h2><div class="table-wrap"><table id="drops"></table></div><div class="more"><button type="button" class="ghost small" id="drops-more">Load more</button></div></section>
           <section class="card"><h2>Latest duels</h2><div class="table-wrap"><table id="duels"></table></div><div class="more"><button type="button" class="ghost small" id="duels-more">Load more</button></div></section>
         </div>
       </div>
@@ -206,9 +300,9 @@
       <div data-panel="wallets" hidden>
         <section class="card">
           <div class="row" style="margin-bottom:8px">
-            <input type="search" id="w-q" placeholder="Search by code or name" />
-            <select id="w-sort"><option value="newest">Newest</option><option value="balance">Biggest balance</option><option value="loaded">Most loaded</option><option value="spent">Most spent</option><option value="name">Name</option></select>
-            <select id="w-status"><option value="">Everyone</option><option value="active">Active</option><option value="banned">Banned</option></select>
+            <input type="search" id="w-q" placeholder="Search code, name, Telegram, Throne or your notes" />
+            <select id="w-sort"><option value="newest">Newest</option><option value="balance">Biggest balance</option><option value="loaded">Most loaded</option><option value="spent">Most spent</option><option value="name">Name</option><option value="quiet">Quietest first</option></select>
+            <select id="w-status"><option value="">Open wallets</option><option value="active">Active only</option><option value="banned">Banned</option><option value="requested">Asked to close</option><option value="inactive">Inactive 6+ months</option><option value="break">On a break</option><option value="closed">Closed</option><option value="all">Everyone (closed too)</option></select>
             <button type="button" class="ghost small" id="wallets-csv">Download CSV</button>
           </div>
           <div class="table-wrap"><table id="wallets"></table></div>
@@ -242,6 +336,16 @@
       function num(n) { return (n || 0).toLocaleString('en-US'); }
       function pct(a, b) { return b ? (a / b * 100).toFixed(1) + '%' : '—'; }
       function when(ms) { return ms ? new Date(ms).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''; }
+      function ago(ms) {
+        if (!ms) return '—';
+        var d = Math.floor((Date.now() - ms) / 86400000);
+        return d < 1 ? 'today' : d === 1 ? 'yesterday' : d < 60 ? d + ' days ago' : Math.round(d / 30) + ' months ago';
+      }
+      // Older log lines had the country stuck on the end, like "[US]"
+      function splitRegion(n) {
+        var m = String(n.detail || '').match(/^([\s\S]*?)\s*\[([A-Z]{2})\]$/);
+        return m ? { detail: m[1], region: n.region || m[2] } : { detail: n.detail || '', region: n.region || '' };
+      }
       function day(ms) { return new Date(ms).toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: 'UTC' }); }
       function cents(v) { var n = parseFloat(String(v).replace(/[$,\s]/g, '')); return isFinite(n) ? Math.round(n * 100) : NaN; }
       function who(r) { return r.display_code ? esc(r.name || ('Anonymous #' + r.anon_number)) : '<span class="muted">—</span>'; }
@@ -261,9 +365,20 @@
         backstage_kept_as_gift: 'You kept a load as a gift', backstage_pin_reset: 'You set a new PIN', backstage_rename: 'You renamed a wallet',
         backstage_unlock: 'You unlocked a wallet', backstage_signout_all: 'You signed a wallet out everywhere',
         backstage_ban: 'You banned a wallet', backstage_unban: 'You unbanned a wallet',
+        backstage_password_changed: 'You changed the Backstage password', backstage_password_reset: 'Backstage password reset with the app',
         backstage_signout_everywhere: 'You signed out of Backstage everywhere', backstage_lockdown: 'Backstage locked', backstage_locked_attempt: 'Sign-in tried while locked',
-        wallet_2fa_on: 'Fan turned on 2FA', wallet_2fa_off: 'Fan turned off 2FA', backstage_2fa_off: 'You turned off a fan’s 2FA'
+        wallet_2fa_on: 'Fan turned on 2FA', wallet_2fa_off: 'Fan turned off 2FA', backstage_2fa_off: 'You turned off a fan’s 2FA',
+        backstage_added_load: 'You added money they sent', backstage_adjusted: 'You adjusted a balance', backstage_set_balance: 'You set a balance',
+        backstage_nudge: 'You sent a nudge', nudge_seen: 'Fan saw your nudge', nudge_closed: 'Fan closed your nudge',
+        backstage_close: 'You closed a wallet', backstage_reopen: 'You reopened a wallet',
+        close_requested: 'Fan asked to close their wallet', close_request_cancelled: 'Fan cancelled their close request',
+        break_started: 'Fan started a financial break', break_ended: 'Fan ended their financial break',
+        terms_agreed: 'Fan agreed to updated terms', pin_changed: 'Fan changed their PIN', pin_change_failed: 'Wrong PIN while changing it',
+        issue_reported: 'Fan reported a game problem', new_code_requested: 'Fan asked for a new code', backstage_new_code: 'You gave a new code',
+        backstage_request_done: 'You handled a request', backstage_request_declined: 'You declined a request',
+        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note'
       };
+      var COLOR_HEX = { green: '#4ade80', blue: '#60a5fa', purple: '#a78bfa', orange: '#fb923c', gold: '#facc15', red: '#f87171', white: '#f4f1f4', electric: '#22d3ee' };
       function eventName(a) { return EVENTS[a] || a.replace(/_/g, ' '); }
 
       async function api(method, path, body) {
@@ -274,14 +389,46 @@
         });
         var data = {}; try { data = await res.json(); } catch (e) {}
         if (res.status === 423) { showLocked(); throw new Error('Backstage is locked.'); }
-        if (res.status === 401 && path.indexOf('hq/log') !== 0 && path !== 'hq/setup-2fa') { showLogin(); throw new Error('Please sign in.'); }
+        if (res.status === 403 && data.mustChange) { showExpired(true); throw new Error(data.error); }
+        if (res.status === 401 && path.indexOf('hq/log') !== 0 && path !== 'hq/setup-2fa' && path !== 'hq/lockdown') { showLogin(); throw new Error('Please sign in.'); }
         if (!res.ok) throw new Error(data.error || 'Something went wrong.');
         return data;
       }
 
       // ---------- sign in ----------
-      function showLogin() { $('app').hidden = true; $('login').hidden = false; $('login-form').hidden = false; $('setup-form').hidden = true; }
-      function showLocked() { $('app').hidden = true; $('login').hidden = false; $('login-form').hidden = true; $('setup-form').hidden = true; $('locked').hidden = false; }
+      function hideLoginForms() { ['login-form', 'setup-form', 'forgot-form', 'expired-form'].forEach(function(id) { $(id).hidden = true; }); }
+      function showLogin() { $('app').hidden = true; $('login').hidden = false; hideLoginForms(); $('login-form').hidden = false; }
+      // forced = the monthly change (can't skip); otherwise the "Change password" button
+      function showExpired(forced) {
+        $('app').hidden = true; $('login').hidden = false; hideLoginForms(); $('expired-form').hidden = false;
+        $('expired-why').textContent = forced ? 'Your Backstage password is a month old. Choose a new one to keep going.' : 'Choose a new Backstage password. It will need changing again in 30 days.';
+        $('expired-cancel').hidden = !!forced; $('expired-error').textContent = '';
+        $('ex-cur').focus();
+      }
+      $('forgot-open').addEventListener('click', function() { hideLoginForms(); $('forgot-form').hidden = false; $('forgot-error').textContent = ''; $('fg-1').focus(); });
+      $('forgot-back').addEventListener('click', showLogin);
+      $('forgot-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var err = $('forgot-error'); err.textContent = '';
+        if ($('fg-pw').value !== $('fg-pw2').value) { err.textContent = 'Those passwords don’t match.'; return; }
+        try {
+          await api('POST', 'hq/password-forgot', { code1: $('fg-1').value, code2: $('fg-2').value, next: $('fg-pw').value });
+          showLogin(); $('login-error').innerHTML = '<span class="ok">Password reset. Sign in with your new password (and a fresh app code).</span>';
+        } catch (x) { err.textContent = x.message; }
+      });
+      $('expired-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var err = $('expired-error'); err.textContent = '';
+        if ($('ex-pw').value !== $('ex-pw2').value) { err.textContent = 'Those passwords don’t match.'; return; }
+        try {
+          await api('POST', 'hq/password', { current: $('ex-cur').value, next: $('ex-pw').value });
+          ['ex-cur', 'ex-pw', 'ex-pw2'].forEach(function(id) { $(id).value = ''; });
+          start();
+        } catch (x) { err.textContent = x.message; }
+      });
+      $('expired-cancel').addEventListener('click', function() { start(); });
+      $('pw-change').addEventListener('click', function() { showExpired(false); });
+      function showLocked() { $('app').hidden = true; $('login').hidden = false; hideLoginForms(); $('locked').hidden = false; }
       var pwKeep = '';
       $('login-form').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -313,11 +460,17 @@
         try { await api('POST', 'hq/signout-everywhere', {}); } catch (x) {}
         location.reload();
       });
-      $('lockdown').addEventListener('click', async function() {
-        if (!confirm('Lock Backstage?\n\nEveryone is signed out and NO ONE can sign in, not even with the right password and code. The games, wallets and payments keep working.\n\nTo unlock: Cloudflare \u2192 D1 \u2192 nashgnomie-games \u2192 Console, then run:\nDELETE FROM backstage WHERE key = \'lockdown\'')) return;
-        if (!confirm('Are you sure? This can only be undone in Cloudflare.')) return;
-        try { await api('POST', 'hq/lockdown', {}); } catch (x) {}
-        location.reload();
+      // Locking asks for the password and authenticator code first
+      $('lockdown').addEventListener('click', function() {
+        $('lock-card').hidden = !$('lock-card').hidden; $('lock-error').textContent = '';
+        if (!$('lock-card').hidden) { $('lock-pw').focus(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      });
+      $('lock-cancel').addEventListener('click', function() { $('lock-card').hidden = true; $('lock-pw').value = ''; $('lock-otp').value = ''; });
+      $('lock-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!confirm('Lock Backstage now? This can only be undone in Cloudflare.')) return;
+        try { await api('POST', 'hq/lockdown', { password: $('lock-pw').value, code: $('lock-otp').value }); location.reload(); }
+        catch (x) { $('lock-error').textContent = x.message; }
       });
 
       // ---------- tabs ----------
@@ -391,10 +544,19 @@
         });
         var badge = document.querySelector('#tabs [data-tab=overview] .badge');
         if (badge) badge.remove();
-        if (review.n) $('tabs').querySelector('[data-tab=overview]').insertAdjacentHTML('beforeend', '<span class="badge">' + review.n + '</span>');
+        var needN = review.n + (s.loadReports || 0) + (s.fanRequests || 0);
+        if (needN) $('tabs').querySelector('[data-tab=overview]').insertAdjacentHTML('beforeend', '<span class="badge">' + needN + '</span>');
+        var wb = document.querySelector('#tabs [data-tab=wallets] .badge');
+        if (wb) wb.remove();
+        if (s.closeRequests) $('tabs').querySelector('[data-tab=wallets]').insertAdjacentHTML('beforeend', '<span class="badge" title="Asked to close">' + s.closeRequests + '</span>');
 
+        var GAME_NAMES = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Too Far', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala' };
+        table($('popular'), [{ t: 'Game' }, { t: 'Plays (period)', num: 1 }, { t: 'Taken (period)', num: 1 }, { t: 'Plays (all time)', num: 1 }, { t: 'Players', num: 1 }, { t: 'Taken (all time)', num: 1 }],
+          (s.popular || []).map(function(g) {
+            return '<tr><td>' + esc(GAME_NAMES[g.game] || g.game) + '</td><td class="num">' + num(g.plays_period || 0) + '</td><td class="num">' + money(g.cents_period || 0) + '</td><td class="num">' + num(g.plays) + '</td><td class="num">' + num(g.players) + '</td><td class="num">' + money(g.cents) + '</td></tr>';
+          }), 'No games played yet.');
         tiles($('ov-tiles'), [
-          { label: 'Need you', value: num(review.n), sub: review.n ? 'payments waiting' : 'all clear', alert: review.n > 0 },
+          { label: 'Need you', value: num(needN), sub: needN ? [review.n ? review.n + ' unclear payment' + (review.n > 1 ? 's' : '') : '', s.loadReports ? s.loadReports + ' missing load' + (s.loadReports > 1 ? 's' : '') : '', s.fanRequests ? s.fanRequests + ' request' + (s.fanRequests > 1 ? 's' : '') : ''].filter(Boolean).join(' · ') : 'all clear', alert: needN > 0 },
           { label: 'Loaded today', value: money(credited.today) },
           { label: 'Loaded, 7 days', value: money(credited.d7) },
           { label: 'Loaded, 30 days', value: money(credited.d30) },
@@ -462,6 +624,40 @@
             return '<tr><td>' + money(r.amount_cents) + '</td><td class="num">' + num(r.n) + '</td><td class="num">' + pct(r.wins, r.n) + '</td><td class="num">' + pct(r.ties, r.n) + '</td><td class="num">' + pct(r.losses, r.n) + '</td><td class="num">' + money(r.cents) + '</td></tr>';
           }), 'No duels finished yet.');
 
+        // Too Far
+        var tf = s.toofar.totals, tfPlayed = (tf.wins || 0) + (tf.ties || 0) + (tf.losses || 0) + (tf.busts || 0);
+        tiles($('tf-tiles'), [
+          { label: 'Games finished', value: num(tfPlayed), sub: num(tf.n_7d) + ' this week' },
+          { label: 'Playing right now', value: num(tf.active) },
+          { label: 'Paid', value: money(tf.cents), sub: money(tf.cents_7d) + ' this week' },
+          { label: 'Players won', value: pct(tf.wins, tfPlayed), sub: num(tf.wins) + ' games (incl. Gnomie going over)' },
+          { label: 'Ties', value: pct(tf.ties, tfPlayed), sub: num(tf.ties) + ' games' },
+          { label: 'Gnomie won', value: pct(tf.losses, tfPlayed), sub: num(tf.losses) + ' games' },
+          { label: 'Went too far', value: pct(tf.busts, tfPlayed), sub: num(tf.busts) + ' games' },
+          { label: 'Average total', value: tfPlayed ? Math.round(tf.avg_you) + ' vs ' + Math.round(tf.avg_gnomie) : '—', sub: 'player vs Gnomie' },
+          { label: 'Players', value: num(tf.players) }
+        ]);
+        table($('tf-amounts'), [{ t: 'Played for' }, { t: 'Games', num: 1 }, { t: 'Won', num: 1 }, { t: 'Tied', num: 1 }, { t: 'Lost', num: 1 }, { t: 'Too far', num: 1 }, { t: 'Paid', num: 1 }],
+          s.toofar.byAmount.map(function(r) {
+            return '<tr><td>' + money(r.amount_cents) + '</td><td class="num">' + num(r.n) + '</td><td class="num">' + pct(r.wins, r.n) + '</td><td class="num">' + pct(r.ties, r.n) +
+              '</td><td class="num">' + pct(r.losses, r.n) + '</td><td class="num">' + pct(r.busts, r.n) + '</td><td class="num">' + money(r.cents) + '</td></tr>';
+          }), 'No games finished yet.');
+
+        // Spin the Bottle
+        var sp = s.spin.totals;
+        tiles($('spin-tiles'), [
+          { label: 'Spins', value: num(sp.n), sub: num(sp.n_7d) + ' this week' },
+          { label: 'Paid', value: money(sp.cents), sub: money(sp.cents_7d) + ' this week' },
+          { label: 'Average per spin', value: sp.n ? money(sp.cents / sp.n) : '—' },
+          { label: 'Landed on their wedge', value: pct(sp.called_hits, sp.n), sub: 'should be about 12.5%' },
+          { label: 'Players', value: num(sp.players) }
+        ]);
+        table($('spin-boards'), [{ t: 'Board' }, { t: 'Spins', num: 1 }, { t: 'Paid', num: 1 }, { t: 'Avg per spin', num: 1 }, { t: 'Players', num: 1 }],
+          s.spin.boards.map(function(b) {
+            return '<tr><td>' + esc(BOARD[b.board] || b.board) + '</td><td class="num">' + num(b.n) + '</td><td class="num">' + money(b.cents) + '</td><td class="num">' + money(b.cents / b.n) + '</td><td class="num">' + num(b.players) + '</td></tr>';
+          }), 'No spins yet.');
+        drawSpinFair();
+
         // Activity tab: counts + filter list
         var evs = s.events.slice().sort(function(a, b) { return b.n - a.n; });
         table($('event-counts'), [{ t: 'Event' }, { t: 'Today', num: 1 }, { t: '7 days', num: 1 }, { t: 'All time', num: 1 }],
@@ -470,7 +666,7 @@
         sel.innerHTML = '<option value="">All events</option>' + evs.map(function(e) { return '<option value="' + esc(e.action) + '">' + esc(eventName(e.action)) + '</option>'; }).join('');
         sel.value = cur;
 
-        await loadReview();
+        await loadReview(); await loadReports(); await loadRequests();
       }
 
       function drawFair() {
@@ -489,6 +685,89 @@
         }).join('');
       }
       $('fair-board').addEventListener('change', drawFair);
+
+      function drawSpinFair() {
+        if (!stats) return;
+        var key = $('spin-fair-board').value, f = stats.spin.fairness[key], slices = stats.spin.slices[key].slices;
+        $('spin-fair-labels').innerHTML = slices.map(function(c, k) { return '<span>Wedge ' + (k + 1) + '</span>'; }).join('');
+        if (!f || !f.n) { $('spin-fair').innerHTML = ''; $('spin-fair-n').textContent = 'No spins on this board yet.'; return; }
+        var e = f.n / 8, max = Math.max.apply(null, f.actual.concat([e]));
+        $('spin-fair-n').textContent = num(f.n) + ' spins';
+        $('spin-fair').innerHTML = f.actual.map(function(a, k) {
+          return '<div data-tip="' + esc(money(slices[k]) + ' slice: landed ' + num(a) + ' · expected about ' + num(Math.round(e))) + '">' +
+            '<span class="act" style="height:' + (a / max * 100) + '%"></span><span class="exp" style="bottom:' + (e / max * 100) + '%"></span></div>';
+        }).join('');
+      }
+      $('spin-fair-board').addEventListener('change', drawSpinFair);
+
+      // ---------- missing-load reports ----------
+      async function loadReports() {
+        var rows = (await api('GET', 'hq/load-reports?status=open')).rows;
+        $('reports-card').hidden = !rows.length;
+        $('reports').innerHTML = rows.map(function(r) {
+          return '<div class="review" data-id="' + r.id + '">' +
+            '<p><strong>' + esc(r.name || ('Anonymous #' + r.anon_number)) + '</strong> <span class="muted">' + esc(r.display_code) + '</span> says they sent <strong>LOAD ' + money(r.amount_cents) + '</strong></p>' +
+            '<p class="muted">Sent: ' + esc(r.sent_when || '—') + ' · Throne: ' + esc(r.throne || 'anonymous / not given') + ' · reported ' + esc(when(r.created_at)) + '</p>' +
+            (r.note ? '<p class="msg">&ldquo;' + esc(r.note) + '&rdquo;</p>' : '') +
+            '<div class="row"><input type="text" class="r-amt" inputmode="decimal" value="' + (r.amount_cents / 100).toFixed(2) + '" style="max-width:110px" />' +
+              '<button type="button" class="r-credit">Add to their wallet</button>' +
+              '<button type="button" class="ghost r-decline">Couldn&rsquo;t find it</button>' +
+              '<button type="button" class="ghost r-open">Open wallet</button></div>' +
+            '<div class="error"></div></div>';
+        }).join('');
+        $('reports').querySelectorAll('.review').forEach(function(box) {
+          var id = +box.dataset.id, err = box.querySelector('.error'), r = rows.filter(function(x) { return x.id === id; })[0];
+          box.querySelector('.r-credit').addEventListener('click', async function() {
+            var c = cents(box.querySelector('.r-amt').value);
+            if (!c || !confirm('Add ' + money(c) + ' to ' + (r.name || 'their') + '’s wallet? They’ll see “Your missing load was found and added.”')) return;
+            try { await api('POST', 'hq/load-report', { id: id, action: 'credit', cents: c }); refresh(); } catch (x) { err.textContent = x.message; }
+          });
+          box.querySelector('.r-decline').addEventListener('click', async function() {
+            var m = prompt('Message they’ll see:', 'Gnomie couldn’t find this load. Message her on Telegram.');
+            if (m == null) return;
+            try { await api('POST', 'hq/load-report', { id: id, action: 'decline', message: m }); refresh(); } catch (x) { err.textContent = x.message; }
+          });
+          box.querySelector('.r-open').addEventListener('click', function() { document.querySelector('#tabs [data-tab=wallets]').click(); showWallet(r.display_code); });
+        });
+      }
+
+      // ---------- fan requests: game problems + new codes ----------
+      async function loadRequests() {
+        var rows = (await api('GET', 'hq/requests?status=open')).rows;
+        $('requests-card').hidden = !rows.length;
+        $('requests').innerHTML = rows.map(function(r) {
+          var isCode = r.kind === 'new_code';
+          return '<div class="review" data-id="' + r.id + '">' +
+            '<p><span class="tag ' + (isCode ? 'needs_review' : '') + '">' + (isCode ? 'New code' : 'Game problem') + '</span> <strong>' + esc(r.name || ('Anonymous #' + r.anon_number)) + '</strong> <span class="muted">' + esc(r.display_code) + ' · ' + esc(when(r.created_at)) + '</span></p>' +
+            (r.game ? '<p class="muted">Game: ' + esc(r.game) + '</p>' : '') +
+            '<p class="msg">&ldquo;' + esc(r.note) + '&rdquo;</p>' +
+            '<div class="row">' +
+              (isCode ? '<button type="button" class="q-newcode">Give them a new code</button>' : '<button type="button" class="q-done">Mark handled</button>') +
+              '<button type="button" class="ghost q-decline">' + (isCode ? 'Decline' : 'Couldn&rsquo;t help') + '</button>' +
+              '<button type="button" class="ghost q-open">Open wallet</button></div>' +
+            '<div class="error"></div></div>';
+        }).join('');
+        $('requests').querySelectorAll('.review').forEach(function(box) {
+          var id = +box.dataset.id, err = box.querySelector('.error'), r = rows.filter(function(x) { return x.id === id; })[0];
+          var nc = box.querySelector('.q-newcode');
+          if (nc) nc.addEventListener('click', async function() {
+            if (!confirm('Give ' + (r.name || 'this wallet') + ' a brand-new code? Their old code stops working right away.')) return;
+            try { var res = await api('POST', 'hq/new-code', { code: r.display_code }); alert('New code: ' + res.code + '\n\nIt’s already in their wallet. Their old code no longer works.'); refresh(); } catch (x) { err.textContent = x.message; }
+          });
+          var dn = box.querySelector('.q-done');
+          if (dn) dn.addEventListener('click', async function() {
+            var m = prompt('Message they’ll see (optional):', 'Handled by Gnomie. Thanks for letting me know!');
+            if (m == null) return;
+            try { await api('POST', 'hq/request', { id: id, action: 'done', message: m }); refresh(); } catch (x) { err.textContent = x.message; }
+          });
+          box.querySelector('.q-decline').addEventListener('click', async function() {
+            var m = prompt('Message they’ll see:', r.kind === 'new_code' ? 'Gnomie couldn’t make a new code right now. Message her on Telegram.' : 'Gnomie couldn’t find a problem. Message her on Telegram.');
+            if (m == null) return;
+            try { await api('POST', 'hq/request', { id: id, action: 'decline', message: m }); refresh(); } catch (x) { err.textContent = x.message; }
+          });
+          box.querySelector('.q-open').addEventListener('click', function() { document.querySelector('#tabs [data-tab=wallets]').click(); showWallet(r.display_code); });
+        });
+      }
 
       // ---------- loads needing review ----------
       async function loadReview() {
@@ -557,10 +836,13 @@
       });
 
       var drops = pager('drops', 'hq/drops', 'drops', function() { return []; },
-        [{ t: 'When' }, { t: 'Wallet' }, { t: 'Board' }, { t: 'Slot' }, { t: 'Took', num: 1 }],
+        [{ t: 'When' }, { t: 'Wallet' }, { t: 'Game' }, { t: 'Where' }, { t: 'Took', num: 1 }],
         function(d) {
-          return '<tr class="click" data-code="' + esc(d.display_code) + '"><td>' + esc(when(d.created_at)) + '</td><td>' + who(d) + '</td><td>' + esc(BOARD[d.board] || d.board) + '</td><td>' +
-            (d.slot === 6 ? 'middle' : Math.abs(d.slot - 6) + ' out') + '<span class="muted"> (aim ' + d.aim + ')</span></td><td class="num">' + money(d.amount_cents) + '</td></tr>';
+          var spin = d.game === 'spin-the-bottle';
+          return '<tr class="click" data-code="' + esc(d.display_code) + '"><td>' + esc(when(d.created_at)) + '</td><td>' + who(d) + '</td><td>' + (spin ? 'Bottle' : 'Ball') + ' · ' + esc(BOARD[d.board] || d.board) + '</td><td>' +
+            (spin ? 'wedge ' + (d.slot + 1) + (/\|hit$/.test(d.path || '') || d.path === 'called' ? ' <span class="tag win">their wedge, paid double</span>' : '')
+                  : (d.slot === 6 ? 'middle' : Math.abs(d.slot - 6) + ' out') + '<span class="muted"> (aim ' + d.aim + ')</span>') +
+            '</td><td class="num">' + money(d.amount_cents) + '</td></tr>';
         });
       function loadDrops(r) { return drops.load(r); }
       var duels = pager('duels', 'hq/duels', 'duels', function() { return []; },
@@ -573,10 +855,11 @@
       function loadDuels(r) { return duels.load(r); }
 
       var events = pager('events', 'hq/events', 'events', function() { return [['action', $('f-action').value]]; },
-        [{ t: 'When' }, { t: 'What' }, { t: 'Wallet' }, { t: 'Details' }],
+        [{ t: 'When' }, { t: 'What' }, { t: 'Wallet' }, { t: 'Details' }, { t: 'Region' }],
         function(n) {
-          var detail = n.action === 'youpay_notice' ? '<details><summary class="muted">Show notice</summary><code>' + esc(n.detail) + '</code></details>' : esc(n.detail);
-          return '<tr' + (n.display_code ? ' class="click" data-code="' + esc(n.display_code) + '"' : '') + '><td>' + esc(when(n.created_at)) + '</td><td>' + esc(eventName(n.action)) + '</td><td>' + who(n) + '</td><td>' + detail + '</td></tr>';
+          var r = splitRegion(n);
+          var detail = n.action === 'youpay_notice' ? '<details><summary class="muted">Show notice</summary><code>' + esc(r.detail) + '</code></details>' : esc(r.detail);
+          return '<tr' + (n.display_code ? ' class="click" data-code="' + esc(n.display_code) + '"' : '') + '><td>' + esc(when(n.created_at)) + '</td><td>' + esc(eventName(n.action)) + '</td><td>' + who(n) + '</td><td>' + detail + '</td><td class="region">' + esc(r.region) + '</td></tr>';
         });
       function loadEvents(r) { return events.load(r); }
       $('f-action').addEventListener('change', function() { loadEvents(true); });
@@ -584,10 +867,10 @@
       // ---------- leaderboards with amounts ----------
       async function loadBoard() {
         var key = $('lb-board').value, rows = (await api('GET', 'hq/leaderboard?board=' + key)).rows;
-        table($('lb'), [{ t: '#' }, { t: 'Wallet' }, { t: key === 'dice-duel-wins' ? 'Wins' : 'Spent', num: 1 }, { t: 'Holding spot since' }],
+        table($('lb'), [{ t: '#' }, { t: 'Wallet' }, { t: /-wins$/.test(key) ? 'Wins' : 'Spent', num: 1 }, { t: 'Holding spot since' }],
           rows.map(function(r) {
             return '<tr class="click" data-code="' + esc(r.code) + '"><td>' + r.rank + '</td><td>' + esc(r.name) + '<br><span class="muted">' + esc(r.code) + '</span></td><td class="num">' +
-              (key === 'dice-duel-wins' ? num(r.score) : money(r.score)) + '</td><td class="muted">' + (r.reignStart ? esc(when(r.reignStart)) : '') + '</td></tr>';
+              (/-wins$/.test(key) ? num(r.score) : money(r.score)) + '</td><td class="muted">' + (r.reignStart ? esc(when(r.reignStart)) : '') + '</td></tr>';
           }), 'No one on this board yet.');
       }
       $('lb-board').addEventListener('change', loadBoard);
@@ -598,12 +881,13 @@
         var q = [['q', $('w-q').value], ['sort', $('w-sort').value], ['status', $('w-status').value]].filter(function(f) { return f[1]; })
           .map(function(f) { return f[0] + '=' + encodeURIComponent(f[1]); }).join('&');
         walletRows = (await api('GET', 'hq/wallets?limit=200&' + q)).rows;
-        table($('wallets'), [{ t: 'Wallet' }, { t: 'Balance', num: 1 }, { t: 'Loaded', num: 1 }, { t: 'Spent', num: 1 }, { t: 'Status' }, { t: 'Joined' }],
+        table($('wallets'), [{ t: 'Wallet' }, { t: 'Balance', num: 1 }, { t: 'Loaded', num: 1 }, { t: 'Spent', num: 1 }, { t: 'Status' }, { t: 'Last active' }, { t: 'Joined' }],
           walletRows.map(function(w) {
-            return '<tr class="click" data-code="' + esc(w.code) + '"><td>' + esc(w.name) + '<br><span class="muted">' + esc(w.code) + '</span></td><td class="num">' + money(w.balanceCents) +
+            return '<tr class="click" data-code="' + esc(w.code) + '"><td>' + esc(w.name) + '<br><span class="muted">' + esc(w.code) + (w.telegram ? ' · @' + esc(w.telegram) : '') + '</span></td><td class="num">' + money(w.balanceCents) +
               (w.heldCents ? '<br><span class="muted">+ ' + money(w.heldCents) + ' in duel</span>' : '') + '</td><td class="num">' + money(w.loadedCents) + '</td><td class="num">' + money(w.spentCents) + '</td>' +
-              '<td><span class="tag ' + esc(w.status) + '">' + esc(w.status) + '</span>' + (w.locked ? ' <span class="tag banned">locked</span>' : '') + (w.hasPin ? '' : ' <span class="tag">no PIN</span>') + '</td>' +
-              '<td class="muted">' + esc(when(w.createdAt)) + '</td></tr>';
+              '<td><span class="tag ' + esc(w.status) + '">' + esc(w.status) + '</span>' + (w.locked ? ' <span class="tag banned">locked</span>' : '') + (w.hasPin ? '' : ' <span class="tag">no PIN</span>') +
+              (w.closeRequestedAt ? ' <span class="tag needs_review">asked to close</span>' : '') + (w.onBreakSince ? ' <span class="tag">on a break</span>' : '') + '</td>' +
+              '<td class="muted">' + esc(ago(w.lastActive)) + '</td><td class="muted">' + esc(when(w.createdAt)) + '</td></tr>';
           }), 'No wallets found.');
       }
       $('w-q').addEventListener('input', function() { clearTimeout(searchTimer); searchTimer = setTimeout(loadWallets, 300); });
@@ -624,61 +908,119 @@
         showWallet(r.dataset.code);
       });
 
+      function nudgeStats(list) {
+        var seen = 0, closed = 0, loaded = 0, promise = 0, brk = 0;
+        list.forEach(function(n) { if (n.seen_at) seen++; if (n.closed_at && !n.response || n.response === 'closed') closed++; if (n.response === 'promise') promise++; if (n.response === 'break') brk++; if (n.loadedAfter) loaded++; });
+        return '<span>Sent <b>' + list.length + '</b></span><span>Seen <b>' + seen + '</b></span><span>Closed <b>' + closed + '</b></span><span>&ldquo;I&rsquo;ll do better&rdquo; <b>' + promise + '</b></span><span>Took a break <b>' + brk + '</b></span><span>Loaded after <b>' + loaded + '</b></span>';
+      }
+      function nudgeRow(n) {
+        var st = n.response === 'promise' ? '“I’ll do better” ' + when(n.closed_at) : n.response === 'break' ? 'started a break ' + when(n.closed_at) :
+                 n.closed_at ? 'closed ' + when(n.closed_at) : n.seen_at ? 'seen ' + when(n.seen_at) : 'not seen yet';
+        return '<li><span>' + esc(when(n.created_at)) + ' · ' + (n.message ? esc(n.message) : '<span class="muted">no message</span>') + '</span>' +
+          '<span class="muted" style="white-space:nowrap">' + esc(st) + (n.loadedAfter ? ' · <span class="ok">loaded</span>' : '') + '</span></li>';
+      }
+
       async function showWallet(code) {
         var d = await api('GET', 'hq/wallet?code=' + encodeURIComponent(code));
         var w = d.wallet;
         var game = {}; d.perGame.forEach(function(g) { game[g.game] = g; });
         $('wallet-card').hidden = false;
         $('wallet').innerHTML =
-          '<div class="row" style="justify-content:space-between"><h2 style="margin:0">' + esc(w.name) + '</h2><button type="button" class="ghost small" id="w-close">Close</button></div>' +
+          '<div class="row" style="justify-content:space-between"><h2 style="margin:0">' + esc(w.name) + ' <span class="tag ' + esc(w.status) + '" style="vertical-align:2px">' + esc(w.status) + '</span></h2><button type="button" class="ghost small" id="w-close">Close</button></div>' +
+          (w.closeRequestedAt ? '<div class="review" style="margin-top:12px"><p><strong>They asked you to close their wallet</strong> on ' + esc(when(w.closeRequestedAt)) + '. They agreed their ' + money(w.balanceCents) + ' balance can’t be withdrawn. Use <strong>Close wallet</strong> under Account when you’re ready.</p></div>' : '') +
+          (w.onBreakSince ? '<div class="review" style="margin-top:12px;border-color:var(--border)"><p><strong>On a financial break</strong> since ' + esc(when(w.onBreakSince)) + '. They’ve sent ' + money(w.loadedCents) + ' in total.</p></div>' : '') +
           '<div class="split" style="margin-top:12px">' +
             '<div><dl>' +
               '<dt>Code</dt><dd>' + esc(w.code) + '</dd>' +
               '<dt>Balance</dt><dd>' + money(w.balanceCents) + (w.heldCents ? ' <span class="muted">+ ' + money(w.heldCents) + ' set aside in a duel</span>' : '') + '</dd>' +
               '<dt>Loaded</dt><dd>' + money(w.loadedCents) + '</dd>' +
               '<dt>Spent in games</dt><dd>' + money(w.spentCents) + '</dd>' +
-              '<dt>Drop the Ball</dt><dd>' + num(game['drop-the-ball'] ? game['drop-the-ball'].n : 0) + ' balls · ' + money(game['drop-the-ball'] ? game['drop-the-ball'].cents : 0) + '</dd>' +
-              '<dt>Dice Duel</dt><dd>' + num(game['dice-duel'] ? game['dice-duel'].n : 0) + ' games · ' + money(game['dice-duel'] ? game['dice-duel'].cents : 0) + ' · ' + num(w.duelWins) + ' wins</dd>' +
               '<dt>Status</dt><dd><span class="tag ' + esc(w.status) + '">' + esc(w.status) + '</span>' + (w.locked ? ' <span class="tag banned">locked until ' + esc(when(w.lockedUntil)) + '</span>' : '') + '</dd>' +
               '<dt>PIN</dt><dd>' + (w.hasPin ? w.pinLength + ' digits' : 'not set') + (w.failedPins ? ' · ' + w.failedPins + ' wrong tries' : '') + '</dd>' +
               '<dt>Authenticator app</dt><dd>' + (w.twoFactor ? 'On' : 'Off') + '</dd>' +
               '<dt>Signed-in devices</dt><dd>' + num(d.devices) + (d.lastSignIn ? ' · latest ' + esc(when(d.lastSignIn)) : '') + '</dd>' +
               '<dt>Joined</dt><dd>' + esc(when(w.createdAt)) + '</dd>' +
-            '</dl></div>' +
-            '<div>' +
-              '<h3 style="margin-top:0">Change balance</h3>' +
-              '<div class="row"><input type="text" id="adj-amt" placeholder="e.g. 10 or -5" inputmode="decimal" />' +
-                '<select id="adj-kind"><option value="load">Count as a load</option><option value="fix">Fix only</option></select></div>' +
-              '<div class="row" style="margin-top:8px"><input type="text" id="adj-note" placeholder="Note (optional)" /><button type="button" id="adj-go">Apply</button></div>' +
-              '<h3>Leaderboard name</h3>' +
-              '<div class="row"><input type="text" id="ren-name" maxlength="24" placeholder="New name" /><button type="button" id="ren-go">Rename</button><button type="button" class="ghost" id="ren-anon">Make anonymous</button></div>' +
-              '<h3>Set a new PIN</h3>' +
-              '<div class="row"><input type="text" id="pin-new" placeholder="4 or 6 digits" inputmode="numeric" maxlength="6" /><button type="button" id="pin-go">Set PIN</button></div>' +
-              '<div class="row" style="margin-top:14px">' +
-                (w.locked ? '<button type="button" class="ghost" id="unlock-go">Unlock</button>' : '') +
-                (w.twoFactor ? '<button type="button" class="ghost" id="tf-go">Turn off their 2FA</button>' : '') +
-                '<button type="button" class="ghost" id="out-go">Sign out everywhere</button>' +
-                '<button type="button" class="ghost" id="ban-go">' + (w.status === 'banned' ? 'Unban' : 'Ban') + '</button></div>' +
+              '<dt>Last active</dt><dd>' + esc(ago(w.lastActive)) + ' <span class="muted">' + esc(when(w.lastActive)) + '</span></dd>' +
+              '<dt>Telegram</dt><dd>' + (w.telegram ? '@' + esc(w.telegram) : '<span class="muted">—</span>') + '</dd>' +
+              '<dt>Throne</dt><dd>' + (w.throneName ? esc(w.throneName) : '<span class="muted">—</span>') + '</dd>' +
+              '<dt>Their color</dt><dd><span class="swatch" style="background:' + esc(COLOR_HEX[w.color] || COLOR_HEX.green) + '"></span>' + esc(w.color) + ' <span class="muted">· ' + num(w.loadCount) + ' loads</span></dd>' +
+              '<dt>Wallet terms</dt><dd>' + (w.termsCurrent ? 'Agreed to the current terms' : '<span class="tag needs_review">not agreed to the current terms</span>') +
+                (d.agreements.length ? ' <span class="muted">· last ' + esc(when(d.agreements[0].created_at)) + ' (' + esc(d.agreements[0].how || '') + ')</span>' : '') + '</dd>' +
+            '</dl>' +
+            '<div class="tool notes"><h3>My notes <span class="muted" style="font-weight:400">(only you see these)</span></h3>' +
+              (d.notes.length ? '<ul class="note-list">' + d.notes.map(function(n) {
+                return '<li data-id="' + n.id + '"><div><span class="txt">' + esc(n.note) + '</span><span class="meta">' + esc(when(n.created_at)) + (n.updated_at !== n.created_at ? ' · edited ' + esc(when(n.updated_at)) : '') + '</span></div>' +
+                  '<div class="btns"><button type="button" class="ghost small" data-note-edit="' + n.id + '">Edit</button><button type="button" class="ghost small danger" data-note-del="' + n.id + '">Delete</button></div></li>';
+              }).join('') + '</ul>' : '') +
+              '<textarea id="note-new" maxlength="2000" placeholder="Add a note: their Telegram, what they like, anything"></textarea>' +
+              '<div class="row" style="justify-content:flex-end;margin-top:6px"><button type="button" id="note-add">Add note</button></div>' +
+            '</div>' +
+            '</div>' +
+            '<div class="tools">' +
+              '<div class="tool">' +
+                '<h3>Money</h3>' +
+                '<div class="seg" id="adj-kind"><button type="button" data-k="load" class="on">Add money they sent</button><button type="button" data-k="adjust">Adjust balance</button><button type="button" data-k="set">Set exact balance</button></div>' +
+                '<p class="help" id="adj-help"></p>' +
+                '<div class="row"><input type="text" id="adj-amt" inputmode="decimal" /></div>' +
+                '<div class="row"><input type="text" id="adj-note" maxlength="300" placeholder="Note (optional)" /></div>' +
+                '<div class="row" style="justify-content:space-between"><span class="muted">Who sees the note?</span><div class="seg vis" id="adj-vis"><button type="button" data-v="0" class="on">Only me</button><button type="button" data-v="1">Show them</button></div></div>' +
+                '<button type="button" class="wide" id="adj-go">Apply</button>' +
+              '</div>' +
+              '<div class="tool">' +
+                '<h3>Nudge to add money</h3>' +
+                '<p class="help">Shows a banner at the top of their wallet until they close it.</p>' +
+                (w.onBreakSince ? '<p class="help" style="color:var(--accent)">They&rsquo;re on a financial break, so nudges are paused.</p>' : '') +
+                '<div class="row"><input type="text" id="nudge-msg" maxlength="140" value="Your wallet will be closed if it stays at $0! Add funds to keep your wallet." aria-label="Nudge message" /><button type="button" id="nudge-go"' + (w.status !== 'active' || w.onBreakSince ? ' disabled' : '') + '>Send nudge</button></div>' +
+                '<div class="nudge-stats">' + nudgeStats(d.nudges) + '</div>' +
+                (d.nudges.length ? '<ul class="nudge-list">' + d.nudges.slice(0, 5).map(nudgeRow).join('') + '</ul>' : '') +
+              '</div>' +
+              '<div class="tool">' +
+                '<h3>Name, PIN &amp; usernames</h3>' +
+                '<div class="row"><input type="text" id="c-tg" maxlength="41" placeholder="Telegram username" value="' + esc(w.telegram ? '@' + w.telegram : '') + '" /><input type="text" id="c-th" maxlength="40" placeholder="Throne username" value="' + esc(w.throneName || '') + '" /><button type="button" id="c-go">Save</button></div>' +
+                '<div class="row"><input type="text" id="ren-name" maxlength="24" placeholder="New leaderboard name" /><button type="button" id="ren-go">Rename</button></div>' +
+                '<div class="row"><button type="button" class="ghost small" id="ren-anon">Make anonymous</button></div>' +
+                '<div class="row"><input type="text" id="pin-new" placeholder="New PIN (4 or 6 digits)" inputmode="numeric" maxlength="6" /><button type="button" id="pin-go">Set PIN</button></div>' +
+              '</div>' +
+              '<div class="tool account">' +
+                '<h3>Account</h3>' +
+                '<div class="row" style="margin-top:8px">' +
+                  (w.locked ? '<button type="button" class="ghost small" id="unlock-go">Unlock</button>' : '') +
+                  (w.twoFactor ? '<button type="button" class="ghost small" id="tf-go">Turn off their 2FA</button>' : '') +
+                  '<button type="button" class="ghost small" id="out-go">Sign out everywhere</button>' +
+                  '<button type="button" class="ghost small" id="code-go">Give new code</button>' +
+                  (w.status !== 'closed' ? '<button type="button" class="ghost small danger" id="ban-go">' + (w.status === 'banned' ? 'Unban' : 'Ban') + '</button>' : '') +
+                  '<button type="button" class="ghost small danger" id="close-go">' + (w.status === 'closed' ? 'Reopen wallet' : 'Close wallet') + '</button>' +
+                '</div>' +
+              '</div>' +
               '<div class="error" id="tool-error"></div>' +
             '</div>' +
           '</div>' +
+          '<h3>Account history <span class="muted" style="font-weight:400">(what they see in their wallet, plus your private notes)</span></h3><div class="table-wrap"><table id="wl-statement"></table></div>' +
           '<h3>Loads</h3><div class="table-wrap"><table id="wl-loads"></table></div>' +
-          '<div class="split"><div><h3>Drops</h3><div class="table-wrap"><table id="wl-drops"></table></div></div>' +
+          '<div class="split"><div><h3>Balls &amp; spins</h3><div class="table-wrap"><table id="wl-drops"></table></div></div>' +
           '<div><h3>Duels</h3><div class="table-wrap"><table id="wl-duels"></table></div></div></div>' +
           '<h3>Activity</h3><div class="table-wrap"><table id="wl-events"></table></div>';
 
+        table($('wl-statement'), [{ t: 'When' }, { t: 'What' }, { t: 'Amount', num: 1 }, { t: 'Balance after', num: 1 }, { t: 'Note' }], d.statement.slice(0, 100).map(function(r) {
+          return '<tr><td>' + esc(when(r.at)) + '</td><td>' + esc(r.label) + (r.detail ? '<br><span class="muted">' + esc(r.detail) + '</span>' : '') + '</td>' +
+            '<td class="num">' + (r.cents > 0 ? '+' : '') + money(r.cents) + '</td><td class="num">' + money(r.balanceAfter) + '</td>' +
+            '<td>' + (r.adjId ? (r.note ? esc(r.note) + ' ' : '<span class="muted">no note</span> ') +
+              '<button type="button" class="ghost small" data-adj="' + r.adjId + '" data-pub="' + (r.notePublic ? 1 : 0) + '" data-note="' + esc(r.note || '') + '" title="Click to ' + (r.notePublic ? 'hide it from them' : 'show it to them') + '">' + (r.notePublic ? 'Shown to them' : 'Private') + '</button>' +
+              ' <button type="button" class="ghost small" data-adj-edit="' + r.adjId + '" data-pub="' + (r.notePublic ? 1 : 0) + '" data-note="' + esc(r.note || '') + '">Edit</button>' : '') + '</td></tr>';
+        }), 'Nothing yet.');
         table($('wl-loads'), [{ t: 'When' }, { t: 'From' }, { t: 'Amount', num: 1 }, { t: 'Status' }, { t: 'Message' }], d.loads.map(function(l) {
           return '<tr><td>' + esc(when(l.created_at)) + '</td><td>' + plat(l.platform) + (l.gifter ? '<br><span class="muted">' + esc(l.gifter) + '</span>' : '') + '</td><td class="num">' + money(l.amount_cents) + '</td><td><span class="tag ' + esc(l.status) + '">' + esc(STATUS[l.status] || l.status) + '</span></td><td class="muted">' + esc((l.message || '').slice(0, 80)) + '</td></tr>';
         }), 'No loads.');
         table($('wl-drops'), [{ t: 'When' }, { t: 'Board' }, { t: 'Took', num: 1 }], d.drops.map(function(x) {
-          return '<tr><td>' + esc(when(x.created_at)) + '</td><td>' + esc(BOARD[x.board] || x.board) + '</td><td class="num">' + money(x.amount_cents) + '</td></tr>';
+          return '<tr><td>' + esc(when(x.created_at)) + '</td><td>' + (x.game === 'spin-the-bottle' ? 'Bottle' : 'Ball') + ' · ' + esc(BOARD[x.board] || x.board) + '</td><td class="num">' + money(x.amount_cents) + '</td></tr>';
         }), 'No drops.');
         table($('wl-duels'), [{ t: 'When' }, { t: 'Result' }, { t: 'Paid', num: 1 }], d.duels.map(function(x) {
           return '<tr><td>' + esc(when(x.finished_at || x.created_at)) + '</td><td><span class="tag ' + esc(x.outcome || x.status) + '">' + esc(x.outcome === 'win' ? 'won' : x.outcome === 'lose' ? 'Gnomie won' : x.outcome || 'playing') + '</span>' +
             (x.status === 'done' ? ' <span class="muted">' + x.you_score + '–' + x.gnomie_score + '</span>' : '') + '</td><td class="num">' + (x.paid_cents != null ? money(x.paid_cents) : '') + '</td></tr>';
         }), 'No duels.');
-        table($('wl-events'), [{ t: 'When' }, { t: 'What' }, { t: 'Details' }], d.events.map(function(n) {
-          return '<tr><td>' + esc(when(n.created_at)) + '</td><td>' + esc(eventName(n.action)) + '</td><td>' + esc(n.detail) + '</td></tr>';
+        table($('wl-events'), [{ t: 'When' }, { t: 'What' }, { t: 'Details' }, { t: 'Region' }], d.events.map(function(n) {
+          var r = splitRegion(n);
+          return '<tr><td>' + esc(when(n.created_at)) + '</td><td>' + esc(eventName(n.action)) + '</td><td>' + esc(r.detail) + '</td><td class="region">' + esc(r.region) + '</td></tr>';
         }), 'Nothing yet.');
 
         var err = $('tool-error');
@@ -688,10 +1030,62 @@
           catch (x) { err.textContent = x.message; }
         }
         $('w-close').addEventListener('click', function() { $('wallet-card').hidden = true; });
+        var kind = 'load', vis = 0;
+        var HELP = {
+          load: ['Adds to their balance and counts as money they sent you.', 'How much they sent, e.g. 20'],
+          adjust: ['Adds or removes without counting as money sent. Use a minus sign to remove, e.g. -5.', 'Amount, e.g. 10 or -5'],
+          set: ['Replaces their balance with this exact amount. It’s ' + money(w.balanceCents) + ' now.', 'New balance, e.g. 50']
+        };
+        function paintMoney() {
+          document.querySelectorAll('#adj-kind button').forEach(function(b) { b.classList.toggle('on', b.dataset.k === kind); });
+          document.querySelectorAll('#adj-vis button').forEach(function(b) { b.classList.toggle('on', +b.dataset.v === vis); });
+          $('adj-help').textContent = HELP[kind][0];
+          $('adj-amt').placeholder = HELP[kind][1];
+        }
+        document.querySelectorAll('#adj-kind button').forEach(function(b) { b.addEventListener('click', function() { kind = b.dataset.k; paintMoney(); }); });
+        document.querySelectorAll('#adj-vis button').forEach(function(b) { b.addEventListener('click', function() { vis = +b.dataset.v; paintMoney(); }); });
+        paintMoney();
         $('adj-go').addEventListener('click', function() {
-          var c = cents($('adj-amt').value);
-          if (!c) { err.textContent = 'Enter an amount.'; return; }
-          act('hq/adjust', { cents: c, kind: $('adj-kind').value, note: $('adj-note').value }, (c > 0 ? 'Add ' : 'Remove ') + money(Math.abs(c)) + (c > 0 ? ' to ' : ' from ') + w.name + '’s wallet?');
+          var c = cents($('adj-amt').value), note = $('adj-note').value.trim();
+          err.textContent = '';
+          if (isNaN(c) || (kind !== 'set' && !c)) { err.textContent = 'Enter an amount.'; return; }
+          if (kind === 'load' && c < 0) { err.textContent = 'Use “Adjust balance” to remove money.'; return; }
+          if (kind === 'set' && c < 0) { err.textContent = 'A balance can’t be below $0.'; return; }
+          var q = kind === 'load' ? 'Add ' + money(c) + ' to ' + w.name + '’s wallet as money they sent?'
+                : kind === 'set' ? 'Set ' + w.name + '’s balance to exactly ' + money(c) + '? (It’s ' + money(w.balanceCents) + ' now.)'
+                : (c > 0 ? 'Add ' + money(c) + ' to ' : 'Remove ' + money(-c) + ' from ') + w.name + '’s wallet? (Not counted as money sent.)';
+          if (note) q += vis ? '\n\nThey’ll see your note.' : '\n\nYour note stays private.';
+          act('hq/adjust', { cents: c, kind: kind, note: note, public: !!vis }, q);
+        });
+        $('note-add').addEventListener('click', function() {
+          var t = $('note-new').value.trim(); if (!t) return;
+          act('hq/note', { note: t });
+        });
+        document.querySelectorAll('[data-note-edit]').forEach(function(b) {
+          b.addEventListener('click', function() {
+            var n = d.notes.filter(function(x) { return x.id === +b.dataset.noteEdit; })[0];
+            var t = prompt('Edit your note:', n.note);
+            if (t != null && t.trim()) act('hq/note', { id: n.id, note: t });
+          });
+        });
+        document.querySelectorAll('[data-note-del]').forEach(function(b) {
+          b.addEventListener('click', function() { act('hq/note-delete', { id: +b.dataset.noteDel }, 'Delete this note?'); });
+        });
+        $('c-go').addEventListener('click', function() { act('hq/contacts', { telegram: $('c-tg').value, throne: $('c-th').value }); });
+        document.querySelectorAll('[data-adj]').forEach(function(b) {
+          b.addEventListener('click', function() {
+            var show = b.dataset.pub !== '1';
+            act('hq/adjustment-note', { id: +b.dataset.adj, note: b.dataset.note, public: show }, show ? 'Show this note to them in their account activity?' : 'Hide this note from them?');
+          });
+        });
+        document.querySelectorAll('[data-adj-edit]').forEach(function(b) {
+          b.addEventListener('click', function() {
+            var t = prompt('Note for this balance change:', b.dataset.note);
+            if (t != null) act('hq/adjustment-note', { id: +b.dataset.adjEdit, note: t, public: b.dataset.pub === '1' });
+          });
+        });
+        $('nudge-go').addEventListener('click', function() {
+          act('hq/nudge', { message: $('nudge-msg').value }, 'Send ' + w.name + ' a nudge to add money?');
         });
         $('ren-go').addEventListener('click', function() { act('hq/rename', { name: $('ren-name').value }); });
         $('ren-anon').addEventListener('click', function() { act('hq/rename', { anonymous: true }); });
@@ -702,8 +1096,17 @@
         if ($('unlock-go')) $('unlock-go').addEventListener('click', function() { act('hq/unlock', {}); });
         if ($('tf-go')) $('tf-go').addEventListener('click', function() { act('hq/2fa-off', {}, 'Turn off this fan’s authenticator app? Do this only if they lost their phone and you’ve confirmed it’s really them.'); });
         $('out-go').addEventListener('click', function() { act('hq/signout-all', {}, 'Sign this wallet out on every device?'); });
-        $('ban-go').addEventListener('click', function() {
+        $('code-go').addEventListener('click', async function() {
+          if (!confirm('Give ' + w.name + ' a brand-new wallet code? Their old code stops working right away.')) return;
+          try { var res = await api('POST', 'hq/new-code', { code: w.code }); alert('New code: ' + res.code + '\n\nIt’s already in their wallet.'); showWallet(res.code); refresh(); } catch (x) { err.textContent = x.message; }
+        });
+        if ($('ban-go')) $('ban-go').addEventListener('click', function() {
           act('hq/status', { status: w.status === 'banned' ? 'active' : 'banned' }, w.status === 'banned' ? 'Unban this wallet?' : 'Ban this wallet? They’ll be signed out and can’t play.');
+        });
+        $('close-go').addEventListener('click', function() {
+          if (w.status === 'closed') { act('hq/status', { status: 'active' }, 'Reopen ' + w.name + '’s wallet? Their code and PIN will work again.'); return; }
+          act('hq/status', { status: 'closed' }, 'Close ' + w.name + '’s wallet?\n\nTheir code stops working, they’re signed out everywhere and they leave the leaderboards.' +
+            (w.balanceCents ? ' Their ' + money(w.balanceCents) + ' balance stays on record.' : '') + '\n\nYou can reopen it later.');
         });
         $('wallet-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
@@ -721,14 +1124,15 @@
       $('refresh').addEventListener('click', refresh);
       $('days').addEventListener('change', refresh);
 
-      function start() { $('login').hidden = true; $('app').hidden = false; refresh(); }
+      function start() { $('login').hidden = true; hideLoginForms(); $('app').hidden = false; refresh(); }
 
       api('GET', 'hq/session').then(function(s) {
         if (!s.ready) { $('login').hidden = false; $('login-form').hidden = true; $('not-ready').hidden = false; return; }
         if (s.locked) { showLocked(); return; }
         // Until 2FA is connected, only the password is needed (no code box)
         $('otp').hidden = !s.twoFactor;
-        if (s.signedIn) start(); else showLogin();
+        $('forgot-open').hidden = !s.twoFactor;
+        if (s.signedIn && s.mustChange) showExpired(true); else if (s.signedIn) start(); else showLogin();
       }, function() { showLogin(); });
     })();
   </script>

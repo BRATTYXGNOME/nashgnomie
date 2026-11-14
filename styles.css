@@ -4267,3 +4267,805 @@ button {
   color: var(--text-light);
   word-break: break-all;
 }
+
+/* ==========================================
+   Too Far
+   ========================================== */
+.tf-pays {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 460px;
+}
+
+.tf-pays.duel-pays-small {
+  max-width: 360px;
+}
+
+.duel-pays .bust {
+  border-color: #ff2d55;
+}
+
+.duel-pays .bust span {
+  color: #ff2d55;
+}
+
+.tf-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.tf-side-gnomie {
+  margin-top: 6px;
+}
+
+.tf-hand {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  min-height: 92px;
+}
+
+.tf-c {
+  position: relative;
+  width: 62px;
+  height: 88px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, #22202a, #141418);
+  border: 1.5px solid var(--accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tf-c-empty {
+  border: 1.5px dashed var(--accent-border);
+  background: var(--bg);
+  box-shadow: none;
+}
+
+.tf-c-num {
+  font-family: var(--font-display);
+  font-size: 34px;
+  color: var(--text-light);
+  line-height: 1;
+}
+
+.tf-c-corner {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.tf-c-mark {
+  position: absolute;
+  bottom: 5px;
+  right: 7px;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.tf-c-new {
+  animation: tf-deal 0.45s ease both;
+}
+
+@keyframes tf-deal {
+  0% { opacity: 0; transform: translateY(-14px) rotate(-8deg) scale(0.9); }
+  100% { opacity: 1; transform: none; }
+}
+
+.duel-total.tf-over {
+  background: #ff2d55;
+}
+
+.tf-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.tf-actions .btn {
+  min-width: 110px;
+}
+
+@media (max-width: 400px) {
+  .tf-c { width: 52px; height: 74px; }
+  .tf-c-num { font-size: 28px; }
+}
+
+/* ==========================================
+   Spin the Bottle
+   ========================================== */
+.stb-wheel-wrap {
+  max-width: 340px;
+  margin: 14px auto 6px;
+}
+
+.stb-wheel {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.stb-slice {
+  fill: #1a1a1f;
+  stroke: rgba(255, 95, 162, 0.35);
+  stroke-width: 1.5;
+  cursor: pointer;
+  transition: fill 0.2s;
+  outline: none;
+}
+
+.stb-slice.alt {
+  fill: #22202a;
+}
+
+.stb-slice:hover,
+.stb-slice:focus-visible {
+  fill: rgba(255, 95, 162, 0.12);
+}
+
+.stb-slice.called {
+  fill: rgba(255, 95, 162, 0.22);
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.stb-slice.landed {
+  fill: rgba(255, 95, 162, 0.45);
+}
+
+.stb-label {
+  fill: var(--text-light);
+  font: 700 15px var(--font-body);
+  pointer-events: none;
+}
+
+.stb-hub {
+  fill: var(--bg);
+  stroke: var(--accent-border);
+  pointer-events: none;
+}
+
+.stb-bottle {
+  transition: transform 3.2s cubic-bezier(0.17, 0.67, 0.21, 1);
+  pointer-events: none;
+}
+
+.stb-glass {
+  fill: rgba(255, 95, 162, 0.55);
+  stroke: #ff9cc8;
+  stroke-width: 2;
+}
+
+.stb-cap {
+  fill: #ff9cc8;
+}
+
+.stb-shine {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.stb-status {
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--text-body);
+  min-height: 40px;
+  margin: 6px auto 12px;
+  max-width: 360px;
+  text-wrap: balance;
+}
+
+.stb-status strong {
+  color: var(--accent);
+}
+
+/* Games page card art: Too Far and Spin the Bottle */
+.game-card-tf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background:
+    radial-gradient(circle at 50% 120%, rgba(255, 95, 162, 0.18), transparent 60%),
+    var(--bg);
+}
+
+.gc-card {
+  width: 46px;
+  height: 64px;
+  border-radius: 8px;
+  border: 1.5px solid var(--accent);
+  background: linear-gradient(160deg, #22202a, #141418);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--text-light);
+}
+
+.gc-card-a { transform: rotate(-9deg); }
+.gc-card-b { transform: rotate(8deg); }
+
+.game-card-stb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+.gc-wheel {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 95, 162, 0.5);
+  background: repeating-conic-gradient(#1a1a1f 0deg 45deg, #22202a 45deg 90deg);
+}
+
+.gc-bottle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 46px;
+  margin: -23px 0 0 -7px;
+  border-radius: 4px 4px 7px 7px;
+  background: rgba(255, 95, 162, 0.7);
+  box-shadow: 0 0 10px rgba(255, 95, 162, 0.6);
+  transform: rotate(35deg);
+  clip-path: polygon(35% 0, 65% 0, 65% 22%, 100% 38%, 100% 100%, 0 100%, 0 38%, 35% 22%);
+}
+
+/* =========================================
+   WALLET: nudge banner + account activity
+   ========================================= */
+.wl-nudge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 12px 40px 12px 14px;
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  background: var(--accent-subtle);
+  text-align: left;
+}
+.wl-nudge-text {
+  margin: 0;
+  flex: 1 1 180px;
+  font-size: 13px;
+  color: var(--text-light);
+  text-wrap: balance;
+}
+.wl-nudge .btn { padding: 8px 16px; font-size: 13px; }
+.wl-nudge-x {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.wl-nudge-x:hover { color: var(--text-light); }
+
+.wl-activity + .wl-settings { margin-top: 2px; }
+.wl-ledger {
+  list-style: none;
+  margin: 8px 0 4px;
+  padding: 0;
+  text-align: left;
+  border-top: 1px solid var(--accent-border);
+}
+.wl-ledger li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--accent-border);
+}
+.wl-led-main, .wl-led-amt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.wl-led-amt { align-items: flex-end; text-align: right; white-space: nowrap; font-size: 13px; color: var(--text-light); font-variant-numeric: tabular-nums; }
+.wl-led-label { font-size: 13px; color: var(--text-light); }
+.wl-led-detail, .wl-led-bal { font-size: 11px; color: var(--text-muted); }
+.wl-led-note { font-size: 12px; font-style: italic; color: var(--text-body); margin-top: 2px; }
+.wl-led-plus { color: var(--accent); font-weight: 600; }
+.wl-ledger-empty { margin-top: 8px; font-size: 12px; }
+
+/* Wallet: "Account activity" / "Wallet settings" toggles + settings rows */
+.wl-more {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.wl-more-btn {
+  background: transparent;
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font: 600 12px var(--font-body);
+  color: var(--text-body);
+  cursor: pointer;
+}
+.wl-more-btn:hover { border-color: var(--accent-dim); color: var(--text-light); }
+.wl-more-btn.on { border-color: var(--accent-dim); background: var(--accent-subtle); color: var(--accent); }
+.wl-more-btn span { font-size: 9px; margin-left: 2px; }
+.wl-activity { margin-top: 6px; }
+
+.wl-set {
+  margin-top: 10px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+  text-align: left;
+}
+.wl-set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+}
+.wl-set-row + .wl-set-row, .wl-set-edit + .wl-set-row { border-top: 1px solid var(--accent-border); }
+.wl-set-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.wl-set-label { font-size: 11px; color: var(--text-muted); }
+.wl-set-value { font-size: 14px; font-weight: 600; color: var(--text-light); overflow-wrap: anywhere; }
+.wl-pill {
+  flex: none;
+  background: transparent;
+  border: 1px solid var(--accent-dim);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font: 600 12px var(--font-body);
+  color: var(--accent);
+  cursor: pointer;
+}
+.wl-pill:hover { background: var(--accent-subtle); }
+.wl-set-edit { padding: 0 14px 12px; }
+.wl-set-edit input {
+  width: 100%;
+  background: var(--bg-card);
+  color: var(--text-light);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 14px;
+}
+.wl-set-edit input:focus { outline: none; border-color: var(--accent-dim); }
+.wl-set-edit .wl-fine { margin: 6px 0 0; text-align: left; }
+.wl-set-btns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.wl-set-btns .btn { padding: 7px 16px; font-size: 13px; }
+.wl-set .wl-tf { margin: 0 14px 12px; }
+.wl-signout { display: block; margin: 10px auto 0; }
+.wl-pill-quiet { border-color: var(--accent-border); color: var(--text-body); }
+.wl-pill-quiet:hover { color: var(--text-light); }
+.wl-close-box { margin: 0 14px 12px; padding: 12px 14px; border: 1px solid var(--accent-border); border-radius: var(--radius); background: var(--bg-card); }
+.wl-close-box .wl-lead { margin: 0 0 8px; font-size: 12.5px; text-align: left; }
+.wl-agree-signin { margin-top: 6px; }
+.wl-agree-signin .wl-lead { margin: 4px 0 6px; }
+
+/* A hidden field must stay hidden (the app-code box was always showing) */
+.wl-field[hidden] { display: none; }
+
+/* Wallet: terms, forgot-code help, color swatches */
+.wl-terms-wrap { margin-top: 10px; text-align: left; }
+.wl-terms { border: 1px solid var(--accent-border); border-radius: var(--radius-card); background: var(--bg); padding: 16px 18px; max-height: 420px; overflow-y: auto; }
+.wl-terms h3 { margin: 0 0 6px; font: 600 15px var(--font-body); color: var(--text-light); }
+.wl-terms h4 { margin: 14px 0 3px; font: 600 12.5px var(--font-body); color: var(--accent); }
+.wl-terms p { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--text-body); }
+.wl-terms .wl-fine { margin-top: 14px; }
+.wl-terms-note { margin: 0; text-align: center; }
+.wl-pin-note { margin: -4px 0 2px; text-align: left; }
+.wl-forgot { text-align: left; border: 1px solid var(--accent-border); border-radius: var(--radius); background: var(--bg); padding: 12px 14px; font-size: 12.5px; line-height: 1.6; color: var(--text-body); }
+.wl-forgot p { margin: 0 0 8px; }
+.wl-forgot strong { color: var(--text-light); }
+.wl-forgot ol { margin: 0 0 10px; padding-left: 20px; }
+.wl-forgot .wl-fine { margin: 0; text-align: left; }
+.wl-saved { padding: 10px 12px; border: 1px dashed var(--accent-dim); border-radius: var(--radius); }
+.wl-set-colors { flex-wrap: wrap; }
+.wl-swatches { display: flex; flex-wrap: wrap; gap: 7px; }
+.wl-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; background: var(--sw); cursor: pointer; padding: 0; display: grid; place-items: center; font-size: 10px; box-shadow: inset 0 0 0 2px rgba(0,0,0,0.25); }
+.wl-swatch.on { border-color: var(--text-light); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--sw); }
+.wl-swatch.locked { opacity: 0.35; cursor: help; }
+.wl-swatch-note { margin: 0; padding: 0 14px 10px; font-size: 11px; color: var(--text-muted); text-align: left; }
+.wl-contacts input + input { margin-top: 8px; }
+.wl-set > * + .wl-set-row { border-top: 1px solid var(--accent-border); }
+
+/* Wallet: "my load didn't show up" */
+.wl-report { margin-top: 12px; text-align: center; }
+.wl-report-box { margin-top: 8px; text-align: left; border: 1px solid var(--accent-border); border-radius: var(--radius-card); background: var(--bg); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.wl-report-box .wl-lead { margin: 0; font-size: 12.5px; text-align: left; }
+.wl-report-form { display: flex; flex-direction: column; gap: 10px; }
+.wl-report-form select { background: var(--bg-card); color: var(--text-light); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 9px 10px; font: inherit; }
+.wl-field small { color: var(--text-muted); font-weight: 400; }
+.wl-report-done { margin: 0; padding: 8px 10px; border-radius: var(--radius); background: var(--accent-subtle); color: var(--text-light); font-size: 13px; }
+.wl-report-tg { border-top: 1px solid var(--accent-border); padding-top: 12px; }
+.wl-report-tg .wl-fine { margin: 0 0 8px; text-align: left; }
+.wl-report-msg { margin: 0 0 8px; padding: 9px 11px; border: 1px dashed var(--accent-dim); border-radius: var(--radius); font-size: 12.5px; color: var(--text-light); user-select: all; }
+.wl-report-tg .btn { padding: 7px 14px; font-size: 13px; text-decoration: none; }
+.wl-report-list { border-top: 1px solid var(--accent-border); padding-top: 10px; }
+.wl-report-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; padding: 6px 0; font-size: 12.5px; color: var(--text-body); }
+.wl-report-row .wl-fine { flex-basis: 100%; margin: 0; text-align: left; }
+.wl-report-st { font-weight: 600; }
+.wl-report-st.open { color: var(--text-muted); }
+.wl-report-st.credited { color: var(--accent); }
+.wl-terms-lead { padding: 10px 12px; margin: 4px 0 4px !important; border-radius: var(--radius); background: var(--accent-subtle); color: var(--text-light) !important; }
+.wl-terms-lead strong { color: var(--accent); }
+.wl-terms-help:empty { display: none; }
+.wl-terms-help { margin-top: 8px; }
+.wl-agree .wl-terms { max-height: 340px; }
+.wl-help-tabs { display: flex; border: 1px solid var(--accent-border); border-radius: var(--radius); overflow: hidden; }
+.wl-help-tabs button { flex: 1; background: transparent; border: 0; padding: 9px 6px; font: 600 12.5px var(--font-body); color: var(--text-body); cursor: pointer; }
+.wl-help-tabs button + button { border-left: 1px solid var(--accent-border); }
+.wl-help-tabs button.on { background: var(--accent); color: #fff; }
+.wl-report-tg select, .wl-report-form select { background: var(--bg-card); color: var(--text-light); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 9px 10px; font: inherit; }
+.wl-report-tg { display: flex; flex-direction: column; gap: 10px; border-top: 0; padding-top: 0; }
+.wl-report-tg .wl-fine, .wl-report-tg .wl-report-msg { margin: 0; }
+.wl-help-terms { background: var(--bg-card); }
+
+/* =========================================
+   SHARED GAME BITS: player color, demo, activity, final board
+   ========================================= */
+:root { --you: #a78bfa; }
+.game-demo-btn { display: block; margin: 14px auto 0; font-size: 13px; }
+.game-demo-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; padding: 8px 12px; border: 1px dashed var(--accent-dim); border-radius: var(--radius); font-size: 12px; color: var(--text-muted); }
+.game-activity { margin: 14px 0; border: 1px solid var(--accent-border); border-radius: var(--radius-card); background: var(--bg-card); padding: 12px 16px; }
+.game-activity summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--text-light); }
+.game-activity .wl-ledger { margin-top: 10px; }
+.game-activity .wl-muted { margin: 10px 0 0; font-size: 13px; }
+.game-final { margin: 6px 0 4px; opacity: 0.95; }
+.game-final .duel-status-line { color: var(--text-muted); font-size: 12px; }
+
+/* Dice Duel: the player's side uses their color, Gnomie stays pink */
+.duel-player-you .duel-total { background: var(--you); }
+.duel-board-you .duel-col { border-color: color-mix(in srgb, var(--you) 28%, transparent); }
+.duel-board-you .duel-col.open { border-color: color-mix(in srgb, var(--you) 60%, transparent); }
+.duel-board-you .duel-col.open:hover { background: color-mix(in srgb, var(--you) 10%, transparent); border-color: var(--you); }
+.duel-board-you .duel-cell { background: color-mix(in srgb, var(--you) 6%, transparent); }
+.duel-board-you .duel-colscore { color: var(--you); }
+.duel-board-you .die-pink { background: var(--you); box-shadow: 0 0 10px color-mix(in srgb, var(--you) 70%, transparent), inset 0 -2px 0 rgba(0, 0, 0, 0.18); }
+.duel-board-you .die-pink i.on { background: #1a1a1f; }
+/* Drop the Ball: aim by dragging or tapping (no slider) */
+#drain-canvas { touch-action: pan-y; cursor: pointer; outline: none; }
+#drain-canvas:focus-visible { box-shadow: 0 0 0 2px var(--accent-dim); border-radius: 8px; }
+.drain-aim-hint { margin: 6px 0 0; text-align: center; font-size: 12px; color: var(--text-muted); }
+.game-demo-cap { color: var(--text-light); }
+
+/* Too Far: dealt cards, player color, splatter */
+.tf-c-new { animation: tf-deal 0.5s cubic-bezier(.2,.8,.25,1) both; }
+@keyframes tf-deal {
+  0% { opacity: 0; transform: translate(120px, -90px) rotate(28deg) scale(0.85); }
+  70% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+.tf-side-you .tf-c { border-color: var(--you); }
+.tf-side-you .tf-c-corner, .tf-side-you .tf-c-mark { color: var(--you); }
+.tf-side-you .tf-c-empty { border-color: color-mix(in srgb, var(--you) 30%, transparent); }
+.tf-side-you .duel-total { background: var(--you); }
+.tf-side-you .duel-total.tf-over, .tf-side-gnomie .duel-total.tf-over { background: #ff2d55; color: #fff; }
+
+.tf-splat { position: fixed; inset: 0; z-index: 9999; pointer-events: none; display: grid; place-items: center; transition: opacity 0.7s ease; }
+.tf-splat.fade { opacity: 0; }
+.tf-splat svg { position: absolute; width: min(118vw, 118vh); height: min(118vw, 118vh); filter: drop-shadow(0 6px 18px rgba(0,0,0,0.45)); }
+.tf-splat .goo { fill: #f6f3ea; }
+.tf-splat circle { transform-box: fill-box; transform-origin: center; animation: tf-splat-in 0.32s cubic-bezier(.2,1.6,.4,1) both; }
+.tf-splat .drip { transform-box: fill-box; transform-origin: top; animation: tf-drip 1.6s cubic-bezier(.45,0,.6,1) both; }
+@keyframes tf-splat-in { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+@keyframes tf-drip { 0% { transform: scaleY(0); } 100% { transform: scaleY(1); } }
+.tf-splat-word { position: relative; font-family: var(--font-display); font-size: clamp(48px, 13vw, 120px); color: #ff2d55; text-shadow: 0 3px 0 #fff, 0 0 24px rgba(255,45,85,0.6); transform: rotate(-8deg); animation: tf-word 0.45s 0.15s cubic-bezier(.2,1.8,.4,1) both; }
+@keyframes tf-word { 0% { transform: rotate(-8deg) scale(0.2); opacity: 0; } 100% { transform: rotate(-8deg) scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tf-splat circle, .tf-splat .drip, .tf-splat-word { animation: none; } }
+.tf-splat ellipse { transform-box: fill-box; transform-origin: center; }
+.tf-splat .goo g ellipse { animation: tf-splat-in 0.3s cubic-bezier(.2,1.6,.4,1) both; }
+.tf-splat .drip-end { animation: tf-drip-end 1.6s cubic-bezier(.45,0,.6,1) both; }
+@keyframes tf-drip-end { 0% { opacity: 0; transform: translateY(-30px) scale(0.3); } 100% { opacity: 1; transform: none; } }
+.tf-splat .shine { fill: rgba(255,255,255,0.75); animation: tf-splat-in 0.3s 0.2s both; }
+.tf-splat svg { filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); }
+.tf-splat .goo { fill: #f4f1e6; }
+
+/* Spin the Bottle: blind wedges, player color for their pick */
+.stb-slice.picked { fill: color-mix(in srgb, var(--you) 26%, transparent); stroke: var(--you); stroke-width: 3; }
+.stb-slice.landed { fill: rgba(255, 95, 162, 0.42); }
+.stb-slice.picked.landed { fill: color-mix(in srgb, var(--you) 55%, #ff5fa2); }
+.stb-slice.locked-in { cursor: default; }
+.stb-label.hidden-amt { fill: var(--text-muted); font-size: 18px; }
+.stb-reveal { animation: stb-reveal 0.45s cubic-bezier(.2,1.4,.4,1) both; transform-box: fill-box; transform-origin: center; }
+@keyframes stb-reveal { 0% { opacity: 0; transform: scale(0.3); } 100% { opacity: 1; transform: scale(1); } }
+
+/* Games 18+ gate: even lines, label, matching widths */
+#games-gate { width: 340px; padding: 28px 26px; }
+#games-gate h3 { margin-bottom: 12px; }
+#games-gate .gate-rule { font-size: 14px; line-height: 1.6; color: var(--text-light); margin-bottom: 18px; }
+#games-gate .gate-pref { color: var(--text-muted); font-size: 13px; }
+#games-gate form { gap: 10px; }
+#games-gate .gate-label { width: 100%; max-width: 240px; text-align: left; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: -4px; }
+#games-gate input[type="date"], #games-gate .btn { width: 100%; max-width: 240px; }
+#games-gate .age-error:empty { display: none; }
+
+/* Wallet code hidden until tapped */
+.wl-code-hidden { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--text-muted); }
+.wl-code-dots { letter-spacing: 1px; }
+.wl-code-tap { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0; color: var(--accent); white-space: nowrap; }
+
+/* Wallet: pop-up help panels */
+body.wl-modal-open { overflow: hidden; }
+.wl-modal { position: fixed; inset: 0; z-index: 1000; background: rgba(5, 5, 8, 0.72); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.wl-modal-card { width: 100%; max-width: 440px; max-height: calc(100vh - 32px); overflow-y: auto; background: var(--bg-card); border: 1px solid var(--accent-dim); border-radius: 14px; padding: 18px 18px 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); text-align: left; animation: wl-modal-in 0.22s ease both; }
+@keyframes wl-modal-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+.wl-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.wl-modal-head h3 { margin: 0; font: 700 16px var(--font-body); color: var(--text-light); }
+.wl-modal-x { background: none; border: 0; color: var(--text-muted); font-size: 24px; line-height: 1; cursor: pointer; padding: 2px 6px; }
+.wl-modal-x:hover { color: var(--text-light); }
+.wl-modal-lead { margin: 0 0 14px; font-size: 13px; line-height: 1.6; color: var(--text-body); }
+.wl-modal-lead strong { color: var(--text-light); }
+.wl-modal-body { display: flex; flex-direction: column; gap: 12px; }
+.wl-modal-body .wl-fine { margin: 0; text-align: left; }
+.wl-modal-note { color: var(--text-muted); }
+.wl-modal textarea { width: 100%; background: var(--bg); color: var(--text-light); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 9px 12px; font: inherit; font-size: 14px; resize: vertical; }
+.wl-modal input[type=text] { width: 100%; background: var(--bg); color: var(--text-light); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 9px 12px; font: inherit; font-size: 14px; }
+.wl-modal select { width: 100%; background: var(--bg); color: var(--text-light); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 9px 10px; font: inherit; }
+.wl-terms-act:empty { display: none; }
+.wl-terms-act { margin: 8px 0 4px; }
+.wl-help-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-subtle); border: 1px solid var(--accent-dim); color: var(--accent); border-radius: 999px; padding: 7px 14px; font: 600 12.5px var(--font-body); cursor: pointer; }
+.wl-help-btn:hover { background: rgba(255, 95, 162, 0.18); }
+.wl-help-btn span { font-size: 16px; line-height: 1; }
+.wl-nudge { flex-direction: column; align-items: stretch; }
+.wl-nudge-answers { display: flex; flex-wrap: wrap; gap: 8px; }
+.wl-pin-form input + input { margin-top: 8px; }
+.wl-set-label small { font-size: 10.5px; color: var(--text-muted); opacity: 0.8; }
+
+/* Result moments (shared by every game) */
+.g-burst { position: fixed; inset: 0; z-index: 9998; pointer-events: none; overflow: hidden; display: grid; place-items: center; transition: opacity 0.5s ease; }
+.g-burst.out { opacity: 0; }
+.g-bit { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation: g-fall linear both; }
+.g-bit-shape { width: auto; height: auto; font-size: 22px; line-height: 1; }
+@keyframes g-fall { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 100% { transform: translate(var(--dx), 105vh) rotate(var(--rot)); opacity: 0.9; } }
+.g-burst-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 30px; border-radius: 18px; background: rgba(13, 13, 15, 0.82); border: 1px solid var(--accent-dim); box-shadow: 0 20px 60px rgba(0,0,0,0.55); animation: g-pop 0.5s cubic-bezier(.2,1.7,.4,1) both; text-align: center; }
+.g-burst-card strong { font-family: var(--font-display); font-size: clamp(40px, 11vw, 78px); line-height: 1; color: var(--accent); text-shadow: 0 0 24px currentColor; font-weight: 400; }
+.g-burst-card span { font: 600 15px var(--font-body); color: var(--text-light); }
+.g-burst-tie .g-burst-card strong { color: var(--text-light); }
+.g-burst-double .g-burst-card { border-color: var(--accent); }
+@keyframes g-pop { 0% { transform: scale(0.3) rotate(-6deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .g-bit { display: none; } .g-burst-card { animation: none; } }
+.drain-loss-pop { display: inline-block; animation: g-pop 0.45s cubic-bezier(.2,1.7,.4,1) both; }
+
+/* Too Far: type an exact amount */
+.tf-amount { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 4px 0 12px; }
+.tf-amount-box { display: flex; align-items: center; gap: 4px; padding: 8px 16px; background: var(--bg); border: 1.5px solid var(--accent-dim); border-radius: 14px; }
+.tf-amount-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+.tf-amount-cur { font: 700 28px var(--font-body); color: var(--accent); }
+.tf-amount-box input { width: 130px; background: none; border: 0; outline: none; color: var(--text-light); font: 700 32px var(--font-body); text-align: left; }
+.tf-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.tf-chip { background: transparent; border: 1px solid var(--accent-border); color: var(--text-body); border-radius: 999px; padding: 5px 12px; font: 600 12.5px var(--font-body); cursor: pointer; }
+.tf-chip:hover { border-color: var(--accent-dim); color: var(--text-light); }
+.tf-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tf-amount-note { margin: 0; font-size: 12px; color: var(--text-muted); text-align: center; }
+
+/* Spin the Bottle: picked wedge pops out, landed wedge flashes, loss in the middle */
+.stb-slice { transition: fill 0.2s, transform 0.25s cubic-bezier(.2,1.6,.4,1); }
+.stb-slice.picked { transform: translate(var(--px), var(--py)); filter: drop-shadow(0 0 10px color-mix(in srgb, var(--you) 70%, transparent)); }
+.stb-slice.just-picked { animation: stb-pick 0.45s cubic-bezier(.2,1.6,.4,1); }
+@keyframes stb-pick { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(calc(var(--px) * 1.8), calc(var(--py) * 1.8)); } 100% { transform: translate(var(--px), var(--py)); } }
+.stb-slice.landed { animation: stb-land 0.6s ease 3; }
+@keyframes stb-land { 0%, 100% { fill: rgba(255, 95, 162, 0.42); } 50% { fill: rgba(255, 95, 162, 0.85); } }
+.stb-hub-amt { fill: #fff; font: 800 20px var(--font-body); opacity: 0; pointer-events: none; transform-box: fill-box; transform-origin: center; }
+.stb-hub-amt.show { animation: stb-amt 0.55s cubic-bezier(.2,1.8,.4,1) both; }
+.stb-hub-amt.double { fill: var(--accent); }
+@keyframes stb-amt { 0% { opacity: 0; transform: scale(0.2); } 100% { opacity: 1; transform: scale(1); } }
+.stb-bottle { transition: transform 3.2s cubic-bezier(0.17, 0.67, 0.21, 1), opacity 0.3s; }
+.stb-wheel:has(.stb-hub-amt.show) .stb-bottle { opacity: 0.35; }
+.wl-tg-link { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.wl-tg-link:hover { color: #ff8cc0; }
+
+/* =========================================
+   MANCALA (mancala.html)
+   ========================================= */
+.mc-board { display: grid; grid-template-columns: 58px 1fr 58px; gap: 8px; align-items: stretch; margin: 10px 0 6px; padding: 10px; border-radius: 22px; background: linear-gradient(160deg, #1d1b22, #121215); border: 1px solid var(--accent-border); box-shadow: inset 0 2px 10px rgba(0,0,0,0.45); }
+.mc-rows { display: grid; grid-template-rows: 1fr 1fr; gap: 8px; }
+.mc-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.mc-pit, .mc-store { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border-radius: 999px; background: #0c0c0e; border: 1.5px solid; padding: 6px 2px; font: inherit; color: inherit; min-height: 64px; transition: transform 0.15s, box-shadow 0.15s, background 0.15s; }
+.mc-store { border-radius: 30px; min-height: 0; }
+.mc-her, .mc-store-her { border-color: rgba(255, 95, 162, 0.45); }
+.mc-you, .mc-store-you { border-color: color-mix(in srgb, var(--you) 55%, transparent); }
+.mc-pit:disabled { cursor: default; }
+.mc-pit.open { cursor: pointer; border-color: var(--you); box-shadow: 0 0 0 1px color-mix(in srgb, var(--you) 35%, transparent); }
+.mc-pit.open:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--you) 12%, #0c0c0e); }
+.mc-pit.hot, .mc-store.hot { animation: mc-hot 0.32s ease; }
+.mc-her.hot, .mc-store-her.hot { box-shadow: 0 0 14px rgba(255, 95, 162, 0.7); }
+.mc-you.hot, .mc-store-you.hot { box-shadow: 0 0 14px color-mix(in srgb, var(--you) 75%, transparent); }
+@keyframes mc-hot { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.mc-pit.from { opacity: 0.55; }
+.mc-pit.cap { background: rgba(255, 95, 162, 0.28); box-shadow: 0 0 18px rgba(255, 95, 162, 0.8); animation: mc-hot 0.45s ease 2; }
+.mc-stones { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; max-width: 34px; min-height: 12px; }
+.mc-store .mc-stones { max-width: 42px; }
+.mc-stones i { width: 7px; height: 7px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #d9cbd6 55%, #8f8290); box-shadow: 0 1px 1px rgba(0,0,0,0.5); }
+.mc-count { font: 700 12px var(--font-body); color: var(--text-light); }
+.mc-store .mc-count { font-size: 18px; }
+.mc-store-label { font: 700 10px var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); }
+.mc-store-you .mc-store-label { color: var(--you); }
+.mc-store-her .mc-store-label { color: var(--accent); }
+.mc-status { min-height: 40px; }
+@media (max-width: 480px) {
+  .mc-board { grid-template-columns: 40px 1fr 40px; padding: 7px; gap: 5px; }
+  .mc-row { gap: 4px; }
+  .mc-pit { min-height: 52px; }
+  .mc-stones { max-width: 24px; }
+  .mc-stones i { width: 5px; height: 5px; }
+}
+
+/* NEW badges for new games */
+.nav-new { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--accent); color: #fff; font: 700 9px var(--font-body); letter-spacing: 0.05em; vertical-align: 2px; }
+.game-card { position: relative; }
+.game-card-new { position: absolute; top: 10px; right: 10px; z-index: 2; padding: 3px 9px; border-radius: 999px; background: var(--accent); color: #fff; font: 700 10.5px var(--font-body); letter-spacing: 0.06em; box-shadow: 0 0 12px rgba(255, 95, 162, 0.6); }
+.game-card-mc { display: grid; place-items: center; }
+.gc-mc { display: grid; grid-template-columns: 14px repeat(6, 22px) 14px; grid-template-rows: 22px 22px; gap: 5px; padding: 8px; border-radius: 16px; border: 1px solid var(--accent-border); background: #121215; }
+.gc-mc i { border-radius: 50%; border: 1.5px solid rgba(255, 95, 162, 0.5); background: radial-gradient(circle, #d9cbd6 0 3px, transparent 4px); }
+.gc-mc i:nth-child(n+7) { border-color: #a78bfa; }
+.gc-mc b { grid-row: 1 / 3; border-radius: 10px; border: 1.5px solid rgba(255, 95, 162, 0.5); }
+.gc-mc b:first-of-type { grid-column: 1; }
+.gc-mc b:last-of-type { grid-column: 8; border-color: #a78bfa; }
+.gc-mc i:nth-child(-n+6) { grid-row: 1; }
+.gc-mc i:nth-child(n+7) { grid-row: 2; }
+
+/* Games page cards: Too Far (31, glow + grid), Spin the Bottle (spiral), Mancala (pebbles) */
+.game-card-tf {
+  position: relative;
+  gap: 0;
+  background:
+    radial-gradient(circle at 50% 120%, rgba(255, 95, 162, 0.22), transparent 62%),
+    linear-gradient(rgba(255, 95, 162, 0.12) 1px, transparent 1px) 0 0 / 20px 20px,
+    linear-gradient(90deg, rgba(255, 95, 162, 0.12) 1px, transparent 1px) 0 0 / 20px 20px,
+    var(--bg);
+}
+.game-card-tf .gc-card { margin: 0 -6px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5); }
+.gc-card-a { transform: rotate(-12deg) translateY(4px); }
+.gc-card-m { transform: translateY(-4px); z-index: 1; }
+.gc-card-b { transform: rotate(12deg) translateY(4px); }
+.gc-total { position: absolute; right: 14px; bottom: 10px; padding: 2px 9px; border-radius: 999px; background: var(--accent); color: #fff; font: 700 12px var(--font-body); box-shadow: 0 0 12px rgba(255, 95, 162, 0.6); }
+
+.game-card-stb {
+  background:
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 95, 162, 0.10) 0deg 10deg, transparent 10deg 20deg),
+    radial-gradient(circle at 50% 50%, rgba(255, 95, 162, 0.16), transparent 58%),
+    var(--bg);
+  overflow: hidden;
+}
+.game-card-stb::before {
+  content: ''; position: absolute; inset: -40%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255, 95, 162, 0.16) 60deg, transparent 120deg, rgba(255, 95, 162, 0.10) 200deg, transparent 260deg);
+  -webkit-mask: repeating-radial-gradient(circle at 50% 50%, #000 0 6px, transparent 6px 14px);
+  mask: repeating-radial-gradient(circle at 50% 50%, #000 0 6px, transparent 6px 14px);
+  animation: gc-spiral 14s linear infinite;
+}
+@keyframes gc-spiral { to { transform: rotate(360deg); } }
+.game-card-stb .gc-wheel { z-index: 1; box-shadow: 0 0 18px rgba(255, 95, 162, 0.25); }
+
+.game-card-mc {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(217, 203, 214, 0.18) 2px, transparent 2.5px) 0 0 / 26px 22px,
+    radial-gradient(circle at 70% 70%, rgba(167, 139, 250, 0.16) 1.5px, transparent 2px) 0 0 / 26px 22px,
+    radial-gradient(ellipse at 50% 110%, rgba(167, 139, 250, 0.18), transparent 60%),
+    var(--bg);
+}
+@media (prefers-reduced-motion: reduce) { .game-card-stb::before { animation: none; } }
+
+/* Spin the Bottle card: a slow-turning spiral behind the wheel */
+.game-card-stb { background: radial-gradient(circle at 50% 50%, rgba(255, 95, 162, 0.14), transparent 60%), var(--bg); }
+.game-card-stb::before { inset: 50% auto auto 50%; width: 420px; height: 420px; margin: -210px 0 0 -210px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M202.0,200.0 L202.1,200.0 L202.3,200.1 L202.4,200.2 L202.5,200.2 L202.6,200.3 L202.8,200.3 L202.9,200.4 L203.0,200.5 L203.1,200.6 L203.2,200.7 L203.3,200.8 L203.4,200.9 L203.6,201.0 L203.7,201.1 L203.8,201.2 L203.9,201.3 L203.9,201.5 L204.0,201.6 L204.1,201.7 L204.2,201.9 L204.3,202.0 L204.4,202.2 L204.4,202.3 L204.5,202.5 L204.5,202.6 L204.6,202.8 L204.6,203.0 L204.7,203.1 L204.7,203.3 L204.8,203.5 L204.8,203.6 L204.8,203.8 L204.8,204.0 L204.9,204.2 L204.9,204.4 L204.9,204.6 L204.9,204.8 L204.9,205.0 L204.8,205.1 L204.8,205.3 L204.8,205.5 L204.8,205.7 L204.7,205.9 L204.7,206.1 L204.6,206.3 L204.6,206.5 L204.5,206.7 L204.4,207.0 L204.3,207.2 L204.2,207.4 L204.2,207.6 L204.1,207.8 L203.9,208.0 L203.8,208.2 L203.7,208.4 L203.6,208.5 L203.5,208.7 L203.3,208.9 L203.2,209.1 L203.0,209.3 L202.9,209.5 L202.7,209.7 L202.5,209.9 L202.4,210.0 L202.2,210.2 L202.0,210.4 L201.8,210.6 L201.6,210.7 L201.4,210.9 L201.2,211.0 L200.9,211.2 L200.7,211.3 L200.5,211.5 L200.2,211.6 L200.0,211.7 L199.8,211.9 L199.5,212.0 L199.2,212.1 L199.0,212.2 L198.7,212.3 L198.4,212.4 L198.2,212.5 L197.9,212.6 L197.6,212.7 L197.3,212.8 L197.0,212.8 L196.7,212.9 L196.4,212.9 L196.1,213.0 L195.8,213.0 L195.5,213.0 L195.1,213.1 L194.8,213.1 L194.5,213.1 L194.2,213.1 L193.8,213.1 L193.5,213.1 L193.2,213.0 L192.8,213.0 L192.5,213.0 L192.2,212.9 L191.8,212.9 L191.5,212.8 L191.2,212.7 L190.8,212.6 L190.5,212.6 L190.1,212.5 L189.8,212.3 L189.4,212.2 L189.1,212.1 L188.8,212.0 L188.4,211.8 L188.1,211.7 L187.8,211.5 L187.4,211.3 L187.1,211.1 L186.8,211.0 L186.4,210.8 L186.1,210.6 L185.8,210.3 L185.5,210.1 L185.1,209.9 L184.8,209.6 L184.5,209.4 L184.2,209.1 L183.9,208.8 L183.6,208.6 L183.3,208.3 L183.0,208.0 L182.8,207.7 L182.5,207.4 L182.2,207.0 L181.9,206.7 L181.7,206.4 L181.4,206.0 L181.2,205.7 L180.9,205.3 L180.7,205.0 L180.5,204.6 L180.3,204.2 L180.1,203.8 L179.8,203.4 L179.7,203.0 L179.5,202.6 L179.3,202.2 L179.1,201.8 L179.0,201.3 L178.8,200.9 L178.7,200.4 L178.5,200.0 L178.4,199.5 L178.3,199.1 L178.2,198.6 L178.1,198.2 L178.0,197.7 L177.9,197.2 L177.9,196.7 L177.8,196.2 L177.8,195.8 L177.7,195.3 L177.7,194.8 L177.7,194.3 L177.7,193.8 L177.7,193.3 L177.7,192.8 L177.8,192.3 L177.8,191.7 L177.9,191.2 L177.9,190.7 L178.0,190.2 L178.1,189.7 L178.2,189.2 L178.3,188.7 L178.4,188.2 L178.6,187.6 L178.7,187.1 L178.9,186.6 L179.1,186.1 L179.3,185.6 L179.5,185.1 L179.7,184.6 L179.9,184.1 L180.1,183.6 L180.4,183.1 L180.7,182.6 L180.9,182.1 L181.2,181.6 L181.5,181.1 L181.8,180.7 L182.2,180.2 L182.5,179.7 L182.8,179.2 L183.2,178.8 L183.6,178.3 L183.9,177.9 L184.3,177.5 L184.7,177.0 L185.2,176.6 L185.6,176.2 L186.0,175.8 L186.5,175.4 L186.9,175.0 L187.4,174.6 L187.9,174.2 L188.4,173.9 L188.9,173.5 L189.4,173.1 L189.9,172.8 L190.4,172.5 L191.0,172.2 L191.5,171.9 L192.1,171.6 L192.6,171.3 L193.2,171.0 L193.8,170.7 L194.4,170.5 L195.0,170.2 L195.6,170.0 L196.2,169.8 L196.8,169.6 L197.4,169.4 L198.1,169.2 L198.7,169.1 L199.3,168.9 L200.0,168.8 L200.7,168.7 L201.3,168.6 L202.0,168.5 L202.7,168.4 L203.3,168.3 L204.0,168.3 L204.7,168.2 L205.4,168.2 L206.1,168.2 L206.8,168.2 L207.5,168.2 L208.2,168.3 L208.8,168.3 L209.5,168.4 L210.2,168.5 L210.9,168.6 L211.7,168.7 L212.4,168.8 L213.1,168.9 L213.8,169.1 L214.5,169.3 L215.2,169.5 L215.8,169.7 L216.5,169.9 L217.2,170.2 L217.9,170.4 L218.6,170.7 L219.3,171.0 L220.0,171.3 L220.6,171.6 L221.3,171.9 L222.0,172.3 L222.6,172.6 L223.3,173.0 L223.9,173.4 L224.6,173.8 L225.2,174.3 L225.8,174.7 L226.4,175.2 L227.1,175.6 L227.7,176.1 L228.3,176.6 L228.8,177.1 L229.4,177.7 L230.0,178.2 L230.5,178.8 L231.1,179.3 L231.6,179.9 L232.1,180.5 L232.7,181.1 L233.2,181.8 L233.6,182.4 L234.1,183.1 L234.6,183.7 L235.0,184.4 L235.5,185.1 L235.9,185.8 L236.3,186.5 L236.7,187.2 L237.1,187.9 L237.5,188.7 L237.8,189.4 L238.2,190.2 L238.5,191.0 L238.8,191.8 L239.1,192.5 L239.4,193.3 L239.6,194.1 L239.9,195.0 L240.1,195.8 L240.3,196.6 L240.5,197.5 L240.7,198.3 L240.8,199.1 L241.0,200.0 L241.1,200.9 L241.2,201.7 L241.3,202.6 L241.3,203.5 L241.4,204.3 L241.4,205.2 L241.4,206.1 L241.4,207.0 L241.4,207.9 L241.3,208.8 L241.3,209.7 L241.2,210.6 L241.1,211.5 L240.9,212.4 L240.8,213.3 L240.6,214.2 L240.5,215.0 L240.3,215.9 L240.0,216.8 L239.8,217.7 L239.5,218.6 L239.2,219.5 L238.9,220.4 L238.6,221.2 L238.3,222.1 L237.9,223.0 L237.5,223.8 L237.1,224.7 L236.7,225.5 L236.3,226.4 L235.8,227.2 L235.4,228.0 L234.9,228.8 L234.3,229.6 L233.8,230.4 L233.3,231.2 L232.7,232.0 L232.1,232.8 L231.5,233.5 L230.9,234.3 L230.2,235.0 L229.6,235.8 L228.9,236.5 L228.2,237.2 L227.5,237.9 L226.8,238.5 L226.0,239.2 L225.3,239.8 L224.5,240.5 L223.7,241.1 L222.9,241.7 L222.1,242.3 L221.3,242.8 L220.4,243.4 L219.6,243.9 L218.7,244.5 L217.8,245.0 L216.9,245.4 L216.0,245.9 L215.1,246.4 L214.1,246.8 L213.2,247.2 L212.2,247.6 L211.3,248.0 L210.3,248.3 L209.3,248.6 L208.3,249.0 L207.3,249.3 L206.3,249.5 L205.2,249.8 L204.2,250.0 L203.2,250.2 L202.1,250.4 L201.1,250.6 L200.0,250.7 L198.9,250.8 L197.9,250.9 L196.8,251.0 L195.7,251.0 L194.6,251.1 L193.5,251.1 L192.5,251.1 L191.4,251.0 L190.3,250.9 L189.2,250.9 L188.1,250.7 L187.0,250.6 L185.9,250.5 L184.8,250.3 L183.7,250.1 L182.6,249.8 L181.6,249.6 L180.5,249.3 L179.4,249.0 L178.3,248.7 L177.3,248.3 L176.2,248.0 L175.1,247.6 L174.1,247.2 L173.0,246.7 L172.0,246.3 L171.0,245.8 L169.9,245.3 L168.9,244.7 L167.9,244.2 L166.9,243.6 L165.9,243.0 L165.0,242.4 L164.0,241.7 L163.0,241.1 L162.1,240.4 L161.2,239.7 L160.3,238.9 L159.4,238.2 L158.5,237.4 L157.6,236.6 L156.7,235.8 L155.9,235.0 L155.1,234.1 L154.3,233.2 L153.5,232.3 L152.7,231.4 L151.9,230.5 L151.2,229.6 L150.5,228.6 L149.8,227.6 L149.1,226.6 L148.4,225.6 L147.8,224.6 L147.2,223.5 L146.6,222.5 L146.0,221.4 L145.4,220.3 L144.9,219.2 L144.4,218.1 L143.9,216.9 L143.4,215.8 L143.0,214.6 L142.6,213.5 L142.2,212.3 L141.8,211.1 L141.4,209.9 L141.1,208.7 L140.8,207.5 L140.5,206.2 L140.3,205.0 L140.1,203.8 L139.9,202.5 L139.7,201.3 L139.6,200.0 L139.4,198.7 L139.4,197.5 L139.3,196.2 L139.3,194.9 L139.3,193.6 L139.3,192.3 L139.3,191.0 L139.4,189.7 L139.5,188.5 L139.6,187.2 L139.8,185.9 L140.0,184.6 L140.2,183.3 L140.4,182.0 L140.7,180.7 L141.0,179.4 L141.3,178.2 L141.6,176.9 L142.0,175.6 L142.4,174.4 L142.9,173.1 L143.3,171.9 L143.8,170.6 L144.3,169.4 L144.9,168.2 L145.4,166.9 L146.0,165.7 L146.6,164.5 L147.3,163.4 L148.0,162.2 L148.7,161.0 L149.4,159.9 L150.1,158.7 L150.9,157.6 L151.7,156.5 L152.5,155.4 L153.4,154.4 L154.3,153.3 L155.2,152.3 L156.1,151.2 L157.0,150.2 L158.0,149.2 L159.0,148.3 L160.0,147.3 L161.0,146.4 L162.1,145.5 L163.2,144.6 L164.3,143.7 L165.4,142.9 L166.5,142.0 L167.7,141.2 L168.9,140.5 L170.1,139.7 L171.3,139.0 L172.5,138.3 L173.8,137.6 L175.0,136.9 L176.3,136.3 L177.6,135.7 L178.9,135.1 L180.2,134.6 L181.6,134.0 L182.9,133.5 L184.3,133.1 L185.7,132.6 L187.1,132.2 L188.5,131.8 L189.9,131.5 L191.3,131.2 L192.7,130.9 L194.2,130.6 L195.6,130.4 L197.1,130.1 L198.5,130.0 L200.0,129.8 L201.5,129.7 L202.9,129.6 L204.4,129.6 L205.9,129.6 L207.4,129.6 L208.9,129.6 L210.4,129.7 L211.9,129.8 L213.4,129.9 L214.9,130.1 L216.4,130.3 L217.8,130.5 L219.3,130.8 L220.8,131.1 L222.3,131.4 L223.8,131.8 L225.2,132.2 L226.7,132.6 L228.1,133.0 L229.6,133.5 L231.0,134.0 L232.5,134.6 L233.9,135.2 L235.3,135.8 L236.7,136.4 L238.1,137.1 L239.5,137.8 L240.8,138.5 L242.2,139.3 L243.5,140.1 L244.9,140.9 L246.2,141.7 L247.5,142.6 L248.7,143.5 L250.0,144.5 L251.2,145.4 L252.5,146.4 L253.7,147.5 L254.8,148.5 L256.0,149.6 L257.2,150.7 L258.3,151.8 L259.4,152.9 L260.4,154.1 L261.5,155.3 L262.5,156.5 L263.5,157.8 L264.5,159.1 L265.5,160.4 L266.4,161.7 L267.3,163.0 L268.2,164.4 L269.0,165.7 L269.8,167.1 L270.6,168.6 L271.4,170.0 L272.1,171.4 L272.8,172.9 L273.5,174.4 L274.1,175.9 L274.8,177.4 L275.3,179.0 L275.9,180.5 L276.4,182.1 L276.9,183.7 L277.3,185.2 L277.8,186.8 L278.2,188.5 L278.5,190.1 L278.8,191.7 L279.1,193.4 L279.4,195.0 L279.6,196.7 L279.8,198.3 L279.9,200.0 L280.0,201.7 L280.1,203.4 L280.1,205.0 L280.1,206.7 L280.1,208.4 L280.1,210.1 L280.0,211.8 L279.8,213.5 L279.6,215.2 L279.4,216.9 L279.2,218.6 L278.9,220.3 L278.6,221.9 L278.2,223.6 L277.9,225.3 L277.4,227.0 L277.0,228.6 L276.5,230.3 L275.9,231.9 L275.4,233.6 L274.8,235.2 L274.1,236.8 L273.5,238.4 L272.8,240.0 L272.0,241.6 L271.2,243.1 L270.4,244.7 L269.6,246.2 L268.7,247.8 L267.8,249.3 L266.9,250.7 L265.9,252.2 L264.9,253.7 L263.8,255.1 L262.8,256.5 L261.7,257.9 L260.5,259.3 L259.4,260.6 L258.2,261.9 L256.9,263.2 L255.7,264.5 L254.4,265.8 L253.1,267.0 L251.8,268.2 L250.4,269.4 L249.0,270.5 L247.6,271.6 L246.2,272.7 L244.7,273.8 L243.2,274.8 L241.7,275.8 L240.2,276.8 L238.6,277.7 L237.0,278.7 L235.4,279.5 L233.8,280.4 L232.1,281.2 L230.5,282.0 L228.8,282.7 L227.1,283.4 L225.4,284.1 L223.7,284.7 L221.9,285.3 L220.1,285.9 L218.4,286.4 L216.6,286.9 L214.8,287.4 L213.0,287.8 L211.1,288.2 L209.3,288.5 L207.5,288.8 L205.6,289.1 L203.7,289.3 L201.9,289.5 L200.0,289.7 L198.1,289.8 L196.2,289.8 L194.3,289.9 L192.5,289.9 L190.6,289.8 L188.7,289.7 L186.8,289.6 L184.9,289.4 L183.0,289.2 L181.1,289.0 L179.2,288.7 L177.3,288.3 L175.4,288.0 L173.6,287.6 L171.7,287.1 L169.8,286.6 L168.0,286.1 L166.1,285.5 L164.3,284.9 L162.5,284.3 L160.7,283.6 L158.9,282.9 L157.1,282.1 L155.3,281.3 L153.6,280.5 L151.8,279.6 L150.1,278.7 L148.4,277.7 L146.7,276.7 L145.0,275.7 L143.4,274.6 L141.7,273.5 L140.1,272.4 L138.5,271.2 L137.0,270.0 L135.4,268.8 L133.9,267.5 L132.4,266.2 L131.0,264.8 L129.5,263.5 L128.1,262.1 L126.7,260.6 L125.4,259.2 L124.0,257.7 L122.7,256.1 L121.5,254.6 L120.2,253.0 L119.0,251.4 L117.9,249.7 L116.7,248.1 L115.6,246.4 L114.6,244.7 L113.5,242.9 L112.5,241.2 L111.6,239.4 L110.7,237.6 L109.8,235.7 L108.9,233.9 L108.1,232.0 L107.3,230.1 L106.6,228.2 L105.9,226.3 L105.2,224.3 L104.6,222.4 L104.1,220.4 L103.5,218.4 L103.0,216.4 L102.6,214.4 L102.2,212.4 L101.8,210.3 L101.5,208.3 L101.2,206.2 L101.0,204.2 L100.8,202.1 L100.6,200.0 L100.5,197.9 L100.4,195.8 L100.4,193.7 L100.4,191.6 L100.5,189.5 L100.6,187.4 L100.8,185.3 L101.0,183.3 L101.2,181.2 L101.5,179.1 L101.8,177.0 L102.2,174.9 L102.6,172.8 L103.1,170.7 L103.6,168.7 L104.2,166.6 L104.8,164.6 L105.4,162.6 L106.1,160.5 L106.8,158.5 L107.6,156.5 L108.4,154.5 L109.3,152.6 L110.2,150.6 L111.1,148.7 L112.1,146.8 L113.1,144.9 L114.2,143.0 L115.3,141.1 L116.4,139.3 L117.6,137.5 L118.9,135.7 L120.1,133.9 L121.4,132.2 L122.8,130.5 L124.1,128.8 L125.6,127.1 L127.0,125.5 L128.5,123.9 L130.0,122.3 L131.6,120.7 L133.2,119.2 L134.8,117.7 L136.5,116.3 L138.1,114.9 L139.9,113.5 L141.6,112.1 L143.4,110.8 L145.2,109.5 L147.1,108.3 L148.9,107.1 L150.8,105.9 L152.7,104.8 L154.7,103.7 L156.7,102.7 L158.7,101.7 L160.7,100.7 L162.7,99.8 L164.8,98.9 L166.9,98.1 L169.0,97.3 L171.1,96.5 L173.2,95.8 L175.4,95.1 L177.6,94.5 L179.8,94.0 L182.0,93.4 L184.2,92.9 L186.4,92.5 L188.7,92.1 L190.9,91.8 L193.2,91.5 L195.4,91.2 L197.7,91.0 L200.0,90.9 L202.3,90.8 L204.6,90.7 L206.9,90.7 L209.2,90.7 L211.5,90.8 L213.8,91.0 L216.1,91.1 L218.4,91.4 L220.7,91.7 L223.0,92.0 L225.2,92.4 L227.5,92.8 L229.8,93.3 L232.1,93.8 L234.3,94.4 L236.6,95.0 L238.8,95.6 L241.0,96.4 L243.2,97.1 L245.4,97.9 L247.6,98.8 L249.8,99.7 L251.9,100.6 L254.1,101.6 L256.2,102.7 L258.3,103.8 L260.4,104.9 L262.4,106.1 L264.4,107.3 L266.4,108.6 L268.4,109.9 L270.4,111.2 L272.3,112.6 L274.2,114.0 L276.1,115.5 L277.9,117.0 L279.7,118.6 L281.5,120.2 L283.2,121.8 L285.0,123.5 L286.6,125.2 L288.3,127.0 L289.9,128.7 L291.5,130.6 L293.0,132.4 L294.5,134.3 L296.0,136.2 L297.4,138.2 L298.8,140.2 L300.1,142.2 L301.4,144.2 L302.7,146.3 L303.9,148.4 L305.1,150.5 L306.2,152.7 L307.3,154.9 L308.3,157.1 L309.3,159.3 L310.3,161.6 L311.2,163.9 L312.1,166.2 L312.9,168.5 L313.6,170.8 L314.3,173.2 L315.0,175.6 L315.6,177.9 L316.2,180.3 L316.7,182.8 L317.2,185.2 L317.6,187.6 L317.9,190.1 L318.2,192.6 L318.5,195.0 L318.7,197.5' stroke='rgba%28255,95,162,0.32%29' stroke-width='3'/%3E%3Cpath d='M198.0,200.0 L197.9,200.0 L197.7,199.9 L197.6,199.8 L197.5,199.8 L197.4,199.7 L197.2,199.7 L197.1,199.6 L197.0,199.5 L196.9,199.4 L196.8,199.3 L196.7,199.2 L196.6,199.1 L196.4,199.0 L196.3,198.9 L196.2,198.8 L196.1,198.7 L196.1,198.5 L196.0,198.4 L195.9,198.3 L195.8,198.1 L195.7,198.0 L195.6,197.8 L195.6,197.7 L195.5,197.5 L195.5,197.4 L195.4,197.2 L195.4,197.0 L195.3,196.9 L195.3,196.7 L195.2,196.5 L195.2,196.4 L195.2,196.2 L195.2,196.0 L195.1,195.8 L195.1,195.6 L195.1,195.4 L195.1,195.2 L195.1,195.0 L195.2,194.9 L195.2,194.7 L195.2,194.5 L195.2,194.3 L195.3,194.1 L195.3,193.9 L195.4,193.7 L195.4,193.5 L195.5,193.3 L195.6,193.0 L195.7,192.8 L195.8,192.6 L195.8,192.4 L195.9,192.2 L196.1,192.0 L196.2,191.8 L196.3,191.6 L196.4,191.5 L196.5,191.3 L196.7,191.1 L196.8,190.9 L197.0,190.7 L197.1,190.5 L197.3,190.3 L197.5,190.1 L197.6,190.0 L197.8,189.8 L198.0,189.6 L198.2,189.4 L198.4,189.3 L198.6,189.1 L198.8,189.0 L199.1,188.8 L199.3,188.7 L199.5,188.5 L199.8,188.4 L200.0,188.3 L200.2,188.1 L200.5,188.0 L200.8,187.9 L201.0,187.8 L201.3,187.7 L201.6,187.6 L201.8,187.5 L202.1,187.4 L202.4,187.3 L202.7,187.2 L203.0,187.2 L203.3,187.1 L203.6,187.1 L203.9,187.0 L204.2,187.0 L204.5,187.0 L204.9,186.9 L205.2,186.9 L205.5,186.9 L205.8,186.9 L206.2,186.9 L206.5,186.9 L206.8,187.0 L207.2,187.0 L207.5,187.0 L207.8,187.1 L208.2,187.1 L208.5,187.2 L208.8,187.3 L209.2,187.4 L209.5,187.4 L209.9,187.5 L210.2,187.7 L210.6,187.8 L210.9,187.9 L211.2,188.0 L211.6,188.2 L211.9,188.3 L212.2,188.5 L212.6,188.7 L212.9,188.9 L213.2,189.0 L213.6,189.2 L213.9,189.4 L214.2,189.7 L214.5,189.9 L214.9,190.1 L215.2,190.4 L215.5,190.6 L215.8,190.9 L216.1,191.2 L216.4,191.4 L216.7,191.7 L217.0,192.0 L217.2,192.3 L217.5,192.6 L217.8,193.0 L218.1,193.3 L218.3,193.6 L218.6,194.0 L218.8,194.3 L219.1,194.7 L219.3,195.0 L219.5,195.4 L219.7,195.8 L219.9,196.2 L220.2,196.6 L220.3,197.0 L220.5,197.4 L220.7,197.8 L220.9,198.2 L221.0,198.7 L221.2,199.1 L221.3,199.6 L221.5,200.0 L221.6,200.5 L221.7,200.9 L221.8,201.4 L221.9,201.8 L222.0,202.3 L222.1,202.8 L222.1,203.3 L222.2,203.8 L222.2,204.2 L222.3,204.7 L222.3,205.2 L222.3,205.7 L222.3,206.2 L222.3,206.7 L222.3,207.2 L222.2,207.7 L222.2,208.3 L222.1,208.8 L222.1,209.3 L222.0,209.8 L221.9,210.3 L221.8,210.8 L221.7,211.3 L221.6,211.8 L221.4,212.4 L221.3,212.9 L221.1,213.4 L220.9,213.9 L220.7,214.4 L220.5,214.9 L220.3,215.4 L220.1,215.9 L219.9,216.4 L219.6,216.9 L219.3,217.4 L219.1,217.9 L218.8,218.4 L218.5,218.9 L218.2,219.3 L217.8,219.8 L217.5,220.3 L217.2,220.8 L216.8,221.2 L216.4,221.7 L216.1,222.1 L215.7,222.5 L215.3,223.0 L214.8,223.4 L214.4,223.8 L214.0,224.2 L213.5,224.6 L213.1,225.0 L212.6,225.4 L212.1,225.8 L211.6,226.1 L211.1,226.5 L210.6,226.9 L210.1,227.2 L209.6,227.5 L209.0,227.8 L208.5,228.1 L207.9,228.4 L207.4,228.7 L206.8,229.0 L206.2,229.3 L205.6,229.5 L205.0,229.8 L204.4,230.0 L203.8,230.2 L203.2,230.4 L202.6,230.6 L201.9,230.8 L201.3,230.9 L200.7,231.1 L200.0,231.2 L199.3,231.3 L198.7,231.4 L198.0,231.5 L197.3,231.6 L196.7,231.7 L196.0,231.7 L195.3,231.8 L194.6,231.8 L193.9,231.8 L193.2,231.8 L192.5,231.8 L191.8,231.7 L191.2,231.7 L190.5,231.6 L189.8,231.5 L189.1,231.4 L188.3,231.3 L187.6,231.2 L186.9,231.1 L186.2,230.9 L185.5,230.7 L184.8,230.5 L184.2,230.3 L183.5,230.1 L182.8,229.8 L182.1,229.6 L181.4,229.3 L180.7,229.0 L180.0,228.7 L179.4,228.4 L178.7,228.1 L178.0,227.7 L177.4,227.4 L176.7,227.0 L176.1,226.6 L175.4,226.2 L174.8,225.7 L174.2,225.3 L173.6,224.8 L172.9,224.4 L172.3,223.9 L171.7,223.4 L171.2,222.9 L170.6,222.3 L170.0,221.8 L169.5,221.2 L168.9,220.7 L168.4,220.1 L167.9,219.5 L167.3,218.9 L166.8,218.2 L166.4,217.6 L165.9,216.9 L165.4,216.3 L165.0,215.6 L164.5,214.9 L164.1,214.2 L163.7,213.5 L163.3,212.8 L162.9,212.1 L162.5,211.3 L162.2,210.6 L161.8,209.8 L161.5,209.0 L161.2,208.2 L160.9,207.5 L160.6,206.7 L160.4,205.9 L160.1,205.0 L159.9,204.2 L159.7,203.4 L159.5,202.5 L159.3,201.7 L159.2,200.9 L159.0,200.0 L158.9,199.1 L158.8,198.3 L158.7,197.4 L158.7,196.5 L158.6,195.7 L158.6,194.8 L158.6,193.9 L158.6,193.0 L158.6,192.1 L158.7,191.2 L158.7,190.3 L158.8,189.4 L158.9,188.5 L159.1,187.6 L159.2,186.7 L159.4,185.8 L159.5,185.0 L159.7,184.1 L160.0,183.2 L160.2,182.3 L160.5,181.4 L160.8,180.5 L161.1,179.6 L161.4,178.8 L161.7,177.9 L162.1,177.0 L162.5,176.2 L162.9,175.3 L163.3,174.5 L163.7,173.6 L164.2,172.8 L164.6,172.0 L165.1,171.2 L165.7,170.4 L166.2,169.6 L166.7,168.8 L167.3,168.0 L167.9,167.2 L168.5,166.5 L169.1,165.7 L169.8,165.0 L170.4,164.2 L171.1,163.5 L171.8,162.8 L172.5,162.1 L173.2,161.5 L174.0,160.8 L174.7,160.2 L175.5,159.5 L176.3,158.9 L177.1,158.3 L177.9,157.7 L178.7,157.2 L179.6,156.6 L180.4,156.1 L181.3,155.5 L182.2,155.0 L183.1,154.6 L184.0,154.1 L184.9,153.6 L185.9,153.2 L186.8,152.8 L187.8,152.4 L188.7,152.0 L189.7,151.7 L190.7,151.4 L191.7,151.0 L192.7,150.7 L193.7,150.5 L194.8,150.2 L195.8,150.0 L196.8,149.8 L197.9,149.6 L198.9,149.4 L200.0,149.3 L201.1,149.2 L202.1,149.1 L203.2,149.0 L204.3,149.0 L205.4,148.9 L206.5,148.9 L207.5,148.9 L208.6,149.0 L209.7,149.1 L210.8,149.1 L211.9,149.3 L213.0,149.4 L214.1,149.5 L215.2,149.7 L216.3,149.9 L217.4,150.2 L218.4,150.4 L219.5,150.7 L220.6,151.0 L221.7,151.3 L222.7,151.7 L223.8,152.0 L224.9,152.4 L225.9,152.8 L227.0,153.3 L228.0,153.7 L229.0,154.2 L230.1,154.7 L231.1,155.3 L232.1,155.8 L233.1,156.4 L234.1,157.0 L235.0,157.6 L236.0,158.3 L237.0,158.9 L237.9,159.6 L238.8,160.3 L239.7,161.1 L240.6,161.8 L241.5,162.6 L242.4,163.4 L243.3,164.2 L244.1,165.0 L244.9,165.9 L245.7,166.8 L246.5,167.7 L247.3,168.6 L248.1,169.5 L248.8,170.4 L249.5,171.4 L250.2,172.4 L250.9,173.4 L251.6,174.4 L252.2,175.4 L252.8,176.5 L253.4,177.5 L254.0,178.6 L254.6,179.7 L255.1,180.8 L255.6,181.9 L256.1,183.1 L256.6,184.2 L257.0,185.4 L257.4,186.5 L257.8,187.7 L258.2,188.9 L258.6,190.1 L258.9,191.3 L259.2,192.5 L259.5,193.8 L259.7,195.0 L259.9,196.2 L260.1,197.5 L260.3,198.7 L260.4,200.0 L260.6,201.3 L260.6,202.5 L260.7,203.8 L260.7,205.1 L260.7,206.4 L260.7,207.7 L260.7,209.0 L260.6,210.3 L260.5,211.5 L260.4,212.8 L260.2,214.1 L260.0,215.4 L259.8,216.7 L259.6,218.0 L259.3,219.3 L259.0,220.6 L258.7,221.8 L258.4,223.1 L258.0,224.4 L257.6,225.6 L257.1,226.9 L256.7,228.1 L256.2,229.4 L255.7,230.6 L255.1,231.8 L254.6,233.1 L254.0,234.3 L253.4,235.5 L252.7,236.6 L252.0,237.8 L251.3,239.0 L250.6,240.1 L249.9,241.3 L249.1,242.4 L248.3,243.5 L247.5,244.6 L246.6,245.6 L245.7,246.7 L244.8,247.7 L243.9,248.8 L243.0,249.8 L242.0,250.8 L241.0,251.7 L240.0,252.7 L239.0,253.6 L237.9,254.5 L236.8,255.4 L235.7,256.3 L234.6,257.1 L233.5,258.0 L232.3,258.8 L231.1,259.5 L229.9,260.3 L228.7,261.0 L227.5,261.7 L226.2,262.4 L225.0,263.1 L223.7,263.7 L222.4,264.3 L221.1,264.9 L219.8,265.4 L218.4,266.0 L217.1,266.5 L215.7,266.9 L214.3,267.4 L212.9,267.8 L211.5,268.2 L210.1,268.5 L208.7,268.8 L207.3,269.1 L205.8,269.4 L204.4,269.6 L202.9,269.9 L201.5,270.0 L200.0,270.2 L198.5,270.3 L197.1,270.4 L195.6,270.4 L194.1,270.4 L192.6,270.4 L191.1,270.4 L189.6,270.3 L188.1,270.2 L186.6,270.1 L185.1,269.9 L183.6,269.7 L182.2,269.5 L180.7,269.2 L179.2,268.9 L177.7,268.6 L176.2,268.2 L174.8,267.8 L173.3,267.4 L171.9,267.0 L170.4,266.5 L169.0,266.0 L167.5,265.4 L166.1,264.8 L164.7,264.2 L163.3,263.6 L161.9,262.9 L160.5,262.2 L159.2,261.5 L157.8,260.7 L156.5,259.9 L155.1,259.1 L153.8,258.3 L152.5,257.4 L151.3,256.5 L150.0,255.5 L148.8,254.6 L147.5,253.6 L146.3,252.5 L145.2,251.5 L144.0,250.4 L142.8,249.3 L141.7,248.2 L140.6,247.1 L139.6,245.9 L138.5,244.7 L137.5,243.5 L136.5,242.2 L135.5,240.9 L134.5,239.6 L133.6,238.3 L132.7,237.0 L131.8,235.6 L131.0,234.3 L130.2,232.9 L129.4,231.4 L128.6,230.0 L127.9,228.6 L127.2,227.1 L126.5,225.6 L125.9,224.1 L125.2,222.6 L124.7,221.0 L124.1,219.5 L123.6,217.9 L123.1,216.3 L122.7,214.8 L122.2,213.2 L121.8,211.5 L121.5,209.9 L121.2,208.3 L120.9,206.6 L120.6,205.0 L120.4,203.3 L120.2,201.7 L120.1,200.0 L120.0,198.3 L119.9,196.6 L119.9,195.0 L119.9,193.3 L119.9,191.6 L119.9,189.9 L120.0,188.2 L120.2,186.5 L120.4,184.8 L120.6,183.1 L120.8,181.4 L121.1,179.7 L121.4,178.1 L121.8,176.4 L122.1,174.7 L122.6,173.0 L123.0,171.4 L123.5,169.7 L124.1,168.1 L124.6,166.4 L125.2,164.8 L125.9,163.2 L126.5,161.6 L127.2,160.0 L128.0,158.4 L128.8,156.9 L129.6,155.3 L130.4,153.8 L131.3,152.2 L132.2,150.7 L133.1,149.3 L134.1,147.8 L135.1,146.3 L136.2,144.9 L137.2,143.5 L138.3,142.1 L139.5,140.7 L140.6,139.4 L141.8,138.1 L143.1,136.8 L144.3,135.5 L145.6,134.2 L146.9,133.0 L148.2,131.8 L149.6,130.6 L151.0,129.5 L152.4,128.4 L153.8,127.3 L155.3,126.2 L156.8,125.2 L158.3,124.2 L159.8,123.2 L161.4,122.3 L163.0,121.3 L164.6,120.5 L166.2,119.6 L167.9,118.8 L169.5,118.0 L171.2,117.3 L172.9,116.6 L174.6,115.9 L176.3,115.3 L178.1,114.7 L179.9,114.1 L181.6,113.6 L183.4,113.1 L185.2,112.6 L187.0,112.2 L188.9,111.8 L190.7,111.5 L192.5,111.2 L194.4,110.9 L196.3,110.7 L198.1,110.5 L200.0,110.3 L201.9,110.2 L203.8,110.2 L205.7,110.1 L207.5,110.1 L209.4,110.2 L211.3,110.3 L213.2,110.4 L215.1,110.6 L217.0,110.8 L218.9,111.0 L220.8,111.3 L222.7,111.7 L224.6,112.0 L226.4,112.4 L228.3,112.9 L230.2,113.4 L232.0,113.9 L233.9,114.5 L235.7,115.1 L237.5,115.7 L239.3,116.4 L241.1,117.1 L242.9,117.9 L244.7,118.7 L246.4,119.5 L248.2,120.4 L249.9,121.3 L251.6,122.3 L253.3,123.3 L255.0,124.3 L256.6,125.4 L258.3,126.5 L259.9,127.6 L261.5,128.8 L263.0,130.0 L264.6,131.2 L266.1,132.5 L267.6,133.8 L269.0,135.2 L270.5,136.5 L271.9,137.9 L273.3,139.4 L274.6,140.8 L276.0,142.3 L277.3,143.9 L278.5,145.4 L279.8,147.0 L281.0,148.6 L282.1,150.3 L283.3,151.9 L284.4,153.6 L285.4,155.3 L286.5,157.1 L287.5,158.8 L288.4,160.6 L289.3,162.4 L290.2,164.3 L291.1,166.1 L291.9,168.0 L292.7,169.9 L293.4,171.8 L294.1,173.7 L294.8,175.7 L295.4,177.6 L295.9,179.6 L296.5,181.6 L297.0,183.6 L297.4,185.6 L297.8,187.6 L298.2,189.7 L298.5,191.7 L298.8,193.8 L299.0,195.8 L299.2,197.9 L299.4,200.0 L299.5,202.1 L299.6,204.2 L299.6,206.3 L299.6,208.4 L299.5,210.5 L299.4,212.6 L299.2,214.7 L299.0,216.7 L298.8,218.8 L298.5,220.9 L298.2,223.0 L297.8,225.1 L297.4,227.2 L296.9,229.3 L296.4,231.3 L295.8,233.4 L295.2,235.4 L294.6,237.4 L293.9,239.5 L293.2,241.5 L292.4,243.5 L291.6,245.5 L290.7,247.4 L289.8,249.4 L288.9,251.3 L287.9,253.2 L286.9,255.1 L285.8,257.0 L284.7,258.9 L283.6,260.7 L282.4,262.5 L281.1,264.3 L279.9,266.1 L278.6,267.8 L277.2,269.5 L275.9,271.2 L274.4,272.9 L273.0,274.5 L271.5,276.1 L270.0,277.7 L268.4,279.3 L266.8,280.8 L265.2,282.3 L263.5,283.7 L261.9,285.1 L260.1,286.5 L258.4,287.9 L256.6,289.2 L254.8,290.5 L252.9,291.7 L251.1,292.9 L249.2,294.1 L247.3,295.2 L245.3,296.3 L243.3,297.3 L241.3,298.3 L239.3,299.3 L237.3,300.2 L235.2,301.1 L233.1,301.9 L231.0,302.7 L228.9,303.5 L226.8,304.2 L224.6,304.9 L222.4,305.5 L220.2,306.0 L218.0,306.6 L215.8,307.1 L213.6,307.5 L211.3,307.9 L209.1,308.2 L206.8,308.5 L204.6,308.8 L202.3,309.0 L200.0,309.1 L197.7,309.2 L195.4,309.3 L193.1,309.3 L190.8,309.3 L188.5,309.2 L186.2,309.0 L183.9,308.9 L181.6,308.6 L179.3,308.3 L177.0,308.0 L174.8,307.6 L172.5,307.2 L170.2,306.7 L167.9,306.2 L165.7,305.6 L163.4,305.0 L161.2,304.4 L159.0,303.6 L156.8,302.9 L154.6,302.1 L152.4,301.2 L150.2,300.3 L148.1,299.4 L145.9,298.4 L143.8,297.3 L141.7,296.2 L139.6,295.1 L137.6,293.9 L135.6,292.7 L133.6,291.4 L131.6,290.1 L129.6,288.8 L127.7,287.4 L125.8,286.0 L123.9,284.5 L122.1,283.0 L120.3,281.4 L118.5,279.8 L116.8,278.2 L115.0,276.5 L113.4,274.8 L111.7,273.0 L110.1,271.3 L108.5,269.4 L107.0,267.6 L105.5,265.7 L104.0,263.8 L102.6,261.8 L101.2,259.8 L99.9,257.8 L98.6,255.8 L97.3,253.7 L96.1,251.6 L94.9,249.5 L93.8,247.3 L92.7,245.1 L91.7,242.9 L90.7,240.7 L89.7,238.4 L88.8,236.1 L87.9,233.8 L87.1,231.5 L86.4,229.2 L85.7,226.8 L85.0,224.4 L84.4,222.1 L83.8,219.7 L83.3,217.2 L82.8,214.8 L82.4,212.4 L82.1,209.9 L81.8,207.4 L81.5,205.0 L81.3,202.5' stroke='rgba%28255,95,162,0.16%29' stroke-width='2'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; -webkit-mask: none; mask: none; animation: gc-spiral 18s linear infinite; }
+
+/* =========================================
+   MANCALA v2: carved board, glossy colored beads
+   ========================================= */
+.mc-board {
+  position: relative;
+  display: grid; grid-template-columns: 62px 1fr 62px; gap: 10px; align-items: stretch;
+  margin: 12px 0 8px; padding: 16px 12px; border-radius: 34px;
+  background:
+    repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.018) 0 2px, transparent 2px 9px),
+    repeating-linear-gradient(88deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 23px),
+    linear-gradient(170deg, #3a2028 0%, #2a161d 45%, #1c0f14 100%);
+  border: 1px solid rgba(255, 95, 162, 0.28);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), inset 0 2px 0 rgba(255, 255, 255, 0.06), inset 0 -3px 8px rgba(0, 0, 0, 0.4);
+}
+.mc-rows { display: grid; grid-template-rows: 1fr 1fr; gap: 18px; }
+.mc-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.mc-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.mc-cell-her { flex-direction: column-reverse; }
+.mc-pit, .mc-store {
+  position: relative; display: block; padding: 0; border: 0; font: inherit; color: inherit;
+  background: radial-gradient(circle at 50% 38%, #120a0d 0%, #1b1015 55%, #2b1a20 100%);
+  box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.75), inset 0 -2px 3px rgba(255, 255, 255, 0.05), 0 1px 0 rgba(255, 255, 255, 0.07);
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.mc-pit { width: 100%; aspect-ratio: 1; border-radius: 50%; min-height: 0; }
+.mc-store { flex: 1; width: 100%; border-radius: 30px; min-height: 120px; }
+.mc-side { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mc-pit.mc-you { box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.75), 0 0 0 1.5px color-mix(in srgb, var(--you) 30%, transparent); }
+.mc-pit.mc-her { box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.75), 0 0 0 1.5px rgba(255, 95, 162, 0.22); }
+.mc-store-you { box-shadow: inset 0 6px 14px rgba(0, 0, 0, 0.75), 0 0 0 1.5px color-mix(in srgb, var(--you) 40%, transparent); }
+.mc-store-her { box-shadow: inset 0 6px 14px rgba(0, 0, 0, 0.75), 0 0 0 1.5px rgba(255, 95, 162, 0.35); }
+.mc-pit.open { cursor: pointer; box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.75), 0 0 0 2px var(--you), 0 0 14px color-mix(in srgb, var(--you) 40%, transparent); }
+.mc-pit.open:hover { transform: translateY(-2px); }
+.mc-pit.hot.mc-you, .mc-store-you.hot { box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.7), 0 0 0 2px var(--you), 0 0 18px var(--you); }
+.mc-pit.hot.mc-her, .mc-store-her.hot { box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.7), 0 0 0 2px #ff5fa2, 0 0 18px #ff5fa2; }
+.mc-pit.from { box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.7), 0 0 0 2px rgba(255, 255, 255, 0.5); }
+.mc-pit.cap { box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.7), 0 0 0 2.5px #ff5fa2, 0 0 24px #ff5fa2; animation: mc-hot 0.4s ease 2; }
+.mc-pit.hot, .mc-store.hot { animation: mc-hot 0.28s ease; }
+.mc-bead {
+  position: absolute; width: 26%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.55), inset 0 -2px 3px rgba(0, 0, 0, 0.3);
+}
+.mc-store .mc-bead { width: 24%; }
+.mc-bead.you { background: radial-gradient(circle at 32% 28%, #fff 0 12%, color-mix(in srgb, var(--you) 55%, #fff) 26%, var(--you) 55%, color-mix(in srgb, var(--you) 55%, #000) 100%); }
+.mc-bead.her { background: radial-gradient(circle at 32% 28%, #fff 0 12%, #ffb3d4 26%, #ff5fa2 55%, #8c1f52 100%); }
+.mc-fly { position: fixed; z-index: 9990; transform: none; pointer-events: none; }
+.mc-count, .mc-store-count { font: 700 11.5px var(--font-body); color: var(--text-light); background: rgba(0, 0, 0, 0.45); border-radius: 999px; padding: 0 7px; min-width: 22px; text-align: center; }
+.mc-store-count { font-size: 14px; padding: 1px 9px; }
+.mc-store-label { font: 700 10px var(--font-body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); }
+.mc-side-you .mc-store-label, .mc-side-you .mc-store-count { color: var(--you); }
+.mc-side-her .mc-store-label, .mc-side-her .mc-store-count { color: #ff8cc0; }
+.mc-stones { display: none; }
+@media (max-width: 520px) {
+  .mc-board { grid-template-columns: 40px 1fr 40px; gap: 6px; padding: 12px 8px; border-radius: 24px; }
+  .mc-row { gap: 4px; }
+  .mc-rows { gap: 14px; }
+  .mc-store { border-radius: 20px; min-height: 100px; }
+  .mc-count { font-size: 10.5px; padding: 0 5px; min-width: 18px; }
+}
+
+/* Games page tweaks: still spiral; Mancala card matches the game */
+.game-card-stb::before { animation: none; }
+.game-card-mc {
+  background:
+    radial-gradient(circle, rgba(255, 95, 162, 0.32) 1.6px, transparent 2px) 0 0 / 16px 16px,
+    radial-gradient(ellipse at 50% 120%, rgba(255, 95, 162, 0.2), transparent 60%),
+    var(--bg);
+}
+.gc-mc {
+  grid-template-columns: 18px repeat(6, 22px) 18px; grid-template-rows: 22px 22px; gap: 6px 5px; padding: 10px 10px;
+  border-radius: 20px; border: 1px solid rgba(255, 95, 162, 0.5);
+  background:
+    repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 9px),
+    linear-gradient(170deg, #3a2028, #1c0f14);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6), 0 0 18px rgba(255, 95, 162, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.gc-mc i, .gc-mc b { border: 0; box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.8); background-color: #150b10; }
+.gc-mc i { border-radius: 50%; }
+.gc-mc b { border-radius: 10px; }
+/* glossy beads: pink on Gnomie's side, purple on yours, a few already mixed */
+.gc-mc i:nth-child(-n+6) { background-image: radial-gradient(circle at 34% 38%, #ffd1e5 0 1px, #ff5fa2 2px 3.6px, transparent 4px), radial-gradient(circle at 66% 44%, #ffd1e5 0 1px, #ff5fa2 2px 3.6px, transparent 4px), radial-gradient(circle at 50% 70%, #e2d6ff 0 1px, #a78bfa 2px 3.6px, transparent 4px); }
+.gc-mc i:nth-child(n+7) { background-image: radial-gradient(circle at 34% 38%, #e2d6ff 0 1px, #a78bfa 2px 3.6px, transparent 4px), radial-gradient(circle at 66% 44%, #e2d6ff 0 1px, #a78bfa 2px 3.6px, transparent 4px), radial-gradient(circle at 50% 70%, #ffd1e5 0 1px, #ff5fa2 2px 3.6px, transparent 4px); }
+.gc-mc i:nth-child(3), .gc-mc i:nth-child(10) { background-image: none; }
+.gc-mc b:first-of-type { background-image: radial-gradient(circle at 50% 40%, #ffd1e5 0 1px, #ff5fa2 2px 3.6px, transparent 4px), radial-gradient(circle at 45% 62%, #ffd1e5 0 1px, #ff5fa2 2px 3.6px, transparent 4px); }
+.gc-mc b:last-of-type { background-image: radial-gradient(circle at 50% 35%, #e2d6ff 0 1px, #a78bfa 2px 3.6px, transparent 4px), radial-gradient(circle at 55% 55%, #e2d6ff 0 1px, #a78bfa 2px 3.6px, transparent 4px), radial-gradient(circle at 45% 72%, #ffd1e5 0 1px, #ff5fa2 2px 3.6px, transparent 4px); }
+
+/* A lone last card (odd number of games) sits centered instead of hanging left */
+.games-list > .game-card:last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; width: calc((100% - 14px) / 2); }
+@media (max-width: 520px) { .games-list > .game-card:last-child:nth-child(odd) { width: calc((100% - 10px) / 2); } }
+@media (max-width: 520px) { .gc-mc { grid-template-columns: 14px repeat(6, 18px) 14px; grid-template-rows: 18px 18px; gap: 4px; padding: 8px; border-radius: 16px; } }
+/* Bigger mini board so the Mancala art fills its card like the others */
+.gc-mc { grid-template-columns: 22px repeat(6, 27px) 22px; grid-template-rows: 27px 27px; gap: 7px 6px; padding: 12px; border-radius: 24px; }
+.gc-mc i:nth-child(-n+6), .gc-mc i:nth-child(n+7), .gc-mc b { background-size: 100% 100%; }

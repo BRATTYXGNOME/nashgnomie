@@ -9,7 +9,9 @@
 import {
   BOARDS, dropPath, slotValue, oddsFor,
   DUEL, rollDie, emptyBoard, boardScore, boardFull, cloneBoard, openColumns, placeDie, gnomieChoose,
-  randomCode, normalizeCode
+  randomCode, normalizeCode,
+  TOOFAR, newDeck, handTotal, BOTTLE, spinSlice, shuffledOrder,
+  MANCALA, mancalaStart, mancalaMoves, mancalaMove, gnomieMancala, mancalaBeadsStart, mancalaBeadsFromPits, mancalaBeadMove
 } from '../_lib/rules.js';
 import { verifyThrone, parseThrone, verifyYouPay, parseYouPay, codeCandidates } from '../_lib/payments.js';
 import { newSecret, checkCode, otpauthUrl } from '../_lib/totp.js';
@@ -62,12 +64,22 @@ function sessionCookie(token, maxAgeSeconds) {
 
 // ---------- event log (everything shows up in Backstage) ----------
 // Stored in the admin_log table. Country only, never IP addresses.
+// Region (city, region, country) is saved in its own column, never in the details.
+function regionOf(request) {
+  const cf = request && request.cf;
+  if (!cf) return null;
+  return [cf.city, cf.region, cf.country].filter(Boolean).join(', ').slice(0, 120) || null;
+}
 async function logEvent(env, request, action, walletId, detail) {
+  const text = String(detail == null ? '' : detail).slice(0, 8000);
   try {
-    const country = request && request.cf && request.cf.country ? request.cf.country : null;
-    await env.DB.prepare('INSERT INTO admin_log (action, wallet_id, detail, created_at) VALUES (?, ?, ?, ?)')
-      .bind(action, walletId || null, String(detail == null ? '' : detail).slice(0, 8000) + (country ? ' [' + country + ']' : ''), Date.now()).run();
-  } catch (e) { console.error('log failed', e); }
+    await env.DB.prepare('INSERT INTO admin_log (action, wallet_id, detail, created_at, region) VALUES (?, ?, ?, ?, ?)')
+      .bind(action, walletId || null, text, Date.now(), regionOf(request)).run();
+  } catch (e) {
+    try { // older database without the region column
+      await env.DB.prepare('INSERT INTO admin_log (action, wallet_id, detail, created_at) VALUES (?, ?, ?, ?)').bind(action, walletId || null, text, Date.now()).run();
+    } catch (e2) { console.error('log failed', e2); }
+  }
 }
 
 // ---------- database setup ----------
@@ -81,60 +93,134 @@ async function ensureSchema(db) {
     db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_duels_one_active ON duels(wallet_id) WHERE status = 'active'`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_duels_done ON duels(status, wallet_id)`),
     // Fans' optional authenticator-app 2FA
-    db.prepare(`CREATE TABLE IF NOT EXISTS wallet_totp (wallet_id INTEGER PRIMARY KEY REFERENCES wallets(id), secret TEXT, pending TEXT, last_step INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)`)
+    db.prepare(`CREATE TABLE IF NOT EXISTS wallet_totp (wallet_id INTEGER PRIMARY KEY REFERENCES wallets(id), secret TEXT, pending TEXT, last_step INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)`),
+    // Too Far games (one in progress per wallet)
+    db.prepare(`CREATE TABLE IF NOT EXISTS toofar (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), amount_cents INTEGER NOT NULL, held_cents INTEGER NOT NULL, state TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', outcome TEXT, you_total INTEGER, gnomie_total INTEGER, paid_cents INTEGER, created_at INTEGER NOT NULL, finished_at INTEGER)`),
+    db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_toofar_one_active ON toofar(wallet_id) WHERE status = 'active'`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_toofar_done ON toofar(status, wallet_id)`),
+    // Mancala games (one in progress per wallet)
+    db.prepare(`CREATE TABLE IF NOT EXISTS mancala (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), amount_cents INTEGER NOT NULL, held_cents INTEGER NOT NULL, state TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', outcome TEXT, you_score INTEGER, gnomie_score INTEGER, paid_cents INTEGER, created_at INTEGER NOT NULL, finished_at INTEGER)`),
+    db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_mancala_one_active ON mancala(wallet_id) WHERE status = 'active'`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_mancala_done ON mancala(status, wallet_id)`),
+    // Balance changes made in Backstage (kind: load | adjust | set), with an
+    // optional note that is either private (only Gnomie) or shown to the fan
+    db.prepare(`CREATE TABLE IF NOT EXISTS adjustments (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), cents INTEGER NOT NULL, kind TEXT NOT NULL, note TEXT, public INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, log_id INTEGER UNIQUE)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_adjustments_wallet ON adjustments(wallet_id)`),
+    // "Nudge to add money" banners and what the fan did with them
+    db.prepare(`CREATE TABLE IF NOT EXISTS nudges (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), message TEXT, created_at INTEGER NOT NULL, seen_at INTEGER, closed_at INTEGER, response TEXT)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_nudges_wallet ON nudges(wallet_id)`),
+    // Fans asking Gnomie to close their wallet (one open request per wallet)
+    db.prepare(`CREATE TABLE IF NOT EXISTS close_requests (wallet_id INTEGER PRIMARY KEY REFERENCES wallets(id), balance_cents INTEGER NOT NULL, created_at INTEGER NOT NULL)`),
+    // Fans letting Gnomie know they're on a financial break
+    db.prepare(`CREATE TABLE IF NOT EXISTS breaks (wallet_id INTEGER PRIMARY KEY REFERENCES wallets(id), created_at INTEGER NOT NULL)`),
+    // Usernames the fan shares with Gnomie (only Gnomie sees them)
+    db.prepare(`CREATE TABLE IF NOT EXISTS wallet_contacts (wallet_id INTEGER PRIMARY KEY REFERENCES wallets(id), telegram TEXT, throne TEXT, updated_at INTEGER NOT NULL)`),
+    // Gnomie's own private notes about a wallet
+    db.prepare(`CREATE TABLE IF NOT EXISTS wallet_notes (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), note TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_wallet_notes_wallet ON wallet_notes(wallet_id)`),
+    // The fan's chosen color for their side of every game board
+    db.prepare(`CREATE TABLE IF NOT EXISTS wallet_prefs (wallet_id INTEGER PRIMARY KEY REFERENCES wallets(id), color TEXT)`),
+    // Every time a fan agrees to the wallet terms (and which version)
+    db.prepare(`CREATE TABLE IF NOT EXISTS agreements (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), version TEXT NOT NULL, how TEXT, created_at INTEGER NOT NULL)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_agreements_wallet ON agreements(wallet_id)`),
+    // "I sent a load but it didn't show up" reports from fans
+    db.prepare(`CREATE TABLE IF NOT EXISTS load_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), amount_cents INTEGER NOT NULL, sent_when TEXT, throne TEXT, note TEXT, status TEXT NOT NULL DEFAULT 'open', resolution TEXT, created_at INTEGER NOT NULL, resolved_at INTEGER)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_load_reports_status ON load_reports(status, wallet_id)`),
+    // Other things fans ask for: a game problem, or a new wallet code (with a reason)
+    db.prepare(`CREATE TABLE IF NOT EXISTS fan_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), kind TEXT NOT NULL, game TEXT, note TEXT, status TEXT NOT NULL DEFAULT 'open', resolution TEXT, created_at INTEGER NOT NULL, resolved_at INTEGER)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_fan_requests_status ON fan_requests(status, kind)`)
   ]);
+  // Region gets its own column in the event log (fails harmlessly if it's already there)
+  try { await db.prepare('ALTER TABLE admin_log ADD COLUMN region TEXT').run(); } catch (e) {}
+  try { await db.prepare('ALTER TABLE nudges ADD COLUMN response TEXT').run(); } catch (e) {}
+  await carryOverOldAdjustments(db);
   schemaReady = true;
 }
 
-// ---------- unfinished wallets ----------
-// A wallet that never got a PIN (and never had money or games) is removed
-// 30 minutes after it was made. If that visitor comes back, their wallet box
-// starts over from the beginning. Runs at most once every 5 minutes.
-const UNFINISHED_MS = 30 * 60 * 1000;
-let lastCleanup = 0;
-async function cleanUnfinished(env, request) {
-  const now = Date.now();
-  if (now - lastCleanup < 5 * 60 * 1000) return;
-  lastCleanup = now;
+// Balance changes made in Backstage before notes could be shown to fans were
+// only written in the event log. Copy them into the adjustments table once,
+// as private notes, so they appear in account activity and can be shown.
+async function carryOverOldAdjustments(db) {
   try {
-    const db = env.DB;
     const old = (await db.prepare(
-      `SELECT id, display_code FROM wallets w
-       WHERE w.pin_hash IS NULL AND w.created_at < ? AND w.balance_cents = 0 AND w.total_loaded_cents = 0
-         AND NOT EXISTS (SELECT 1 FROM drops d WHERE d.wallet_id = w.id)
-         AND NOT EXISTS (SELECT 1 FROM duels u WHERE u.wallet_id = w.id)
-         AND NOT EXISTS (SELECT 1 FROM loads l WHERE l.wallet_id = w.id)
-       LIMIT 50`
-    ).bind(now - UNFINISHED_MS).all()).results;
-    for (const w of old) {
-      await db.batch([
-        db.prepare('DELETE FROM sessions WHERE wallet_id = ?').bind(w.id),
-        db.prepare('DELETE FROM wallet_totp WHERE wallet_id = ?').bind(w.id),
-        db.prepare('DELETE FROM reigns WHERE wallet_id = ?').bind(w.id),
-        db.prepare('UPDATE admin_log SET wallet_id = NULL WHERE wallet_id = ?').bind(w.id),
-        db.prepare('DELETE FROM wallets WHERE id = ? AND pin_hash IS NULL').bind(w.id)
-      ]);
-      await logEvent(env, request, 'wallet_expired', null, w.display_code + ' (no PIN after 30 minutes)');
+      `SELECT a.id, a.action, a.wallet_id, a.detail, a.created_at FROM admin_log a
+       WHERE a.action IN ('backstage_manual_load', 'backstage_balance_fix') AND a.wallet_id IS NOT NULL
+         AND NOT EXISTS (SELECT 1 FROM adjustments j WHERE j.log_id = a.id) LIMIT 200`
+    ).all()).results;
+    for (const o of old) {
+      const m = String(o.detail || '').match(/^\$(-?\d+(?:\.\d+)?)/);
+      if (!m) continue;
+      const note = String(o.detail).replace(/^\$-?[\d.]+\s*(·\s*)?/, '').replace(/\s*\[[A-Z]{2}\]$/, '').trim() || null;
+      await db.prepare('INSERT OR IGNORE INTO adjustments (wallet_id, cents, kind, note, public, created_at, log_id) VALUES (?, ?, ?, ?, 0, ?, ?)')
+        .bind(o.wallet_id, Math.round(parseFloat(m[1]) * 100), o.action === 'backstage_manual_load' ? 'load' : 'adjust', note, o.created_at, o.id).run();
     }
-  } catch (e) { console.error('cleanup failed', e); }
+  } catch (e) { console.error('carry over failed', e); }
+}
+
+// Wallets are never removed automatically; Gnomie closes them in Backstage.
+
+// The wallet terms. Change this whenever the terms change: every fan then has
+// to check the boxes again before they can see their wallet.
+const TERMS_VERSION = '2026-11-14';
+async function recordAgreement(db, walletId, how) {
+  await db.prepare('INSERT INTO agreements (wallet_id, version, how, created_at) VALUES (?, ?, ?, ?)').bind(walletId, TERMS_VERSION, how, Date.now()).run();
+}
+
+// Colors for the fan's side of every board (and their name on leaderboards).
+// Everyone starts with purple; each load of $20 or more unlocks the next color.
+const COLORS = { purple: 0, green: 1, blue: 2, orange: 3, gold: 4, red: 5, white: 6, electric: 7 };
+const COLOR_LOAD_MIN = 2000;
+
+// Names nobody can use on the leaderboard: slurs, and anything mean about Gnomie.
+// Letters swapped for look-alike numbers/symbols (b1tch, $lut) are caught too.
+const BLOCKED_NAME_PARTS = ['bitch', 'whore', 'cunt', 'skank', 'slut', 'hoe', 'twat', 'scam', 'fraud', 'thief', 'ugly', 'fatass', 'retard', 'rape', 'rapist',
+  'nigg', 'nigga', 'fag', 'faggot', 'dyke', 'tranny', 'kike', 'spic', 'chink', 'gook', 'wetback', 'beaner', 'coon', 'nazi', 'hitler', 'kys', 'killyourself', 'pedo', 'molest'];
+function nameBlocked(name) {
+  const flat = String(name || '').toLowerCase()
+    .replace(/[1!|]/g, 'i').replace(/3/g, 'e').replace(/[4@]/g, 'a').replace(/0/g, 'o').replace(/[5$]/g, 's').replace(/7/g, 't')
+    .replace(/[^a-z]/g, '');
+  return BLOCKED_NAME_PARTS.some(w => flat.includes(w));
 }
 
 // ---------- wallets ----------
 const WALLET_SELECT = `SELECT w.*,
-  (SELECT held_cents FROM duels d WHERE d.wallet_id = w.id AND d.status = 'active') AS held_cents,
+  (SELECT held_cents FROM duels d WHERE d.wallet_id = w.id AND d.status = 'active') AS held_duel,
+  (SELECT held_cents FROM toofar t WHERE t.wallet_id = w.id AND t.status = 'active') AS held_toofar,
+  (SELECT held_cents FROM mancala m WHERE m.wallet_id = w.id AND m.status = 'active') AS held_mancala,
+  (SELECT COUNT(*) FROM mancala m WHERE m.wallet_id = w.id AND m.outcome = 'win') AS mancala_wins,
+  (SELECT COUNT(*) FROM toofar t WHERE t.wallet_id = w.id AND t.outcome = 'win') AS toofar_wins,
   (SELECT COUNT(*) FROM duels d WHERE d.wallet_id = w.id AND d.outcome = 'win') AS duel_wins,
-  (SELECT t.secret IS NOT NULL FROM wallet_totp t WHERE t.wallet_id = w.id) AS two_factor
+  (SELECT t.secret IS NOT NULL FROM wallet_totp t WHERE t.wallet_id = w.id) AS two_factor,
+  (SELECT n.id FROM nudges n WHERE n.wallet_id = w.id AND n.closed_at IS NULL ORDER BY n.id DESC LIMIT 1) AS nudge_id,
+  (SELECT n.message FROM nudges n WHERE n.wallet_id = w.id AND n.closed_at IS NULL ORDER BY n.id DESC LIMIT 1) AS nudge_message,
+  (SELECT c.created_at FROM close_requests c WHERE c.wallet_id = w.id) AS close_requested_at,
+  (SELECT k.created_at FROM breaks k WHERE k.wallet_id = w.id) AS break_since,
+  (SELECT a.version FROM agreements a WHERE a.wallet_id = w.id ORDER BY a.id DESC LIMIT 1) AS terms_version,
+  (SELECT p.color FROM wallet_prefs p WHERE p.wallet_id = w.id) AS color,
+  ((SELECT COUNT(*) FROM loads l WHERE l.wallet_id = w.id AND l.status = 'credited' AND l.amount_cents >= 2000) +
+   (SELECT COUNT(*) FROM adjustments j WHERE j.wallet_id = w.id AND j.kind = 'load' AND j.cents >= 2000)) AS load_count,
+  (SELECT c.telegram FROM wallet_contacts c WHERE c.wallet_id = w.id) AS telegram,
+  (SELECT c.throne FROM wallet_contacts c WHERE c.wallet_id = w.id) AS throne_name
   FROM wallets w`;
 
 function publicWallet(w) {
   if (!w) return null;
+  // Until they've agreed to the current terms, they don't get to see their balance
+  if (w.pin_hash && w.terms_version !== TERMS_VERSION) {
+    return { code: w.display_code, hasPin: true, needsTerms: true, name: w.name, anonymous: !w.name, anonNumber: w.anon_number, color: colorOf(w) };
+  }
   return {
     code: w.display_code, hasPin: !!w.pin_hash, pinLength: w.pin_length || null,
     name: w.name, anonymous: !w.name, anonNumber: w.anon_number,
     balanceCents: w.balance_cents, drainedCents: w.total_drained_cents, loadedCents: w.total_loaded_cents,
-    heldCents: w.held_cents || 0, duelWins: w.duel_wins || 0, twoFactor: !!w.two_factor
+    heldCents: (w.held_duel || 0) + (w.held_toofar || 0) + (w.held_mancala || 0), duelWins: w.duel_wins || 0, twoFactor: !!w.two_factor,
+    heldFor: [w.held_duel ? 'Dice Duel' : null, w.held_toofar ? 'Too Far' : null, w.held_mancala ? 'Mancala' : null].filter(Boolean), tooFarWins: w.toofar_wins || 0, mancalaWins: w.mancala_wins || 0,
+    nudge: w.nudge_id && !w.break_since ? { id: w.nudge_id, message: w.nudge_message || '' } : null,
+    closeRequested: !!w.close_requested_at, onBreak: !!w.break_since,
+    color: colorOf(w), loadCount: w.load_count || 0, telegram: w.telegram || '', throneName: w.throne_name || ''
   };
 }
+function colorOf(w) { return COLORS[w.color] !== undefined && (w.load_count || 0) >= COLORS[w.color] ? w.color : 'purple'; }
 
 async function walletById(db, id) {
   return db.prepare(WALLET_SELECT + ' WHERE w.id = ?').bind(id).first();
@@ -147,13 +233,14 @@ async function sessionWallet(env, request) {
     .bind(await sha256(token), Date.now()).first();
   if (!row) return null;
   const w = await walletById(env.DB, row.wallet_id);
-  if (!w || w.status === 'banned') return null;
+  if (!w || w.status !== 'active') return null;
   return w;
 }
 
 async function needWallet(env, request) {
   const w = await sessionWallet(env, request);
   if (!w) throw new Oops('Set up your wallet first.', 401);
+  if (w.pin_hash && w.terms_version !== TERMS_VERSION) throw new Oops('Please agree to the wallet terms first.', 403, { needsTerms: true });
   return w;
 }
 
@@ -192,6 +279,7 @@ routes['POST wallet'] = async (env, request) => {
     ).bind(normalizeCode(display), display, now, now).run();
     if (r.meta.changes === 1) {
       const id = r.meta.last_row_id;
+      await recordAgreement(env.DB, id, 'new wallet');
       const cookie = await newSession(env.DB, id);
       await logEvent(env, request, 'wallet_created', id, display);
       return json({ wallet: publicWallet(await walletById(env.DB, id)) }, 200, { 'set-cookie': cookie });
@@ -212,6 +300,11 @@ routes['POST pin'] = async (env, request) => {
   return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
 };
 
+// Names work like usernames: one person each (capital letters don't make a new name)
+async function nameTaken(db, name, walletId) {
+  return !!(await db.prepare('SELECT 1 FROM wallets WHERE LOWER(name) = ? AND id != ? LIMIT 1').bind(name.toLowerCase(), walletId).first());
+}
+
 routes['POST name'] = async (env, request) => {
   const w = await needWallet(env, request);
   const body = await readJson(request);
@@ -219,8 +312,10 @@ routes['POST name'] = async (env, request) => {
   if (body.anonymous) name = null;
   else {
     if (name.length < 2 || name.length > 24) throw new Oops('Names need 2–24 characters.');
-    if (/^anonymous|gnomie/i.test(name)) throw new Oops('Please pick a different name.');
+    if (/^anonymous|gnomie/i.test(name) || nameBlocked(name)) throw new Oops('Please pick a different name.');
+    if (await nameTaken(env.DB, name, w.id)) throw new Oops('Someone already has that name. Try another one.');
   }
+  if (name === w.name) return json({ wallet: publicWallet(w) });
   await env.DB.prepare('UPDATE wallets SET name = ? WHERE id = ?').bind(name, w.id).run();
   await logEvent(env, request, 'name_set', w.id, name || 'Anonymous #' + w.anon_number);
   return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
@@ -228,21 +323,38 @@ routes['POST name'] = async (env, request) => {
 
 routes['POST signin'] = async (env, request) => {
   const body = await readJson(request);
-  const code = normalizeCode(body.code), pin = String(body.pin || '');
-  const fail = new Oops("That code and PIN don't match.", 401);
-  if (code.length !== 16 || !/^\d{4,6}$/.test(pin)) throw fail;
-  const w = await env.DB.prepare('SELECT * FROM wallets WHERE code = ?').bind(code).first();
-  if (!w || !w.pin_hash || w.status === 'banned') {
-    await logEvent(env, request, 'signin_failed', w ? w.id : null, w ? (w.status === 'banned' ? 'Banned wallet' : 'No PIN set') : 'Unknown code');
+  const raw = String(body.code || '').trim().replace(/\s+/g, ' ').slice(0, 60), code = normalizeCode(raw), pin = String(body.pin || '');
+  if (body.agreed !== true) throw new Oops('Please check every box to continue.');
+  const fail = new Oops("That wallet and PIN don't match.", 401);
+  if (!raw || !/^\d{4,6}$/.test(pin)) throw fail;
+  // A wallet code always wins; otherwise try it as a leaderboard name
+  let w = code.length === 16 ? await env.DB.prepare('SELECT * FROM wallets WHERE code = ?').bind(code).first() : null;
+  let byName = false;
+  if (!w) {
+    const anon = raw.match(/^anonymous\s*#?\s*(\d+)$/i);
+    w = anon ? await env.DB.prepare('SELECT * FROM wallets WHERE name IS NULL AND anon_number = ?').bind(+anon[1]).first()
+             : await env.DB.prepare('SELECT * FROM wallets WHERE LOWER(name) = ? LIMIT 1').bind(raw.toLowerCase()).first();
+    byName = !!w;
+  }
+  if (!w || !w.pin_hash || w.status !== 'active') {
+    await logEvent(env, request, 'signin_failed', w ? w.id : null, w ? (w.status === 'banned' ? 'Banned wallet' : w.status === 'closed' ? 'Closed wallet' : 'No PIN set') : 'Unknown code');
+    if (w && w.status === 'closed' && w.pin_hash && safeEqual(await pinHash(pin, w.pin_salt), w.pin_hash)) {
+      throw new Oops('This wallet was closed. DM me on Telegram if you think that’s a mistake.', 403);
+    }
     throw fail;
   }
   const now = Date.now();
-  if (w.locked_until > now) throw new Oops('Too many tries. Please wait ' + Math.ceil((w.locked_until - now) / 60000) + ' minutes and try again.', 429);
+  if (w.locked_until > now) {
+    const mins = Math.ceil((w.locked_until - now) / 60000);
+    throw new Oops('Too many tries. Please wait ' + (mins > 90 ? Math.ceil(mins / 60) + ' hours' : mins + ' minutes') + ' and try again.', 429);
+  }
+  // Names are public, so signing in by name locks for a whole day after too many wrong tries
+  const lockMs = byName ? DAY : PIN_LOCK_MS, lockText = byName ? 'Locked 24 hours (signing in by name)' : 'Locked 15 minutes';
   if (!safeEqual(await pinHash(pin, w.pin_salt), w.pin_hash)) {
     const tries = w.failed_pin_count + 1;
     await env.DB.prepare('UPDATE wallets SET failed_pin_count = ?, locked_until = ? WHERE id = ?')
-      .bind(tries >= PIN_TRIES ? 0 : tries, tries >= PIN_TRIES ? now + PIN_LOCK_MS : 0, w.id).run();
-    await logEvent(env, request, tries >= PIN_TRIES ? 'signin_locked' : 'signin_failed', w.id, tries >= PIN_TRIES ? 'Locked 15 minutes after ' + PIN_TRIES + ' wrong PINs' : 'Wrong PIN (' + tries + ' of ' + PIN_TRIES + ')');
+      .bind(tries >= PIN_TRIES ? 0 : tries, tries >= PIN_TRIES ? now + lockMs : 0, w.id).run();
+    await logEvent(env, request, tries >= PIN_TRIES ? 'signin_locked' : 'signin_failed', w.id, (tries >= PIN_TRIES ? lockText + ' after ' + PIN_TRIES + ' wrong PINs' : 'Wrong PIN (' + tries + ' of ' + PIN_TRIES + ')') + (byName ? ' · used their name' : ''));
     throw fail;
   }
   // Wallets with 2FA also need the 6-digit code from the fan's authenticator app
@@ -253,15 +365,16 @@ routes['POST signin'] = async (env, request) => {
     if (step < 0) {
       const tries = w.failed_pin_count + 1;
       await env.DB.prepare('UPDATE wallets SET failed_pin_count = ?, locked_until = ? WHERE id = ?')
-        .bind(tries >= PIN_TRIES ? 0 : tries, tries >= PIN_TRIES ? now + PIN_LOCK_MS : 0, w.id).run();
-      await logEvent(env, request, tries >= PIN_TRIES ? 'signin_locked' : 'signin_failed', w.id, tries >= PIN_TRIES ? 'Locked 15 minutes after ' + PIN_TRIES + ' wrong tries' : 'Right PIN, wrong app code (' + tries + ' of ' + PIN_TRIES + ')');
+        .bind(tries >= PIN_TRIES ? 0 : tries, tries >= PIN_TRIES ? now + lockMs : 0, w.id).run();
+      await logEvent(env, request, tries >= PIN_TRIES ? 'signin_locked' : 'signin_failed', w.id, tries >= PIN_TRIES ? lockText + ' after ' + PIN_TRIES + ' wrong tries' : 'Right PIN, wrong app code (' + tries + ' of ' + PIN_TRIES + ')');
       throw new Oops('That app code didn’t work. Use the newest code.', 401, { needsCode: true });
     }
     await env.DB.prepare('UPDATE wallet_totp SET last_step = ? WHERE wallet_id = ?').bind(step, w.id).run();
   }
   await env.DB.prepare('UPDATE wallets SET failed_pin_count = 0, locked_until = 0 WHERE id = ?').bind(w.id).run();
   const cookie = await newSession(env.DB, w.id);
-  await logEvent(env, request, 'signin_ok', w.id, tf ? 'PIN + app code' : 'PIN');
+  await recordAgreement(env.DB, w.id, 'sign-in');
+  await logEvent(env, request, 'signin_ok', w.id, (byName ? 'Name' : 'Code') + ' + PIN' + (tf ? ' + app code' : '') + ' · agreed to the wallet terms');
   return json({ wallet: publicWallet(await walletById(env.DB, w.id)) }, 200, { 'set-cookie': cookie });
 };
 
@@ -308,14 +421,218 @@ routes['POST 2fa/off'] = async (env, request) => {
   return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
 };
 
+// ---------- account activity (like a bank statement) ----------
+// Every change to a wallet's balance, newest first, with the balance after it.
+// Active games show the amount set aside; finished games show what was paid.
+const BOARD_NAMES = { sweet: 'Sweet', spicy: 'Spicy', savage: 'Savage' };
+const DUEL_RESULT = { win: 'You won', tie: 'Tie', lose: 'Gnomie won' };
+const TOOFAR_RESULT = { win: 'You won', tie: 'Tie', lose: 'Gnomie won', bust: 'Went too far' };
+const ADJ_LABEL = { load: 'Load added by Gnomie', adjust: 'Balance adjusted by Gnomie', set: 'Balance set by Gnomie' };
+
+async function buildStatement(db, w, forFan) {
+  const id = w.id, limit = 1000;
+  const [loads, adjs, drops, duels, toofar, mancala] = await Promise.all([
+    db.prepare("SELECT id, platform, amount_cents, created_at, updated_at FROM loads WHERE wallet_id = ? AND status = 'credited' ORDER BY id DESC LIMIT ?").bind(id, limit).all(),
+    db.prepare('SELECT * FROM adjustments WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
+    db.prepare('SELECT id, game, board, path, amount_cents, created_at FROM drops WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
+    db.prepare('SELECT id, amount_cents, held_cents, status, outcome, paid_cents, created_at, finished_at FROM duels WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
+    db.prepare('SELECT id, amount_cents, held_cents, status, outcome, paid_cents, created_at, finished_at FROM toofar WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
+    db.prepare('SELECT id, amount_cents, held_cents, status, outcome, paid_cents, you_score, gnomie_score, created_at, finished_at FROM mancala WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all()
+  ]);
+  const rows = [];
+  const add = (key, at, label, detail, cents, extra) => rows.push(Object.assign({ key, at, label, detail: detail || '', cents }, extra || {}));
+  for (const l of loads.results) add('l' + l.id, l.updated_at || l.created_at, 'Load from ' + (l.platform === 'youpay' ? 'YouPay' : 'Throne'), '', l.amount_cents);
+  for (const a of adjs.results) {
+    const show = !!a.public;
+    if (forFan) add('a' + a.id, a.created_at, ADJ_LABEL[a.kind] || ADJ_LABEL.adjust, '', a.cents, show && a.note ? { note: a.note } : null);
+    else add('a' + a.id, a.created_at, ADJ_LABEL[a.kind] || ADJ_LABEL.adjust, '', a.cents, { adjId: a.id, note: a.note || '', notePublic: show });
+  }
+  for (const d of drops.results) {
+    if (d.game === 'spin-the-bottle') add('s' + d.id, d.created_at, 'Spin the Bottle', (BOARD_NAMES[d.board] || d.board) + (/\|hit$/.test(d.path) ? ' · landed on your wedge, paid double' : ''), -d.amount_cents);
+    else add('d' + d.id, d.created_at, 'Drop the Ball', (BOARD_NAMES[d.board] || d.board) + ' board', -d.amount_cents);
+  }
+  for (const g of duels.results) {
+    if (g.status === 'active') add('u' + g.id, g.created_at, 'Dice Duel', 'In progress · set aside', -g.held_cents);
+    else if (g.status === 'done') add('u' + g.id, g.finished_at || g.created_at, 'Dice Duel', (DUEL_RESULT[g.outcome] || g.outcome) + ' · played for ' + money(g.amount_cents), -(g.paid_cents || 0));
+  }
+  for (const g of toofar.results) {
+    if (g.status === 'active') add('t' + g.id, g.created_at, 'Too Far', 'In progress · set aside', -g.held_cents);
+    else if (g.status === 'done') add('t' + g.id, g.finished_at || g.created_at, 'Too Far', (TOOFAR_RESULT[g.outcome] || g.outcome) + ' · played for ' + money(g.amount_cents), -(g.paid_cents || 0));
+  }
+  for (const g of mancala.results) {
+    if (g.status === 'active') add('m' + g.id, g.created_at, 'Mancala', 'In progress · set aside', -g.held_cents);
+    else if (g.status === 'done') add('m' + g.id, g.finished_at || g.created_at, 'Mancala', (DUEL_RESULT[g.outcome] || g.outcome) + ' ' + g.you_score + '–' + g.gnomie_score + ' · played for ' + money(g.amount_cents), -(g.paid_cents || 0));
+  }
+  rows.sort((a, b) => b.at - a.at || (b.key < a.key ? -1 : 1));
+  let bal = w.balance_cents;
+  for (const r of rows) { r.balanceAfter = bal; bal -= r.cents; delete r.key; }
+  return rows.slice(0, 300);
+}
+
+routes['GET statement'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  return json({ rows: await buildStatement(env.DB, w, true) });
+};
+
+// ---------- asking to close a wallet ----------
+routes['POST close-request'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  if ((await readJson(request)).agreed !== true) throw new Oops('Please check the box to continue.');
+  if (w.held_duel || w.held_toofar || w.held_mancala) throw new Oops('Finish your game in progress first.');
+  await env.DB.prepare('INSERT OR IGNORE INTO close_requests (wallet_id, balance_cents, created_at) VALUES (?, ?, ?)').bind(w.id, w.balance_cents, Date.now()).run();
+  await logEvent(env, request, 'close_requested', w.id, 'Balance ' + money(w.balance_cents) + ' (agreed it can’t be withdrawn)');
+  return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
+routes['POST close-request/cancel'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const r = await env.DB.prepare('DELETE FROM close_requests WHERE wallet_id = ?').bind(w.id).run();
+  if (r.meta.changes) await logEvent(env, request, 'close_request_cancelled', w.id, '');
+  return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
+// ---------- agreeing to new terms, usernames, color ----------
+routes['POST agree'] = async (env, request) => {
+  const w = await sessionWallet(env, request);
+  if (!w) throw new Oops('Set up your wallet first.', 401);
+  if ((await readJson(request)).agreed !== true) throw new Oops('Please check every box to continue.');
+  if (w.terms_version !== TERMS_VERSION) {
+    await recordAgreement(env.DB, w.id, 'updated terms');
+    await logEvent(env, request, 'terms_agreed', w.id, 'Wallet terms ' + TERMS_VERSION);
+  }
+  return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
+function cleanHandle(v) { return String(v || '').trim().replace(/^@+/, '').replace(/[^A-Za-z0-9_.\-]/g, '').slice(0, 40); }
+
+routes['POST contacts'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const b = await readJson(request);
+  const tg = cleanHandle(b.telegram), th = cleanHandle(b.throne);
+  await env.DB.prepare('INSERT INTO wallet_contacts (wallet_id, telegram, throne, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(wallet_id) DO UPDATE SET telegram = excluded.telegram, throne = excluded.throne, updated_at = excluded.updated_at')
+    .bind(w.id, tg || null, th || null, Date.now()).run();
+  await logEvent(env, request, 'contacts_set', w.id, 'Telegram: ' + (tg ? '@' + tg : '—') + ' · Throne: ' + (th || '—'));
+  return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
+routes['POST color'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const color = String((await readJson(request)).color || '');
+  if (COLORS[color] === undefined) throw new Oops('Pick a color.');
+  if ((w.load_count || 0) < COLORS[color]) throw new Oops('That color unlocks after ' + COLORS[color] + ' load' + (COLORS[color] > 1 ? 's' : '') + ' of $20 or more.');
+  await env.DB.prepare('INSERT INTO wallet_prefs (wallet_id, color) VALUES (?, ?) ON CONFLICT(wallet_id) DO UPDATE SET color = excluded.color').bind(w.id, color).run();
+  return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
+// ---------- "my load didn't show up" ----------
+const REPORT_AMOUNTS = [500, 2000, 5000, 10000];
+function publicReport(r) {
+  return { id: r.id, amountCents: r.amount_cents, sentWhen: r.sent_when || '', status: r.status, resolution: r.resolution || '', createdAt: r.created_at, resolvedAt: r.resolved_at };
+}
+routes['GET load-reports'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const rows = (await env.DB.prepare('SELECT * FROM load_reports WHERE wallet_id = ? ORDER BY id DESC LIMIT 10').bind(w.id).all()).results;
+  return json({ rows: rows.map(publicReport) });
+};
+routes['POST load-report'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const b = await readJson(request);
+  const cents = Math.round(Number(b.amountCents));
+  if (REPORT_AMOUNTS.indexOf(cents) === -1) throw new Oops('Pick the load you sent.');
+  const open = await env.DB.prepare("SELECT COUNT(*) AS n FROM load_reports WHERE wallet_id = ? AND status = 'open'").bind(w.id).first();
+  if (open.n >= 3) throw new Oops('You already have 3 reports waiting. Gnomie will get to them soon, or message her on Telegram.');
+  const clean = (v, n) => String(v || '').replace(/[\u0000-\u001f\u007f<>]/g, ' ').trim().slice(0, n) || null;
+  await env.DB.prepare('INSERT INTO load_reports (wallet_id, amount_cents, sent_when, throne, note, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(w.id, cents, clean(b.sentWhen, 80), cleanHandle(b.throne) || null, clean(b.note, 500), Date.now()).run();
+  await logEvent(env, request, 'load_reported', w.id, money(cents) + ' load not showing' + (b.sentWhen ? ' · sent ' + clean(b.sentWhen, 80) : ''));
+  const rows = (await env.DB.prepare('SELECT * FROM load_reports WHERE wallet_id = ? ORDER BY id DESC LIMIT 10').bind(w.id).all()).results;
+  return json({ rows: rows.map(publicReport) });
+};
+
+// ---------- financial break ----------
+routes['POST break'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const on = (await readJson(request)).on === true;
+  if (on) {
+    const r = await env.DB.prepare('INSERT OR IGNORE INTO breaks (wallet_id, created_at) VALUES (?, ?)').bind(w.id, Date.now()).run();
+    if (r.meta.changes) await logEvent(env, request, 'break_started', w.id, 'Balance ' + money(w.balance_cents) + ' · sent ' + money(w.total_loaded_cents) + ' in total');
+  } else {
+    const r = await env.DB.prepare('DELETE FROM breaks WHERE wallet_id = ?').bind(w.id).run();
+    if (r.meta.changes) await logEvent(env, request, 'break_ended', w.id, '');
+  }
+  return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
+// ---------- change PIN ----------
+routes['POST pin/change'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const b = await readJson(request);
+  if (!safeEqual(await pinHash(String(b.current || ''), w.pin_salt), w.pin_hash)) {
+    await logEvent(env, request, 'pin_change_failed', w.id, 'Wrong current PIN');
+    await new Promise(r => setTimeout(r, 600));
+    throw new Oops('Your current PIN is wrong.');
+  }
+  const next = String(b.next || '');
+  if (!/^(\d{4}|\d{6})$/.test(next)) throw new Oops('Your new PIN must be 4 or 6 digits.');
+  const salt = randomHex(16);
+  await env.DB.prepare('UPDATE wallets SET pin_hash = ?, pin_salt = ?, pin_length = ? WHERE id = ?').bind(await pinHash(next, salt), salt, next.length, w.id).run();
+  await logEvent(env, request, 'pin_changed', w.id, next.length + ' digits');
+  return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
+// ---------- requests: a game problem, or a new wallet code ----------
+const REQUEST_KINDS = { issue: 'Game problem', new_code: 'New wallet code' };
+function publicRequest(r) { return { id: r.id, kind: r.kind, game: r.game || '', status: r.status, resolution: r.resolution || '', createdAt: r.created_at }; }
+routes['GET requests'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const rows = (await env.DB.prepare('SELECT * FROM fan_requests WHERE wallet_id = ? ORDER BY id DESC LIMIT 10').bind(w.id).all()).results;
+  return json({ rows: rows.map(publicRequest) });
+};
+routes['POST request'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const b = await readJson(request);
+  if (!REQUEST_KINDS[b.kind]) throw new Oops('Pick what this is about.');
+  const note = String(b.note || '').replace(/[\u0000-\u0008\u000b-\u001f\u007f<>]/g, ' ').trim().slice(0, 1000);
+  if (note.length < 4) throw new Oops(b.kind === 'new_code' ? 'Tell Gnomie why you need a new code.' : 'Tell Gnomie what happened.');
+  const game = String(b.game || '').slice(0, 40) || null;
+  const open = await env.DB.prepare("SELECT COUNT(*) AS n FROM fan_requests WHERE wallet_id = ? AND kind = ? AND status = 'open'").bind(w.id, b.kind).first();
+  if (open.n >= (b.kind === 'new_code' ? 1 : 3)) throw new Oops(b.kind === 'new_code' ? 'You already asked for a new code. Gnomie will get to it soon.' : 'You already have 3 reports waiting. Gnomie will get to them soon.');
+  await env.DB.prepare('INSERT INTO fan_requests (wallet_id, kind, game, note, created_at) VALUES (?, ?, ?, ?, ?)').bind(w.id, b.kind, game, note, Date.now()).run();
+  await logEvent(env, request, b.kind === 'new_code' ? 'new_code_requested' : 'issue_reported', w.id, (game ? game + ': ' : '') + note.slice(0, 200));
+  const rows = (await env.DB.prepare('SELECT * FROM fan_requests WHERE wallet_id = ? ORDER BY id DESC LIMIT 10').bind(w.id).all()).results;
+  return json({ rows: rows.map(publicRequest) });
+};
+
+// ---------- nudges ----------
+routes['POST nudge/seen'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const { id } = await readJson(request);
+  const r = await env.DB.prepare('UPDATE nudges SET seen_at = ? WHERE id = ? AND wallet_id = ? AND seen_at IS NULL').bind(Date.now(), id, w.id).run();
+  if (r.meta.changes === 1) await logEvent(env, request, 'nudge_seen', w.id, 'Nudge #' + id);
+  return json({ ok: true });
+};
+
+// Close a nudge, optionally answering it: "I'm taking a break" or "I promise I'll do better"
+routes['POST nudge/close'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const { id, response } = await readJson(request);
+  const now = Date.now(), answer = response === 'break' || response === 'promise' ? response : 'closed';
+  const r = await env.DB.prepare('UPDATE nudges SET closed_at = ?, seen_at = COALESCE(seen_at, ?), response = ? WHERE id = ? AND wallet_id = ? AND closed_at IS NULL').bind(now, now, answer, id, w.id).run();
+  if (answer === 'break') await env.DB.prepare('INSERT OR IGNORE INTO breaks (wallet_id, created_at) VALUES (?, ?)').bind(w.id, now).run();
+  if (r.meta.changes === 1) await logEvent(env, request, answer === 'break' ? 'nudge_break' : answer === 'promise' ? 'nudge_promise' : 'nudge_closed', w.id, 'Nudge #' + id);
+  return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
 // Local testing only (never turned on in Cloudflare)
 routes['POST test-credit'] = async (env, request) => {
   if (env.ALLOW_TEST_CREDIT !== '1') throw new Oops('Not found.', 404);
   const w = await needWallet(env, request);
   const { cents } = await readJson(request);
   if (!Number.isInteger(cents) || cents <= 0 || cents > 100000) throw new Oops('Bad amount.');
-  await env.DB.prepare('UPDATE wallets SET balance_cents = balance_cents + ?, total_loaded_cents = total_loaded_cents + ? WHERE id = ?')
-    .bind(cents, cents, w.id).run();
+  await env.DB.batch([
+    env.DB.prepare('UPDATE wallets SET balance_cents = balance_cents + ?, total_loaded_cents = total_loaded_cents + ? WHERE id = ?').bind(cents, cents, w.id),
+    env.DB.prepare('INSERT INTO adjustments (wallet_id, cents, kind, note, public, created_at) VALUES (?, ?, ?, ?, 1, ?)').bind(w.id, cents, 'load', 'Test credit', Date.now())
+  ]);
   return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
 };
 
@@ -442,16 +759,264 @@ routes['POST duel/place'] = async (env, request) => {
   return json(out);
 };
 
+// ---------- routes: Too Far ----------
+function publicTooFar(row, st) {
+  if (!row) return null;
+  return {
+    amount: row.amount_cents, held: row.held_cents,
+    you: st.you.map(c => ({ v: c.v })), gnomie: st.gnomie.map(c => ({ v: c.v })),
+    youTotal: handTotal(st.you), gnomieTotal: handTotal(st.gnomie), gnomieStayed: !!st.gnomieStayed
+  };
+}
+async function activeTooFar(db, walletId) {
+  const row = await db.prepare("SELECT * FROM toofar WHERE wallet_id = ? AND status = 'active'").bind(walletId).first();
+  return row ? { row, st: JSON.parse(row.state) } : null;
+}
+function tooFarPays(amount) {
+  return { win: amount * TOOFAR.PAY.win, tie: Math.round(amount * TOOFAR.PAY.tie), lose: amount * TOOFAR.PAY.lose, bust: Math.round(amount * TOOFAR.PAY.bust) };
+}
+// Ends the game: saves the outcome and gives back what they don't pay.
+async function finishTooFar(env, g, st, outcome) {
+  const you = handTotal(st.you), gn = handTotal(st.gnomie);
+  const pay = tooFarPays(g.row.amount_cents)[outcome === 'gnomie_bust' ? 'win' : outcome];
+  const saved = outcome === 'gnomie_bust' ? 'win' : outcome;
+  const r = await env.DB.prepare(
+    "UPDATE toofar SET state = ?, status = 'done', outcome = ?, you_total = ?, gnomie_total = ?, paid_cents = ?, finished_at = ? WHERE id = ? AND state = ? AND status = 'active'"
+  ).bind(JSON.stringify(st), saved, you, gn, pay, Date.now(), g.row.id, g.row.state).run();
+  if (r.meta.changes !== 1) throw new Oops('Busy. Please try again.', 409);
+  await env.DB.prepare('UPDATE wallets SET balance_cents = balance_cents + ?, total_drained_cents = total_drained_cents + ? WHERE id = ?')
+    .bind(g.row.held_cents - pay, pay, g.row.wallet_id).run();
+  return { outcome, you, gnomie: gn, paidCents: pay, amount: g.row.amount_cents };
+}
+
+routes['GET toofar'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const g = await activeTooFar(env.DB, w.id);
+  return json({ game: g ? publicTooFar(g.row, g.st) : null });
+};
+
+routes['POST toofar/start'] = async (env, request) => {
+  let w = await needWallet(env, request);
+  const amount = Math.round(Number((await readJson(request)).amount));
+  if (!Number.isInteger(amount) || amount < TOOFAR.MIN_CENTS || amount > TOOFAR.MAX_CENTS) throw new Oops('Pick an amount from ' + money(TOOFAR.MIN_CENTS) + ' to ' + money(TOOFAR.MAX_CENTS) + '.');
+  const hold = Math.round(amount * TOOFAR.PAY.bust);
+  if (w.balance_cents < hold) throw new Oops('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amount) + '.');
+  const deck = newDeck();
+  // Your first two cards can never start you over the target:
+  // if they would, the second card goes back under the deck and you get the next one.
+  const first = deck.pop();
+  let second = deck.pop();
+  while (first + second > TOOFAR.TARGET) { deck.unshift(second); second = deck.pop(); }
+  const st = { deck, you: [{ v: first }, { v: second }], gnomie: [{ v: deck.pop() }] };
+  let ins;
+  try {
+    ins = await env.DB.prepare('INSERT INTO toofar (wallet_id, amount_cents, held_cents, state, status, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(w.id, amount, hold, JSON.stringify(st), 'active', Date.now()).run();
+  } catch (e) { throw new Oops('Finish your current game first.'); }
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (w.balance_cents < hold) break;
+    if (await changeBalance(env.DB, w.id, w.balance_cents, -hold, 0)) {
+      const g = await activeTooFar(env.DB, w.id);
+      return json({ game: publicTooFar(g.row, g.st), wallet: publicWallet(await walletById(env.DB, w.id)) });
+    }
+    w = await walletById(env.DB, w.id);
+  }
+  await env.DB.prepare('DELETE FROM toofar WHERE id = ?').bind(ins.meta.last_row_id).run();
+  throw new Oops('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amount) + '.');
+};
+
+// Taking turns: you draw (or stay), then Gnomie takes her turn by her own rule
+// (kept on the server). Once she stops, she stays stopped. Going over ends it.
+function gnomieTurn(st) {
+  if (st.gnomieStayed) return { stayed: true, already: true };
+  if (handTotal(st.gnomie) >= TOOFAR.GNOMIE_STOPS) { st.gnomieStayed = true; return { stayed: true }; }
+  const card = { v: st.deck.pop() };
+  st.gnomie.push(card);
+  if (handTotal(st.gnomie) >= TOOFAR.GNOMIE_STOPS && handTotal(st.gnomie) <= TOOFAR.TARGET) st.gnomieStayed = true;
+  return { card, stayed: !!st.gnomieStayed };
+}
+function copyState(st) { return { deck: st.deck.slice(), you: st.you.slice(), gnomie: st.gnomie.slice(), gnomieStayed: !!st.gnomieStayed }; }
+function tooFarOutcome(st) {
+  const you = handTotal(st.you), gn = handTotal(st.gnomie);
+  return gn > TOOFAR.TARGET ? 'gnomie_bust' : you > gn ? 'win' : you === gn ? 'tie' : 'lose';
+}
+
+routes['POST toofar/draw'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const g = await activeTooFar(env.DB, w.id);
+  if (!g) throw new Oops('No game in progress.');
+  const st = copyState(g.st);
+  if (handTotal(st.you) >= TOOFAR.TARGET) throw new Oops('You’re already at ' + TOOFAR.TARGET + '. Stay to finish.');
+  const card = { v: st.deck.pop() };
+  st.you.push(card);
+  const out = { card };
+  if (handTotal(st.you) > TOOFAR.TARGET) {
+    out.result = await finishTooFar(env, g, st, 'bust');
+    out.final = publicTooFar(g.row, st);
+  } else {
+    out.gnomie = gnomieTurn(st);
+    if (handTotal(st.gnomie) > TOOFAR.TARGET) {
+      out.result = await finishTooFar(env, g, st, 'gnomie_bust');
+      out.final = publicTooFar(g.row, st);
+    } else {
+      const r = await env.DB.prepare("UPDATE toofar SET state = ? WHERE id = ? AND state = ? AND status = 'active'")
+        .bind(JSON.stringify(st), g.row.id, g.row.state).run();
+      if (r.meta.changes !== 1) throw new Oops('Busy. Please try again.', 409);
+      out.game = publicTooFar(g.row, st);
+    }
+  }
+  out.wallet = publicWallet(await walletById(env.DB, w.id));
+  return json(out);
+};
+
+// You stay: Gnomie keeps taking her turns until she stops (or goes over)
+routes['POST toofar/stay'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const g = await activeTooFar(env.DB, w.id);
+  if (!g) throw new Oops('No game in progress.');
+  const st = copyState(g.st);
+  const drawn = [];
+  while (!st.gnomieStayed && handTotal(st.gnomie) <= TOOFAR.TARGET) {
+    const t = gnomieTurn(st);
+    if (t.card) drawn.push(t.card);
+  }
+  const result = await finishTooFar(env, g, st, tooFarOutcome(st));
+  return json({ gnomieDrew: drawn, result, final: publicTooFar(g.row, st), wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
+// ---------- routes: Mancala ----------
+function publicMancala(row, st) {
+  if (!row) return null;
+  return { amount: row.amount_cents, held: row.held_cents, pits: st.pits.slice(), beads: st.beads || mancalaBeadsFromPits(st.pits), turn: st.turn };
+}
+async function activeMancala(db, walletId) {
+  const row = await db.prepare("SELECT * FROM mancala WHERE wallet_id = ? AND status = 'active'").bind(walletId).first();
+  return row ? { row, st: JSON.parse(row.state) } : null;
+}
+async function finishMancala(env, g, st) {
+  const you = st.pits[6], gn = st.pits[13];
+  const outcome = you > gn ? 'win' : you === gn ? 'tie' : 'lose';
+  const pay = Math.round(g.row.amount_cents * MANCALA.PAY[outcome]);
+  const r = await env.DB.prepare(
+    "UPDATE mancala SET state = ?, status = 'done', outcome = ?, you_score = ?, gnomie_score = ?, paid_cents = ?, finished_at = ? WHERE id = ? AND state = ? AND status = 'active'"
+  ).bind(JSON.stringify(st), outcome, you, gn, pay, Date.now(), g.row.id, g.row.state).run();
+  if (r.meta.changes !== 1) throw new Oops('Busy. Please try again.', 409);
+  await env.DB.prepare('UPDATE wallets SET balance_cents = balance_cents + ?, total_drained_cents = total_drained_cents + ? WHERE id = ?')
+    .bind(g.row.held_cents - pay, pay, g.row.wallet_id).run();
+  return { outcome, you, gnomie: gn, paidCents: pay, amount: g.row.amount_cents };
+}
+
+routes['GET mancala'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const g = await activeMancala(env.DB, w.id);
+  return json({ game: g ? publicMancala(g.row, g.st) : null });
+};
+
+routes['POST mancala/start'] = async (env, request) => {
+  let w = await needWallet(env, request);
+  const amount = (await readJson(request)).amount;
+  if (MANCALA.AMOUNTS.indexOf(amount) === -1) throw new Oops('Pick an amount to play for.');
+  const hold = amount * MANCALA.PAY.lose;
+  if (w.balance_cents < hold) throw new Oops('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amount) + '.');
+  const st = { pits: mancalaStart(), beads: mancalaBeadsStart(), turn: 'you' };
+  let ins;
+  try {
+    ins = await env.DB.prepare('INSERT INTO mancala (wallet_id, amount_cents, held_cents, state, status, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(w.id, amount, hold, JSON.stringify(st), 'active', Date.now()).run();
+  } catch (e) { throw new Oops('Finish your current game first.'); }
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (w.balance_cents < hold) break;
+    if (await changeBalance(env.DB, w.id, w.balance_cents, -hold, 0)) {
+      const g = await activeMancala(env.DB, w.id);
+      return json({ game: publicMancala(g.row, g.st), wallet: publicWallet(await walletById(env.DB, w.id)) });
+    }
+    w = await walletById(env.DB, w.id);
+  }
+  await env.DB.prepare('DELETE FROM mancala WHERE id = ?').bind(ins.meta.last_row_id).run();
+  throw new Oops('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amount) + '.');
+};
+
+// Your move, then (unless you earned another turn) Gnomie's moves until it's your turn again
+routes['POST mancala/move'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const g = await activeMancala(env.DB, w.id);
+  if (!g) throw new Oops('No game in progress.');
+  const pit = (await readJson(request)).pit;
+  const st = { pits: g.st.pits.slice(), beads: g.st.beads || mancalaBeadsFromPits(g.st.pits), turn: g.st.turn };
+  if (st.turn !== 'you') throw new Oops('It’s Gnomie’s turn.');
+  if (!Number.isInteger(pit) || pit < 0 || pit > 5 || st.pits[pit] === 0) throw new Oops('Pick one of your pits that has stones.');
+  const moves = [];
+  let r = mancalaMove(st.pits, 'you', pit);
+  moves.push({ side: 'you', pit, capture: r.capture, again: r.again });
+  st.pits = r.pits; st.beads = mancalaBeadMove(st.beads, 'you', pit);
+  let over = r.over;
+  if (!over && !r.again) {
+    st.turn = 'gnomie';
+    for (let guard = 0; guard < 40 && !over && st.turn === 'gnomie'; guard++) {
+      const m = gnomieMancala(st.pits);
+      const gr = mancalaMove(st.pits, 'gnomie', m);
+      moves.push({ side: 'gnomie', pit: m, capture: gr.capture, again: gr.again });
+      st.pits = gr.pits; st.beads = mancalaBeadMove(st.beads, 'gnomie', m); over = gr.over;
+      if (!gr.again) st.turn = 'you';
+    }
+  }
+  const out = { moves };
+  if (over) {
+    out.result = await finishMancala(env, g, st);
+    out.final = publicMancala(g.row, st);
+  } else {
+    st.turn = 'you';
+    const u = await env.DB.prepare("UPDATE mancala SET state = ? WHERE id = ? AND state = ? AND status = 'active'").bind(JSON.stringify(st), g.row.id, g.row.state).run();
+    if (u.meta.changes !== 1) throw new Oops('Busy. Please try again.', 409);
+    out.game = publicMancala(g.row, st);
+  }
+  out.wallet = publicWallet(await walletById(env.DB, w.id));
+  return json(out);
+};
+
+// ---------- routes: Spin the Bottle ----------
+routes['POST bottle/spin'] = async (env, request) => {
+  let w = await needWallet(env, request);
+  const body = await readJson(request);
+  const boardKey = String(body.board || ''), pick = body.pick;
+  if (!BOTTLE[boardKey]) throw new Oops('Unknown board.');
+  if (!Number.isInteger(pick) || pick < 0 || pick > 7) throw new Oops('Pick a wedge first.');
+  const slices = BOTTLE[boardKey].slices, worst = 2 * Math.max(...slices);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (w.balance_cents < worst) throw new Oops('Your wallet needs at least ' + money(worst) + ' for this board (double the biggest wedge).');
+    // Secret wedge order, then the spin; both decided here, never on the page
+    const order = shuffledOrder(8), amounts = order.map(i => slices[i]);
+    const slot = spinSlice(), hit = slot === pick, pay = hit ? amounts[slot] * 2 : amounts[slot];
+    if (await changeBalance(env.DB, w.id, w.balance_cents, -pay, pay)) {
+      await env.DB.prepare('INSERT INTO drops (wallet_id, game, board, aim, path, slot, amount_cents, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        .bind(w.id, 'spin-the-bottle', boardKey, pick, order.join(',') + (hit ? '|hit' : ''), slot, pay, Date.now()).run();
+      return json({ slot, hit, amounts, sliceCents: amounts[slot], paidCents: pay, wallet: publicWallet(await walletById(env.DB, w.id)) });
+    }
+    w = await walletById(env.DB, w.id);
+  }
+  throw new Oops('Busy. Please try again.', 409);
+};
+
 // ---------- routes: leaderboards ----------
 // Only rank, name and how long they've held their spot ever leave the server.
 const BOARD_SQL = {
-  'all': `SELECT id AS wallet_id, total_drained_cents AS score FROM wallets WHERE total_drained_cents > 0 AND status != 'banned'`,
+  'all': `SELECT id AS wallet_id, total_drained_cents AS score FROM wallets WHERE total_drained_cents > 0 AND status = 'active'`,
   'drop-the-ball': `SELECT d.wallet_id, SUM(d.amount_cents) AS score FROM drops d JOIN wallets w ON w.id = d.wallet_id
-                    WHERE d.game = 'drop-the-ball' AND w.status != 'banned' GROUP BY d.wallet_id HAVING score > 0`,
+                    WHERE d.game = 'drop-the-ball' AND w.status = 'active' GROUP BY d.wallet_id HAVING score > 0`,
   'dice-duel': `SELECT d.wallet_id, SUM(d.paid_cents) AS score FROM duels d JOIN wallets w ON w.id = d.wallet_id
-                WHERE d.status = 'done' AND w.status != 'banned' GROUP BY d.wallet_id HAVING score > 0`,
+                WHERE d.status = 'done' AND w.status = 'active' GROUP BY d.wallet_id HAVING score > 0`,
+  'too-far': `SELECT t.wallet_id, SUM(t.paid_cents) AS score FROM toofar t JOIN wallets w ON w.id = t.wallet_id
+              WHERE t.status = 'done' AND w.status = 'active' GROUP BY t.wallet_id HAVING score > 0`,
+  'too-far-wins': `SELECT t.wallet_id, COUNT(*) AS score FROM toofar t JOIN wallets w ON w.id = t.wallet_id
+                   WHERE t.outcome = 'win' AND w.status = 'active' GROUP BY t.wallet_id`,
+  'spin-the-bottle': `SELECT d.wallet_id, SUM(d.amount_cents) AS score FROM drops d JOIN wallets w ON w.id = d.wallet_id
+                      WHERE d.game = 'spin-the-bottle' AND w.status = 'active' GROUP BY d.wallet_id HAVING score > 0`,
+  'mancala': `SELECT m.wallet_id, SUM(m.paid_cents) AS score FROM mancala m JOIN wallets w ON w.id = m.wallet_id
+              WHERE m.status = 'done' AND w.status = 'active' GROUP BY m.wallet_id HAVING score > 0`,
+  'mancala-wins': `SELECT m.wallet_id, COUNT(*) AS score FROM mancala m JOIN wallets w ON w.id = m.wallet_id
+                   WHERE m.outcome = 'win' AND w.status = 'active' GROUP BY m.wallet_id`,
   'dice-duel-wins': `SELECT d.wallet_id, COUNT(*) AS score FROM duels d JOIN wallets w ON w.id = d.wallet_id
-                     WHERE d.outcome = 'win' AND w.status != 'banned' GROUP BY d.wallet_id`
+                     WHERE d.outcome = 'win' AND w.status = 'active' GROUP BY d.wallet_id`
 };
 
 routes['GET leaderboard'] = async (env, request, url) => {
@@ -460,7 +1025,10 @@ routes['GET leaderboard'] = async (env, request, url) => {
   const db = env.DB, now = Date.now();
   const me = await sessionWallet(env, request);
   const top = (await db.prepare(
-    `SELECT s.wallet_id, s.score, w.name, w.anon_number FROM (${BOARD_SQL[key]}) s JOIN wallets w ON w.id = s.wallet_id
+    `SELECT s.wallet_id, s.score, w.name, w.anon_number, (SELECT p.color FROM wallet_prefs p WHERE p.wallet_id = w.id) AS color,
+       ((SELECT COUNT(*) FROM loads l WHERE l.wallet_id = w.id AND l.status = 'credited' AND l.amount_cents >= 2000) +
+        (SELECT COUNT(*) FROM adjustments j WHERE j.wallet_id = w.id AND j.kind = 'load' AND j.cents >= 2000)) AS load_count
+     FROM (${BOARD_SQL[key]}) s JOIN wallets w ON w.id = s.wallet_id
      ORDER BY s.score DESC, s.wallet_id ASC LIMIT 10`
   ).all()).results;
 
@@ -480,7 +1048,7 @@ routes['GET leaderboard'] = async (env, request, url) => {
 
   const nameOf = r => r.name || ('Anonymous #' + r.anon_number);
   const rows = top.map((r, i) => ({
-    rank: i + 1, name: nameOf(r),
+    rank: i + 1, name: nameOf(r), color: colorOf(r),
     reignDays: Math.max(1, Math.round((now - (since[i + 1] || now)) / DAY)),
     me: !!me && r.wallet_id === me.id
   }));
@@ -491,7 +1059,7 @@ routes['GET leaderboard'] = async (env, request, url) => {
       const ahead = await db.prepare(
         `SELECT COUNT(*) AS n FROM (${BOARD_SQL[key]}) WHERE score > ? OR (score = ? AND wallet_id < ?)`
       ).bind(mine.score, mine.score, me.id).first();
-      rows.push({ rank: ahead.n + 1, name: nameOf(me), reignDays: 1, me: true });
+      rows.push({ rank: ahead.n + 1, name: nameOf(me), color: colorOf(me), reignDays: 1, me: true });
     }
   }
   return json({ rows });
@@ -638,14 +1206,47 @@ function hqCookie(token, maxAge) {
 
 async function hqLocked(db) { return !!(await hqGet(db, 'lockdown')); }
 
-async function needHQ(env, request) {
+// ---------- Backstage password ----------
+// The very first password is the ADMIN_PASSWORD secret in Cloudflare. Once
+// Gnomie picks a new one in Backstage, it's saved here (scrambled, never readable)
+// and the Cloudflare secret is no longer used. Passwords expire after 30 days.
+const PW_MAX_AGE = 30 * DAY, PW_MIN = 12;
+async function passwordOk(env, password) {
+  const db = env.DB, h = await hqGet(db, 'pw_hash');
+  if (h) return safeEqual(await pinHash(String(password || ''), await hqGet(db, 'pw_salt')), h);
+  return safeEqual(String(password || ''), env.ADMIN_PASSWORD);
+}
+async function passwordSetAt(db) {
+  let t = Number(await hqGet(db, 'pw_set_at') || 0);
+  if (!t) { t = Date.now(); await hqSet(db, 'pw_set_at', t); } // the clock starts the first time it's used
+  return t;
+}
+async function passwordExpired(db) { return Date.now() - await passwordSetAt(db) > PW_MAX_AGE; }
+async function savePassword(env, pw) {
+  pw = String(pw || '');
+  if (pw.length < PW_MIN) throw new Oops('Use at least ' + PW_MIN + ' characters.');
+  if (await passwordOk(env, pw)) throw new Oops('Pick a password you haven’t used right before.');
+  const prev = await hqGet(env.DB, 'pw_prev_hash'), prevSalt = await hqGet(env.DB, 'pw_prev_salt');
+  if (prev && safeEqual(await pinHash(pw, prevSalt), prev)) throw new Oops('Pick a password you haven’t used right before.');
+  const salt = randomHex(16);
+  const cur = await hqGet(env.DB, 'pw_hash');
+  if (cur) { await hqSet(env.DB, 'pw_prev_hash', cur); await hqSet(env.DB, 'pw_prev_salt', await hqGet(env.DB, 'pw_salt')); }
+  await hqSet(env.DB, 'pw_salt', salt);
+  await hqSet(env.DB, 'pw_hash', await pinHash(pw, salt));
+  await hqSet(env.DB, 'pw_set_at', Date.now());
+}
+
+async function needHQ(env, request, allowExpired) {
   if (!env.ADMIN_PASSWORD) throw new Oops('Backstage password not set up yet.', 503);
   await hqSchema(env.DB);
   if (await hqLocked(env.DB)) throw new Oops('Backstage is locked.', 423, { locked: true });
   const token = getCookie(request, HQ_COOKIE);
   if (token && /^[0-9a-f]{64}$/.test(token)) {
     const ok = await env.DB.prepare('SELECT 1 FROM backstage_sessions WHERE token_hash = ? AND expires_at > ?').bind(await sha256(token), Date.now()).first();
-    if (ok) return;
+    if (ok) {
+      if (!allowExpired && await passwordExpired(env.DB)) throw new Oops('Your Backstage password is a month old. Choose a new one to continue.', 403, { mustChange: true });
+      return;
+    }
   }
   throw new Oops('Please sign in.', 401);
 }
@@ -657,7 +1258,7 @@ async function hqCheck(env, request, password, code, pendingSecret) {
   if (lockedUntil > now) throw new Oops('Too many tries. Backstage is locked for ' + Math.ceil((lockedUntil - now) / 60000) + ' more minutes.', 429);
   const secret = pendingSecret || await hqGet(db, 'totp_secret');
   let step = -1;
-  const passOk = safeEqual(String(password || ''), env.ADMIN_PASSWORD);
+  const passOk = await passwordOk(env, password);
   if (passOk && secret) step = await checkCode(secret, code, Number(await hqGet(db, 'totp_last_step') || 0));
   if (!passOk || (secret && step < 0)) {
     const fails = Number(await hqGet(db, 'fail_count') || 0) + 1;
@@ -687,8 +1288,54 @@ routes['GET hq/session'] = async (env, request) => {
   await hqSchema(env.DB);
   if (await hqLocked(env.DB)) return json({ ready: true, locked: true, signedIn: false });
   let signedIn = true;
-  try { await needHQ(env, request); } catch (e) { signedIn = false; }
-  return json({ ready: true, signedIn, twoFactor: !!(await hqGet(env.DB, 'totp_secret')) });
+  try { await needHQ(env, request, true); } catch (e) { signedIn = false; }
+  const out = { ready: true, signedIn, twoFactor: !!(await hqGet(env.DB, 'totp_secret')) };
+  if (signedIn) { const at = await passwordSetAt(env.DB); out.mustChange = Date.now() - at > PW_MAX_AGE; out.passwordExpiresAt = at + PW_MAX_AGE; }
+  return json(out);
+};
+
+// Change the password while signed in (also how an expired password gets replaced)
+routes['POST hq/password'] = async (env, request) => {
+  await needHQ(env, request, true);
+  const b = await readJson(request);
+  if (!(await passwordOk(env, b.current))) {
+    await logEvent(env, request, 'backstage_failed', null, 'Wrong current password while changing it');
+    await new Promise(r => setTimeout(r, 800));
+    throw new Oops('Your current password is wrong.', 400);
+  }
+  await savePassword(env, b.next);
+  await logEvent(env, request, 'backstage_password_changed', null, 'New Backstage password set');
+  return json({ ok: true, passwordExpiresAt: Date.now() + PW_MAX_AGE });
+};
+
+// Forgot the password: two codes in a row from the authenticator app, then a new password.
+// Everyone is signed out afterwards.
+routes['POST hq/password-forgot'] = async (env, request) => {
+  if (!env.ADMIN_PASSWORD) throw new Oops('Backstage password not set up yet.', 503);
+  await hqSchema(env.DB);
+  const db = env.DB, now = Date.now();
+  if (await hqLocked(db)) throw new Oops('Backstage is locked.', 423, { locked: true });
+  const lockedUntil = Number(await hqGet(db, 'locked_until') || 0);
+  if (lockedUntil > now) throw new Oops('Too many tries. Backstage is locked for ' + Math.ceil((lockedUntil - now) / 60000) + ' more minutes.', 429);
+  const secret = await hqGet(db, 'totp_secret');
+  if (!secret) throw new Oops('Your authenticator app isn’t connected yet, so the password can’t be reset this way. Change ADMIN_PASSWORD in Cloudflare instead.', 400);
+  const b = await readJson(request);
+  const s1 = await checkCode(secret, b.code1, Number(await hqGet(db, 'totp_last_step') || 0));
+  const s2 = s1 >= 0 ? await checkCode(secret, b.code2, s1) : -1;
+  if (s1 < 0 || s2 !== s1 + 1) {
+    const fails = Number(await hqGet(db, 'fail_count') || 0) + 1;
+    await hqSet(db, 'fail_count', fails >= HQ_TRIES ? 0 : fails);
+    if (fails >= HQ_TRIES) await hqSet(db, 'locked_until', now + HQ_LOCK_MS);
+    await logEvent(env, request, fails >= HQ_TRIES ? 'backstage_locked' : 'backstage_failed', null, 'Wrong authenticator codes while resetting the password' + (fails >= HQ_TRIES ? ' · locked 15 minutes' : ' (' + fails + ' of ' + HQ_TRIES + ')'));
+    await new Promise(r => setTimeout(r, 800));
+    throw new Oops('Those codes didn’t work. Type the code your app shows now, wait for it to change, then type the new one.', 400);
+  }
+  await savePassword(env, b.next);
+  await hqSet(db, 'totp_last_step', s2);
+  await hqSet(db, 'fail_count', 0);
+  await db.prepare('DELETE FROM backstage_sessions').run();
+  await logEvent(env, request, 'backstage_password_reset', null, 'Password reset with two authenticator codes · everyone signed out');
+  return json({ ok: true }, 200, { 'set-cookie': hqCookie('', 0) });
 };
 
 routes['POST hq/login'] = async (env, request) => {
@@ -736,6 +1383,9 @@ routes['POST hq/signout-everywhere'] = async (env, request) => {
 // Cloudflare D1 console. The games, wallets and payments keep working.
 routes['POST hq/lockdown'] = async (env, request) => {
   await needHQ(env, request);
+  // Locking needs the password and authenticator code again, not just being signed in
+  const body = await readJson(request);
+  await hqCheck(env, request, body.password, body.code);
   await hqSet(env.DB, 'lockdown', Date.now());
   await env.DB.prepare('DELETE FROM backstage_sessions').run();
   await logEvent(env, request, 'backstage_lockdown', null, 'Backstage locked. Unlock in the Cloudflare D1 console.');
@@ -749,8 +1399,16 @@ routes['POST hq/logout'] = async (env, request) => {
   return json({ ok: true }, 200, { 'set-cookie': hqCookie('', 0) });
 };
 
+const LAST_ACTIVE_SQL = `MAX(w.created_at,
+  COALESCE((SELECT MAX(a.created_at) FROM admin_log a WHERE a.wallet_id = w.id AND a.action NOT LIKE 'backstage%'), 0),
+  COALESCE((SELECT MAX(d.created_at) FROM drops d WHERE d.wallet_id = w.id), 0),
+  COALESCE((SELECT MAX(u.created_at) FROM duels u WHERE u.wallet_id = w.id), 0),
+  COALESCE((SELECT MAX(t.created_at) FROM toofar t WHERE t.wallet_id = w.id), 0),
+  COALESCE((SELECT MAX(m.created_at) FROM mancala m WHERE m.wallet_id = w.id), 0))`;
+const HQ_SELECT = WALLET_SELECT.replace('SELECT w.*,', 'SELECT w.*, ' + LAST_ACTIVE_SQL + ' AS last_active,');
+
 async function hqWallet(db, code) {
-  const w = await db.prepare(WALLET_SELECT + ' WHERE w.code = ?').bind(normalizeCode(code)).first();
+  const w = await db.prepare(HQ_SELECT + ' WHERE w.code = ?').bind(normalizeCode(code)).first();
   if (!w) throw new Oops('No wallet with that code.', 404);
   return w;
 }
@@ -758,9 +1416,11 @@ function hqWalletView(w) {
   return {
     id: w.id, code: w.display_code, name: w.name || ('Anonymous #' + w.anon_number), anonymous: !w.name,
     balanceCents: w.balance_cents, loadedCents: w.total_loaded_cents, spentCents: w.total_drained_cents,
-    heldCents: w.held_cents || 0, duelWins: w.duel_wins || 0, hasPin: !!w.pin_hash, pinLength: w.pin_length, twoFactor: !!w.two_factor,
+    heldCents: (w.held_duel || 0) + (w.held_toofar || 0) + (w.held_mancala || 0), duelWins: w.duel_wins || 0, tooFarWins: w.toofar_wins || 0, mancalaWins: w.mancala_wins || 0, hasPin: !!w.pin_hash, pinLength: w.pin_length, twoFactor: !!w.two_factor,
     failedPins: w.failed_pin_count, locked: w.locked_until > Date.now(), lockedUntil: w.locked_until,
-    status: w.status, createdAt: w.created_at
+    status: w.status, createdAt: w.created_at, closeRequestedAt: w.close_requested_at || null, onBreakSince: w.break_since || null,
+    lastActive: w.last_active || w.created_at, telegram: w.telegram || '', throneName: w.throne_name || '',
+    color: colorOf(w), loadCount: w.load_count || 0, termsVersion: w.terms_version || null, termsCurrent: w.terms_version === TERMS_VERSION
   };
 }
 const startOfDay = t => { const d = new Date(t); d.setUTCHours(0, 0, 0, 0); return d.getTime(); };
@@ -776,7 +1436,8 @@ routes['GET hq/stats'] = async (env, request, url) => {
   const all = async (sql, ...b) => (await db.prepare(sql).bind(...b).all()).results;
 
   const [wallets, money, loadsBy, dropTotals, dropBoards, dropAimSlot, duelTotals, duelByAmount,
-         dailyLoads, dailyDrops, dailyDuels, dailyWallets, topLoaded, topSpent, events] = await Promise.all([
+         dailyLoads, dailyDrops, dailyDuels, dailyWallets, topLoaded, topSpent, events,
+         spinTotals, spinBoards, spinSlots, tfTotals, tfByAmount, dailyTooFar] = await Promise.all([
     one(`SELECT COUNT(*) AS total,
            SUM(pin_hash IS NOT NULL) AS with_pin, SUM(status = 'banned') AS banned, SUM(name IS NOT NULL) AS named,
            SUM(created_at >= ?) AS new_today, SUM(created_at >= ?) AS new_7d, SUM(created_at >= ?) AS new_30d,
@@ -784,11 +1445,12 @@ routes['GET hq/stats'] = async (env, request, url) => {
          FROM wallets`, today, d7, d30, now),
     one(`SELECT COALESCE(SUM(balance_cents), 0) AS balances, COALESCE(SUM(total_loaded_cents), 0) AS loaded,
            COALESCE(SUM(total_drained_cents), 0) AS spent,
-           (SELECT COALESCE(SUM(held_cents), 0) FROM duels WHERE status = 'active') AS held,
+           (SELECT COALESCE(SUM(held_cents), 0) FROM duels WHERE status = 'active') + (SELECT COALESCE(SUM(held_cents), 0) FROM toofar WHERE status = 'active') AS held,
            (SELECT COUNT(DISTINCT wallet_id) FROM (
               SELECT wallet_id FROM drops WHERE created_at >= ? UNION SELECT wallet_id FROM duels WHERE created_at >= ?
+              UNION SELECT wallet_id FROM toofar WHERE created_at >= ?
               UNION SELECT wallet_id FROM loads WHERE created_at >= ? AND wallet_id IS NOT NULL)) AS active_7d
-         FROM wallets`, d7, d7, d7),
+         FROM wallets`, d7, d7, d7, d7),
     all(`SELECT platform, status, COUNT(*) AS n, COALESCE(SUM(amount_cents), 0) AS cents, COALESCE(SUM(paid_cents), 0) AS paid,
            SUM(created_at >= ?) AS n_today, COALESCE(SUM(CASE WHEN created_at >= ? THEN amount_cents END), 0) AS cents_today,
            SUM(created_at >= ?) AS n_7d, COALESCE(SUM(CASE WHEN created_at >= ? THEN amount_cents END), 0) AS cents_7d,
@@ -796,9 +1458,9 @@ routes['GET hq/stats'] = async (env, request, url) => {
          FROM loads GROUP BY platform, status`, today, today, d7, d7, d30, d30),
     one(`SELECT COUNT(*) AS n, COALESCE(SUM(amount_cents), 0) AS cents, COUNT(DISTINCT wallet_id) AS players,
            SUM(created_at >= ?) AS n_7d, COALESCE(SUM(CASE WHEN created_at >= ? THEN amount_cents END), 0) AS cents_7d
-         FROM drops`, d7, d7),
-    all(`SELECT board, COUNT(*) AS n, COALESCE(SUM(amount_cents), 0) AS cents, COUNT(DISTINCT wallet_id) AS players FROM drops GROUP BY board`),
-    all(`SELECT board, aim, slot, COUNT(*) AS n FROM drops GROUP BY board, aim, slot`),
+         FROM drops WHERE game = 'drop-the-ball'`, d7, d7),
+    all(`SELECT board, COUNT(*) AS n, COALESCE(SUM(amount_cents), 0) AS cents, COUNT(DISTINCT wallet_id) AS players FROM drops WHERE game = 'drop-the-ball' GROUP BY board`),
+    all(`SELECT board, aim, slot, COUNT(*) AS n FROM drops WHERE game = 'drop-the-ball' GROUP BY board, aim, slot`),
     one(`SELECT COUNT(*) AS n, SUM(status = 'active') AS active, SUM(outcome = 'win') AS wins, SUM(outcome = 'tie') AS ties,
            SUM(outcome = 'lose') AS losses, COALESCE(SUM(paid_cents), 0) AS cents, COUNT(DISTINCT wallet_id) AS players,
            AVG(you_score) AS avg_you, AVG(gnomie_score) AS avg_gnomie,
@@ -815,8 +1477,31 @@ routes['GET hq/stats'] = async (env, request, url) => {
     all(`SELECT CAST((created_at - ?) / ${DAY} AS INTEGER) AS day, COUNT(*) AS n FROM wallets WHERE created_at >= ? GROUP BY day`, since, since),
     all(`SELECT display_code, name, anon_number, total_loaded_cents AS cents FROM wallets WHERE total_loaded_cents > 0 ORDER BY cents DESC LIMIT 10`),
     all(`SELECT display_code, name, anon_number, total_drained_cents AS cents FROM wallets WHERE total_drained_cents > 0 ORDER BY cents DESC LIMIT 10`),
-    all(`SELECT action, COUNT(*) AS n, SUM(created_at >= ?) AS n_today, SUM(created_at >= ?) AS n_7d FROM admin_log GROUP BY action`, today, d7)
+    all(`SELECT action, COUNT(*) AS n, SUM(created_at >= ?) AS n_today, SUM(created_at >= ?) AS n_7d FROM admin_log GROUP BY action`, today, d7),
+    // Spin the Bottle
+    one(`SELECT COUNT(*) AS n, COALESCE(SUM(amount_cents), 0) AS cents, COUNT(DISTINCT wallet_id) AS players, SUM(path LIKE '%|hit' OR path = 'called') AS called_hits,
+           SUM(created_at >= ?) AS n_7d, COALESCE(SUM(CASE WHEN created_at >= ? THEN amount_cents END), 0) AS cents_7d
+         FROM drops WHERE game = 'spin-the-bottle'`, d7, d7),
+    all(`SELECT board, COUNT(*) AS n, COALESCE(SUM(amount_cents), 0) AS cents, COUNT(DISTINCT wallet_id) AS players FROM drops WHERE game = 'spin-the-bottle' GROUP BY board`),
+    all(`SELECT board, slot, COUNT(*) AS n FROM drops WHERE game = 'spin-the-bottle' GROUP BY board, slot`),
+    // Too Far
+    one(`SELECT COUNT(*) AS n, SUM(status = 'active') AS active, SUM(outcome = 'win') AS wins, SUM(outcome = 'tie') AS ties,
+           SUM(outcome = 'lose') AS losses, SUM(outcome = 'bust') AS busts, COALESCE(SUM(paid_cents), 0) AS cents, COUNT(DISTINCT wallet_id) AS players,
+           AVG(you_total) AS avg_you, AVG(gnomie_total) AS avg_gnomie,
+           SUM(status = 'done' AND finished_at >= ?) AS n_7d, COALESCE(SUM(CASE WHEN finished_at >= ? THEN paid_cents END), 0) AS cents_7d
+         FROM toofar`, d7, d7),
+    all(`SELECT amount_cents, COUNT(*) AS n, SUM(outcome = 'win') AS wins, SUM(outcome = 'tie') AS ties, SUM(outcome = 'lose') AS losses,
+           SUM(outcome = 'bust') AS busts, COALESCE(SUM(paid_cents), 0) AS cents FROM toofar WHERE status = 'done' GROUP BY amount_cents ORDER BY amount_cents`),
+    all(`SELECT CAST((finished_at - ?) / ${DAY} AS INTEGER) AS day, COUNT(*) AS n, COALESCE(SUM(paid_cents), 0) AS cents
+         FROM toofar WHERE status = 'done' AND finished_at >= ? GROUP BY day`, since, since)
   ]);
+
+  // Spin the Bottle fairness: every slice should come up about 1 in 8
+  const spinFair = {};
+  for (const row of spinSlots) {
+    const f = spinFair[row.board] = spinFair[row.board] || { n: 0, actual: new Array(8).fill(0) };
+    f.n += row.n; f.actual[row.slot] += row.n;
+  }
 
   // Fairness check: where balls actually landed vs. what the odds say, per board
   const fairness = {};
@@ -839,13 +1524,29 @@ routes['GET hq/stats'] = async (env, request, url) => {
   dailyLoads.forEach(r => { const s = series[r.day]; if (s) { s[r.platform] += r.cents; s.loads += r.n; } });
   dailyDrops.forEach(r => { const s = series[r.day]; if (s) { s.drops += r.n; s.spent += r.cents; } });
   dailyDuels.forEach(r => { const s = series[r.day]; if (s) { s.duels += r.n; s.spent += r.cents; } });
+  dailyTooFar.forEach(r => { const s = series[r.day]; if (s) { s.spent += r.cents; } });
   dailyWallets.forEach(r => { const s = series[r.day]; if (s) s.wallets += r.n; });
 
   const nm = r => ({ code: r.display_code, name: r.name || ('Anonymous #' + r.anon_number), cents: r.cents });
+  const closeReqs = (await db.prepare('SELECT COUNT(*) AS n FROM close_requests').first()).n;
+  const loadReports = (await db.prepare("SELECT COUNT(*) AS n FROM load_reports WHERE status = 'open'").first()).n;
+  // Most popular games: plays, players and total, in the chosen period and all time
+  const popular = (await db.prepare(
+    `SELECT game, COUNT(*) AS plays, COUNT(DISTINCT wallet_id) AS players, COALESCE(SUM(cents), 0) AS cents,
+            SUM(at >= ?) AS plays_period, COALESCE(SUM(CASE WHEN at >= ? THEN cents END), 0) AS cents_period
+     FROM (SELECT game, wallet_id, amount_cents AS cents, created_at AS at FROM drops
+           UNION ALL SELECT 'dice-duel', wallet_id, paid_cents, finished_at FROM duels WHERE status = 'done'
+           UNION ALL SELECT 'too-far', wallet_id, paid_cents, finished_at FROM toofar WHERE status = 'done'
+           UNION ALL SELECT 'mancala', wallet_id, paid_cents, finished_at FROM mancala WHERE status = 'done')
+     GROUP BY game ORDER BY plays_period DESC, plays DESC`
+  ).bind(since, since).all()).results;
+  const fanRequests = (await db.prepare("SELECT COUNT(*) AS n FROM fan_requests WHERE status = 'open'").first()).n;
   return json({
-    generatedAt: now, days, wallets, money, loads: loadsBy,
+    generatedAt: now, days, wallets, money, loads: loadsBy, closeRequests: closeReqs, loadReports, fanRequests, popular,
     drop: { totals: dropTotals, boards: dropBoards, fairness },
     duel: { totals: duelTotals, byAmount: duelByAmount },
+    spin: { totals: spinTotals, boards: spinBoards, fairness: spinFair, slices: BOTTLE },
+    toofar: { totals: tfTotals, byAmount: tfByAmount },
     series, topLoaded: topLoaded.map(nm), topSpent: topSpent.map(nm), events
   });
 };
@@ -880,11 +1581,12 @@ routes['GET hq/loads'] = async (env, request, url) => {
 routes['GET hq/drops'] = async (env, request, url) => {
   await needHQ(env, request);
   const q = url.searchParams, where = [], b = [];
+  if (q.get('game')) { where.push('d.game = ?'); b.push(q.get('game')); }
   if (q.get('board')) { where.push('d.board = ?'); b.push(q.get('board')); }
   if (q.get('before')) { where.push('d.id < ?'); b.push(+q.get('before')); }
   if (q.get('wallet')) { where.push('w.code = ?'); b.push(normalizeCode(q.get('wallet'))); }
   const rows = (await env.DB.prepare(
-    `SELECT d.id, d.board, d.aim, d.slot, d.amount_cents, d.created_at, w.display_code, w.name, w.anon_number
+    `SELECT d.id, d.game, d.board, d.aim, d.slot, d.path, d.amount_cents, d.created_at, w.display_code, w.name, w.anon_number
      FROM drops d JOIN wallets w ON w.id = d.wallet_id ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY d.id DESC LIMIT ?`
   ).bind(...b, clampInt(q.get('limit'), 1, 500, 100)).all()).results;
   return json({ rows });
@@ -920,16 +1622,26 @@ routes['GET hq/events'] = async (env, request, url) => {
 routes['GET hq/wallets'] = async (env, request, url) => {
   await needHQ(env, request);
   const q = url.searchParams, search = String(q.get('q') || '').trim();
-  const sorts = { newest: 'w.id DESC', balance: 'w.balance_cents DESC', loaded: 'w.total_loaded_cents DESC', spent: 'w.total_drained_cents DESC', name: 'COALESCE(w.name, \'~\') ASC' };
+  const sorts = { newest: 'w.id DESC', balance: 'w.balance_cents DESC', loaded: 'w.total_loaded_cents DESC', spent: 'w.total_drained_cents DESC', name: 'COALESCE(w.name, \'~\') ASC', quiet: 'last_active ASC' };
   const order = sorts[q.get('sort')] || sorts.newest;
   const where = [], b = [];
   if (search) {
-    where.push('(w.code LIKE ? OR LOWER(COALESCE(w.name, \'\')) LIKE ? OR (\'anonymous #\' || w.anon_number) LIKE ?)');
-    b.push('%' + normalizeCode(search) + '%', '%' + search.toLowerCase() + '%', '%' + search.toLowerCase() + '%');
+    const like = '%' + search.toLowerCase().replace(/^@/, '') + '%', code = normalizeCode(search);
+    where.push(`(${code ? 'w.code LIKE ? OR ' : ''}LOWER(COALESCE(w.name, '')) LIKE ? OR ('anonymous #' || w.anon_number) LIKE ?
+      OR EXISTS (SELECT 1 FROM wallet_contacts c WHERE c.wallet_id = w.id AND (LOWER(COALESCE(c.telegram, '')) LIKE ? OR LOWER(COALESCE(c.throne, '')) LIKE ?))
+      OR EXISTS (SELECT 1 FROM wallet_notes n WHERE n.wallet_id = w.id AND LOWER(n.note) LIKE ?)
+      OR EXISTS (SELECT 1 FROM loads l WHERE l.wallet_id = w.id AND LOWER(COALESCE(l.gifter, '')) LIKE ?))`);
+    if (code) b.push('%' + code + '%');
+    b.push(like, like, like, like, like, like);
   }
-  if (q.get('status')) { where.push('w.status = ?'); b.push(q.get('status')); }
+  if (q.get('status') === 'all') { /* everyone, closed too */ }
+  else if (q.get('status') === 'requested') where.push('EXISTS (SELECT 1 FROM close_requests c WHERE c.wallet_id = w.id)');
+  else if (q.get('status') === 'break') where.push('EXISTS (SELECT 1 FROM breaks k WHERE k.wallet_id = w.id)');
+  else if (q.get('status') === 'inactive') { where.push("w.status = 'active' AND " + LAST_ACTIVE_SQL + ' < ?'); b.push(Date.now() - 182 * DAY); }
+  else if (q.get('status')) { where.push('w.status = ?'); b.push(q.get('status')); }
+  else where.push("w.status != 'closed'");
   const rows = (await env.DB.prepare(
-    `${WALLET_SELECT} ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY ${order} LIMIT ?`
+    `${HQ_SELECT} ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY ${order} LIMIT ?`
   ).bind(...b, clampInt(q.get('limit'), 1, 500, 100)).all()).results;
   return json({ rows: rows.map(hqWalletView) });
 };
@@ -939,32 +1651,194 @@ routes['GET hq/wallet'] = async (env, request, url) => {
   await needHQ(env, request);
   const w = await hqWallet(env.DB, url.searchParams.get('code'));
   const db = env.DB;
-  const [loads, drops, duels, events, sessions, perGame] = await Promise.all([
+  const [notes, agreements, statement, nudges, loads, drops, duels, events, sessions, perGame] = await Promise.all([
+    db.prepare('SELECT id, note, created_at, updated_at FROM wallet_notes WHERE wallet_id = ? ORDER BY id DESC').bind(w.id).all(),
+    db.prepare('SELECT version, how, created_at FROM agreements WHERE wallet_id = ? ORDER BY id DESC LIMIT 50').bind(w.id).all(),
+    buildStatement(db, w, false),
+    db.prepare('SELECT * FROM nudges WHERE wallet_id = ? ORDER BY id DESC LIMIT 100').bind(w.id).all(),
     db.prepare('SELECT * FROM loads WHERE wallet_id = ? ORDER BY id DESC LIMIT 100').bind(w.id).all(),
-    db.prepare('SELECT id, board, aim, slot, amount_cents, created_at FROM drops WHERE wallet_id = ? ORDER BY id DESC LIMIT 100').bind(w.id).all(),
+    db.prepare('SELECT id, game, board, aim, slot, amount_cents, created_at FROM drops WHERE wallet_id = ? ORDER BY id DESC LIMIT 100').bind(w.id).all(),
     db.prepare('SELECT id, amount_cents, held_cents, status, outcome, you_score, gnomie_score, paid_cents, created_at, finished_at FROM duels WHERE wallet_id = ? ORDER BY id DESC LIMIT 100').bind(w.id).all(),
     db.prepare('SELECT * FROM admin_log WHERE wallet_id = ? ORDER BY id DESC LIMIT 100').bind(w.id).all(),
     db.prepare('SELECT COUNT(*) AS n, MAX(created_at) AS last FROM sessions WHERE wallet_id = ? AND expires_at > ?').bind(w.id, Date.now()).first(),
-    db.prepare(`SELECT 'drop-the-ball' AS game, COUNT(*) AS n, COALESCE(SUM(amount_cents), 0) AS cents FROM drops WHERE wallet_id = ?
-                UNION ALL SELECT 'dice-duel', COUNT(*), COALESCE(SUM(paid_cents), 0) FROM duels WHERE wallet_id = ? AND status = 'done'`).bind(w.id, w.id).all()
+    db.prepare(`SELECT 'drop-the-ball' AS game, COUNT(*) AS n, COALESCE(SUM(amount_cents), 0) AS cents FROM drops WHERE wallet_id = ? AND game = 'drop-the-ball'
+                UNION ALL SELECT 'dice-duel', COUNT(*), COALESCE(SUM(paid_cents), 0) FROM duels WHERE wallet_id = ? AND status = 'done'
+                UNION ALL SELECT 'too-far', COUNT(*), COALESCE(SUM(paid_cents), 0) FROM toofar WHERE wallet_id = ? AND status = 'done'
+                UNION ALL SELECT 'spin-the-bottle', COUNT(*), COALESCE(SUM(amount_cents), 0) FROM drops WHERE wallet_id = ? AND game = 'spin-the-bottle'`).bind(w.id, w.id, w.id, w.id).all()
   ]);
   return json({
     wallet: hqWalletView(w), devices: sessions.n, lastSignIn: sessions.last, perGame: perGame.results,
+    notes: notes.results, agreements: agreements.results, termsVersion: TERMS_VERSION,
+    statement, nudges: nudges.results.map(n => Object.assign({}, n, {
+      loadedAfter: statement.some(r => r.cents > 0 && /^Load/.test(r.label) && r.at > n.created_at)
+    })),
     loads: loads.results, drops: drops.results, duels: duels.results, events: events.results
   });
 };
 
 // ---------- Backstage actions (each one is logged) ----------
+// Three ways to change a balance:
+//   load   = money they sent (adds, and counts toward "Loaded")
+//   adjust = add or remove, not new money (corrections, spoof wallets)
+//   set    = make the balance exactly this amount
 routes['POST hq/adjust'] = async (env, request) => {
   await needHQ(env, request);
   const b = await readJson(request);
-  const cents = Math.round(Number(b.cents));
-  if (!Number.isInteger(cents) || cents === 0 || Math.abs(cents) > 1000000) throw new Oops('Enter an amount.');
+  const kind = b.kind === 'fix' ? 'adjust' : b.kind;
+  if (['load', 'adjust', 'set'].indexOf(kind) === -1) throw new Oops('Pick what kind of change this is.');
+  const amount = Math.round(Number(b.cents));
+  if (!Number.isInteger(amount) || Math.abs(amount) > 1000000) throw new Oops('Enter an amount.');
+  const note = String(b.note || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 300) || null;
+  const shown = b.public ? 1 : 0;
+  const db = env.DB;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const w = await hqWallet(db, b.code);
+    let delta;
+    if (kind === 'load') { if (amount <= 0) throw new Oops('Enter how much they sent.'); delta = amount; }
+    else if (kind === 'adjust') { if (amount === 0) throw new Oops('Enter an amount.'); delta = amount; }
+    else { if (amount < 0) throw new Oops('A balance can’t be below $0.'); delta = amount - w.balance_cents; if (delta === 0) throw new Oops('Their balance is already ' + money(amount) + '.'); }
+    if (w.balance_cents + delta < 0) throw new Oops('That would take them below $0. Their balance is ' + money(w.balance_cents) + '.');
+    const r = await db.prepare('UPDATE wallets SET balance_cents = balance_cents + ?, total_loaded_cents = total_loaded_cents + ? WHERE id = ? AND balance_cents = ?')
+      .bind(delta, kind === 'load' ? delta : 0, w.id, w.balance_cents).run();
+    if (r.meta.changes !== 1) continue; // balance changed while we looked; try again
+    await db.prepare('INSERT INTO adjustments (wallet_id, cents, kind, note, public, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(w.id, delta, kind, note, shown, Date.now()).run();
+    const what = kind === 'load' ? 'backstage_added_load' : kind === 'set' ? 'backstage_set_balance' : 'backstage_adjusted';
+    await logEvent(env, request, what, w.id, (delta > 0 ? '+' : '−') + money(Math.abs(delta)) + (kind === 'set' ? ' (now ' + money(amount) + ')' : '') +
+      (note ? ' · ' + (shown ? 'note shown to them: ' : 'private note: ') + note : ''));
+    return json({ ok: true });
+  }
+  throw new Oops('Busy. Please try again.', 409);
+};
+
+// Missing-load reports: list, then credit or decline
+routes['GET hq/load-reports'] = async (env, request, url) => {
+  await needHQ(env, request);
+  const status = url.searchParams.get('status') || 'open';
+  const rows = (await env.DB.prepare(
+    `SELECT r.*, w.display_code, w.name, w.anon_number FROM load_reports r JOIN wallets w ON w.id = r.wallet_id
+     ${status === 'all' ? '' : 'WHERE r.status = ?'} ORDER BY r.id DESC LIMIT 100`
+  ).bind(...(status === 'all' ? [] : [status])).all()).results;
+  return json({ rows });
+};
+routes['POST hq/load-report'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
+  const r = await env.DB.prepare('SELECT * FROM load_reports WHERE id = ?').bind(b.id).first();
+  if (!r || r.status !== 'open') throw new Oops('That report was already handled.');
+  const now = Date.now();
+  if (b.action === 'credit') {
+    const cents = Math.round(Number(b.cents));
+    if (!Number.isInteger(cents) || cents <= 0) throw new Oops('Enter the amount to add.');
+    const done = await env.DB.prepare("UPDATE load_reports SET status = 'credited', resolution = ?, resolved_at = ? WHERE id = ? AND status = 'open'").bind('Added ' + money(cents), now, r.id).run();
+    if (done.meta.changes !== 1) throw new Oops('That report was already handled.');
+    await env.DB.batch([
+      env.DB.prepare('UPDATE wallets SET balance_cents = balance_cents + ?, total_loaded_cents = total_loaded_cents + ? WHERE id = ?').bind(cents, cents, r.wallet_id),
+      env.DB.prepare('INSERT INTO adjustments (wallet_id, cents, kind, note, public, created_at) VALUES (?, ?, ?, ?, 1, ?)').bind(r.wallet_id, cents, 'load', 'Your missing load was found and added.', now)
+    ]);
+    await logEvent(env, request, 'backstage_report_credited', r.wallet_id, money(cents) + ' added for a missing-load report');
+  } else if (b.action === 'decline') {
+    const msg = String(b.message || '').trim().slice(0, 200) || 'Gnomie couldn’t find this load. Message her on Telegram.';
+    const done = await env.DB.prepare("UPDATE load_reports SET status = 'declined', resolution = ?, resolved_at = ? WHERE id = ? AND status = 'open'").bind(msg, now, r.id).run();
+    if (done.meta.changes !== 1) throw new Oops('That report was already handled.');
+    await logEvent(env, request, 'backstage_report_declined', r.wallet_id, msg);
+  } else throw new Oops('Pick what to do.');
+  return json({ ok: true });
+};
+
+// Fan requests: game problems and new-code requests
+routes['GET hq/requests'] = async (env, request, url) => {
+  await needHQ(env, request);
+  const status = url.searchParams.get('status') || 'open';
+  const rows = (await env.DB.prepare(
+    `SELECT r.*, w.display_code, w.name, w.anon_number FROM fan_requests r JOIN wallets w ON w.id = r.wallet_id
+     ${status === 'all' ? '' : 'WHERE r.status = ?'} ORDER BY r.id DESC LIMIT 100`
+  ).bind(...(status === 'all' ? [] : [status])).all()).results;
+  return json({ rows });
+};
+routes['POST hq/request'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
+  const r = await env.DB.prepare('SELECT * FROM fan_requests WHERE id = ?').bind(b.id).first();
+  if (!r || r.status !== 'open') throw new Oops('That request was already handled.');
+  const msg = String(b.message || '').trim().slice(0, 200) || (b.action === 'decline' ? 'Gnomie couldn’t do this one. Message her on Telegram.' : 'Handled by Gnomie.');
+  await env.DB.prepare('UPDATE fan_requests SET status = ?, resolution = ?, resolved_at = ? WHERE id = ?').bind(b.action === 'decline' ? 'declined' : 'done', msg, Date.now(), r.id).run();
+  await logEvent(env, request, 'backstage_request_' + (b.action === 'decline' ? 'declined' : 'done'), r.wallet_id, REQUEST_KINDS[r.kind] + ' · ' + msg);
+  return json({ ok: true });
+};
+// Give a wallet a brand-new code. The old one stops working right away.
+routes['POST hq/new-code'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
   const w = await hqWallet(env.DB, b.code);
-  const asLoad = b.kind === 'load';
-  await env.DB.prepare('UPDATE wallets SET balance_cents = balance_cents + ?, total_loaded_cents = total_loaded_cents + ? WHERE id = ?')
-    .bind(cents, asLoad ? cents : 0, w.id).run();
-  await logEvent(env, request, asLoad ? 'backstage_manual_load' : 'backstage_balance_fix', w.id, money(cents) + (b.note ? ' · ' + b.note : ''));
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const display = randomCode();
+    const r = await env.DB.prepare('UPDATE wallets SET code = ?, display_code = ? WHERE id = ? AND NOT EXISTS (SELECT 1 FROM wallets WHERE code = ?)')
+      .bind(normalizeCode(display), display, w.id, normalizeCode(display)).run();
+    if (r.meta.changes === 1) {
+      await env.DB.prepare("UPDATE fan_requests SET status = 'done', resolution = 'Your new wallet code is ready. It’s in your wallet now, and your old code no longer works.', resolved_at = ? WHERE wallet_id = ? AND kind = 'new_code' AND status = 'open'").bind(Date.now(), w.id).run();
+      await logEvent(env, request, 'backstage_new_code', w.id, w.display_code + ' → ' + display);
+      return json({ ok: true, code: display });
+    }
+  }
+  throw new Oops('Busy. Please try again.', 409);
+};
+
+// Gnomie's private notes about a wallet
+routes['POST hq/note'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
+  const note = String(b.note || '').trim().slice(0, 2000);
+  if (!note) throw new Oops('Write a note first.');
+  const now = Date.now();
+  if (b.id) {
+    const r = await env.DB.prepare('UPDATE wallet_notes SET note = ?, updated_at = ? WHERE id = ?').bind(note, now, b.id).run();
+    if (!r.meta.changes) throw new Oops('That note is gone.');
+  } else {
+    const w = await hqWallet(env.DB, b.code);
+    await env.DB.prepare('INSERT INTO wallet_notes (wallet_id, note, created_at, updated_at) VALUES (?, ?, ?, ?)').bind(w.id, note, now, now).run();
+  }
+  return json({ ok: true });
+};
+routes['POST hq/note-delete'] = async (env, request) => {
+  await needHQ(env, request);
+  await env.DB.prepare('DELETE FROM wallet_notes WHERE id = ?').bind((await readJson(request)).id).run();
+  return json({ ok: true });
+};
+
+// Telegram / Throne usernames (the fan can fill these in too)
+routes['POST hq/contacts'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
+  const w = await hqWallet(env.DB, b.code);
+  const tg = cleanHandle(b.telegram), th = cleanHandle(b.throne);
+  await env.DB.prepare('INSERT INTO wallet_contacts (wallet_id, telegram, throne, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(wallet_id) DO UPDATE SET telegram = excluded.telegram, throne = excluded.throne, updated_at = excluded.updated_at')
+    .bind(w.id, tg || null, th || null, Date.now()).run();
+  return json({ ok: true });
+};
+
+// Show or hide the note on a balance change (and fix its wording)
+routes['POST hq/adjustment-note'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
+  const note = String(b.note == null ? '' : b.note).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 300) || null;
+  const r = await env.DB.prepare('UPDATE adjustments SET note = ?, public = ? WHERE id = ?').bind(note, b.public ? 1 : 0, b.id).run();
+  if (!r.meta.changes) throw new Oops('That change is gone.');
+  const row = await env.DB.prepare('SELECT wallet_id FROM adjustments WHERE id = ?').bind(b.id).first();
+  await logEvent(env, request, 'backstage_note_changed', row.wallet_id, (b.public ? 'Shown to them: ' : 'Private: ') + (note || '(no note)'));
+  return json({ ok: true });
+};
+
+// Nudge to add money: a banner in their wallet until they close it
+routes['POST hq/nudge'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
+  const w = await hqWallet(env.DB, b.code);
+  if (w.status !== 'active') throw new Oops('This wallet isn’t open.');
+  if (w.break_since) throw new Oops('They’re on a financial break, so nudges are paused.');
+  const message = String(b.message || '').replace(/[\u0000-\u001f\u007f<>]/g, ' ').trim().slice(0, 140) || null;
+  await env.DB.prepare('INSERT INTO nudges (wallet_id, message, created_at) VALUES (?, ?, ?)').bind(w.id, message, Date.now()).run();
+  await logEvent(env, request, 'backstage_nudge', w.id, message || '(no message)');
   return json({ ok: true });
 };
 
@@ -1012,6 +1886,7 @@ routes['POST hq/rename'] = async (env, request) => {
   const b = await readJson(request);
   const w = await hqWallet(env.DB, b.code);
   const name = b.anonymous ? null : String(b.name || '').replace(/[\u0000-\u001f\u007f<>]/g, '').trim().replace(/\s+/g, ' ').slice(0, 24) || null;
+  if (name && await nameTaken(env.DB, name, w.id)) throw new Oops('Another wallet already has that name.');
   await env.DB.prepare('UPDATE wallets SET name = ? WHERE id = ?').bind(name, w.id).run();
   await logEvent(env, request, 'backstage_rename', w.id, (w.name || 'Anonymous #' + w.anon_number) + ' → ' + (name || 'Anonymous #' + w.anon_number));
   return json({ ok: true });
@@ -1044,11 +1919,14 @@ routes['POST hq/signout-all'] = async (env, request) => {
 routes['POST hq/status'] = async (env, request) => {
   await needHQ(env, request);
   const b = await readJson(request);
-  if (['active', 'banned'].indexOf(b.status) === -1) throw new Oops('Bad status.');
+  if (['active', 'banned', 'closed'].indexOf(b.status) === -1) throw new Oops('Bad status.');
   const w = await hqWallet(env.DB, b.code);
+  if (b.status === 'closed' && (w.held_duel || w.held_toofar || w.held_mancala)) throw new Oops('They have a game in progress. Try again once it’s finished.');
   await env.DB.prepare('UPDATE wallets SET status = ?, failed_pin_count = 0, locked_until = 0 WHERE id = ?').bind(b.status, w.id).run();
-  if (b.status === 'banned') await env.DB.prepare('DELETE FROM sessions WHERE wallet_id = ?').bind(w.id).run();
-  await logEvent(env, request, b.status === 'banned' ? 'backstage_ban' : 'backstage_unban', w.id, '');
+  if (b.status !== 'active') await env.DB.prepare('DELETE FROM sessions WHERE wallet_id = ?').bind(w.id).run();
+  if (b.status === 'closed') await env.DB.prepare('DELETE FROM close_requests WHERE wallet_id = ?').bind(w.id).run();
+  const what = b.status === 'banned' ? 'backstage_ban' : b.status === 'closed' ? 'backstage_close' : w.status === 'closed' ? 'backstage_reopen' : 'backstage_unban';
+  await logEvent(env, request, what, w.id, b.status === 'closed' ? 'Balance at closing: ' + money(w.balance_cents) : '');
   return json({ ok: true });
 };
 
@@ -1062,7 +1940,6 @@ export async function onRequest(context) {
   if (!env.DB) return json({ error: 'The games are being set up. Please check back soon.' }, 503);
   try {
     await ensureSchema(env.DB);
-    await cleanUnfinished(env, request);
     return await handler(env, request, url);
   } catch (e) {
     if (e instanceof Oops) return json(Object.assign({ error: e.message }, e.extra || {}), e.status);
