@@ -482,3 +482,113 @@ export function mindPick(words, used) {
   const pool = fresh.length ? fresh : words;          // every word used: start over
   return pool[randomBelow(pool.length)];
 }
+
+// ---------- Sink My Ship (race to sink each other's fleet) ----------
+// Both sides hide ships of 4, 3, 3 and 2 on an 8 x 8 sea. Take turns firing at
+// one square. A hit (or a sink) means you fire again. First to sink the whole
+// other fleet wins. Win = 1x, Gnomie wins = 2x (set aside at the start).
+export const SHIPS = { N: 8, FLEET: [4, 3, 3, 2], PAY: { win: 1, lose: 2 } };
+// A ship is a list of [row, col] cells in a straight, unbroken line
+export function shipCells(r, c, len, vertical) {
+  const out = [];
+  for (let i = 0; i < len; i++) out.push(vertical ? [r + i, c] : [r, c + i]);
+  return out;
+}
+export function shipFleetOk(ships) {
+  if (!Array.isArray(ships) || ships.length !== SHIPS.FLEET.length) return false;
+  const lens = ships.map(s => Array.isArray(s) ? s.length : 0).sort((a, b) => b - a);
+  if (lens.join() !== SHIPS.FLEET.slice().sort((a, b) => b - a).join()) return false;
+  const used = {};
+  for (const s of ships) {
+    for (const cell of s) {
+      if (!Array.isArray(cell) || cell.length !== 2) return false;
+      const [r, c] = cell;
+      if (!Number.isInteger(r) || !Number.isInteger(c) || r < 0 || c < 0 || r >= SHIPS.N || c >= SHIPS.N) return false;
+      if (used[r * 8 + c]) return false;
+      used[r * 8 + c] = 1;
+    }
+    const rows = s.map(x => x[0]), cols = s.map(x => x[1]);
+    const sameRow = rows.every(x => x === rows[0]), sameCol = cols.every(x => x === cols[0]);
+    if (!sameRow && !sameCol) return false;
+    const line = (sameRow ? cols : rows).slice().sort((a, b) => a - b);
+    for (let i = 1; i < line.length; i++) if (line[i] !== line[i - 1] + 1) return false;
+  }
+  return true;
+}
+export function shipRandomFleet() {
+  for (let attempt = 0; attempt < 500; attempt++) {
+    const ships = [], used = {};
+    let ok = true;
+    for (const len of SHIPS.FLEET) {
+      let placed = false;
+      for (let t = 0; t < 200 && !placed; t++) {
+        const vertical = randomBelow(2) === 1;
+        const r = randomBelow(vertical ? SHIPS.N - len + 1 : SHIPS.N), c = randomBelow(vertical ? SHIPS.N : SHIPS.N - len + 1);
+        const cells = shipCells(r, c, len, vertical);
+        if (cells.some(([a, b]) => used[a * 8 + b])) continue;
+        cells.forEach(([a, b]) => { used[a * 8 + b] = 1; });
+        ships.push(cells); placed = true;
+      }
+      if (!placed) { ok = false; break; }
+    }
+    if (ok) return ships;
+  }
+  throw new Error('Could not place ships');
+}
+// Fire at a fleet: shots is a list of [r, c]. Returns { hit, sunk: cells|null, won }
+export function shipFire(ships, shots, r, c) {
+  const all = shots.concat([[r, c]]);
+  const shot = (a, b) => all.some(([x, y]) => x === a && y === b);
+  const ship = ships.find(s => s.some(([a, b]) => a === r && b === c));
+  const sunk = ship && ship.every(([a, b]) => shot(a, b)) ? ship : null;
+  const won = ships.every(s => s.every(([a, b]) => shot(a, b)));
+  return { hit: !!ship, sunk, won };
+}
+// What a shooter knows about the other sea: 'h' hit (ship not sunk yet), 's' sunk, 'm' miss, 0 unknown
+export function shipView(ships, shots) {
+  const v = Array.from({ length: SHIPS.N }, () => new Array(SHIPS.N).fill(0));
+  const shot = (a, b) => shots.some(([x, y]) => x === a && y === b);
+  shots.forEach(([r, c]) => { v[r][c] = 'm'; });
+  ships.forEach(s => {
+    const sunk = s.every(([a, b]) => shot(a, b));
+    s.forEach(([a, b]) => { if (shot(a, b)) v[a][b] = sunk ? 's' : 'h'; });
+  });
+  return v;
+}
+// Gnomie aims like a decent player who slips sometimes:
+// after a hit she tries the squares around it (and follows a line once she has
+// two hits in a row); otherwise she searches on a checkerboard. Now and then
+// she takes a random shot instead.
+export function gnomieShipShot(view, loose) {
+  const N = SHIPS.N, open = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!view[r][c]) open.push([r, c]);
+  const inside = (r, c) => r >= 0 && c >= 0 && r < N && c < N;
+  const hits = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (view[r][c] === 'h') hits.push([r, c]);
+  const slip = loose == null ? 18 : loose;
+  if (hits.length && randomBelow(100) >= Math.round(slip * 0.6)) {
+    // Follow a line of two or more hits first
+    const line = [];
+    for (const [r, c] of hits) {
+      for (const [dr, dc] of [[0, 1], [1, 0]]) {
+        if (inside(r + dr, c + dc) && view[r + dr][c + dc] === 'h') {
+          for (const sgn of [1, -1]) {
+            let a = r, b = c;
+            while (inside(a, b) && view[a][b] === 'h') { a += dr * sgn; b += dc * sgn; }
+            if (inside(a, b) && !view[a][b]) line.push([a, b]);
+          }
+        }
+      }
+    }
+    if (line.length) return line[randomBelow(line.length)];
+    const near = [];
+    for (const [r, c] of hits) for (const [dr, dc] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+      if (inside(r + dr, c + dc) && !view[r + dr][c + dc]) near.push([r + dr, c + dc]);
+    }
+    if (near.length) return near[randomBelow(near.length)];
+  }
+  if (randomBelow(100) < slip) return open[randomBelow(open.length)];
+  const checker = open.filter(([r, c]) => (r + c) % 2 === 0);
+  const pool = checker.length ? checker : open;
+  return pool[randomBelow(pool.length)];
+}

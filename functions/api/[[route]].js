@@ -14,7 +14,8 @@ import {
   MANCALA, mancalaStart, mancalaMoves, mancalaMove, gnomieMancala, mancalaBeadsStart, mancalaBeadsFromPits, mancalaBeadMove,
   FIVE, fiveStart, fiveOpenCols, fiveDrop, fiveLine, fiveFull, gnomieFive,
   DOTS, dotsStart, dotsPlay, dotsDone, dotsScore, dotsValid, gnomieDots,
-  MIND, MIND_WORDS, mindMarks, mindPick
+  MIND, MIND_WORDS, mindMarks, mindPick,
+  SHIPS, shipFleetOk, shipRandomFleet, shipFire, shipView, gnomieShipShot
 } from '../_lib/rules.js';
 import { verifyThrone, parseThrone, verifyYouPay, parseYouPay, codeCandidates } from '../_lib/payments.js';
 import { newSecret, checkCode, otpauthUrl } from '../_lib/totp.js';
@@ -115,6 +116,10 @@ async function ensureSchema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS mindread (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), word TEXT NOT NULL, state TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', outcome TEXT, tries INTEGER NOT NULL DEFAULT 0, paid_cents INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, finished_at INTEGER)`),
     db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_mindread_one_active ON mindread(wallet_id) WHERE status = 'active'`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_mindread_wallet ON mindread(wallet_id, status)`),
+    // Sink My Ship games (one in progress per wallet)
+    db.prepare(`CREATE TABLE IF NOT EXISTS shipgame (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), amount_cents INTEGER NOT NULL, held_cents INTEGER NOT NULL, state TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', outcome TEXT, you_sunk INTEGER, gnomie_sunk INTEGER, paid_cents INTEGER, created_at INTEGER NOT NULL, finished_at INTEGER)`),
+    db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_shipgame_one_active ON shipgame(wallet_id) WHERE status = 'active'`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_shipgame_done ON shipgame(status, wallet_id)`),
     // Dots & Boxes games (one in progress per wallet)
     db.prepare(`CREATE TABLE IF NOT EXISTS dotsbox (id INTEGER PRIMARY KEY AUTOINCREMENT, wallet_id INTEGER NOT NULL REFERENCES wallets(id), size INTEGER NOT NULL, amount_cents INTEGER NOT NULL, held_cents INTEGER NOT NULL, state TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', outcome TEXT, you_boxes INTEGER, gnomie_boxes INTEGER, paid_cents INTEGER, created_at INTEGER NOT NULL, finished_at INTEGER)`),
     db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_dotsbox_one_active ON dotsbox(wallet_id) WHERE status = 'active'`),
@@ -212,6 +217,8 @@ const WALLET_SELECT = `SELECT w.*,
   (SELECT COUNT(*) FROM fiverow f WHERE f.wallet_id = w.id AND f.outcome = 'win') AS five_wins,
   (SELECT held_cents FROM dotsbox x WHERE x.wallet_id = w.id AND x.status = 'active') AS held_dots,
   (SELECT COUNT(*) FROM dotsbox x WHERE x.wallet_id = w.id AND x.outcome = 'win') AS dots_wins,
+  (SELECT held_cents FROM shipgame k WHERE k.wallet_id = w.id AND k.status = 'active') AS held_ships,
+  (SELECT COUNT(*) FROM shipgame k WHERE k.wallet_id = w.id AND k.outcome = 'win') AS ships_wins,
   (SELECT COUNT(*) FROM mindread r WHERE r.wallet_id = w.id AND r.outcome = 'solved') AS mind_wins,
   (SELECT COUNT(*) FROM mindread r WHERE r.wallet_id = w.id AND r.status = 'active' AND r.tries > 0) AS mind_active,
   (SELECT COUNT(*) FROM toofar t WHERE t.wallet_id = w.id AND t.outcome = 'win') AS toofar_wins,
@@ -242,8 +249,8 @@ function publicWallet(w) {
     code: w.display_code, hasPin: !!w.pin_hash, pinLength: w.pin_length || null,
     name: w.name, anonymous: !w.name, anonNumber: w.anon_number,
     balanceCents: w.balance_cents, drainedCents: w.total_drained_cents, loadedCents: w.total_loaded_cents,
-    heldCents: (w.held_duel || 0) + (w.held_toofar || 0) + (w.held_mancala || 0) + (w.held_five || 0) + (w.held_dots || 0), duelWins: w.duel_wins || 0, twoFactor: !!w.two_factor,
-    heldFor: [w.held_duel ? 'Dice Duel' : null, w.held_toofar ? 'Don’t Bust' : null, w.held_mancala ? 'Mancala' : null, w.held_five ? '5 in a Row' : null, w.held_dots ? 'Dots & Boxes' : null].filter(Boolean), tooFarWins: w.toofar_wins || 0, mancalaWins: w.mancala_wins || 0, fiveWins: w.five_wins || 0, dotsWins: w.dots_wins || 0, mindWins: w.mind_wins || 0,
+    heldCents: (w.held_duel || 0) + (w.held_toofar || 0) + (w.held_mancala || 0) + (w.held_five || 0) + (w.held_dots || 0) + (w.held_ships || 0), duelWins: w.duel_wins || 0, twoFactor: !!w.two_factor,
+    heldFor: [w.held_duel ? 'Dice Duel' : null, w.held_toofar ? 'Don’t Bust' : null, w.held_mancala ? 'Mancala' : null, w.held_five ? '5 in a Row' : null, w.held_dots ? 'Dots & Boxes' : null, w.held_ships ? 'Sink My Ship' : null].filter(Boolean), tooFarWins: w.toofar_wins || 0, mancalaWins: w.mancala_wins || 0, fiveWins: w.five_wins || 0, dotsWins: w.dots_wins || 0, mindWins: w.mind_wins || 0, shipsWins: w.ships_wins || 0,
     unfinished: heldGames(w).map(h => h.game).concat(w.mind_active ? ['read-my-mind'] : []),
     nudge: w.nudge_id && !w.break_since ? { id: w.nudge_id, message: w.nudge_message || '' } : null,
     closeRequested: !!w.close_requested_at, onBreak: !!w.break_since,
@@ -461,7 +468,7 @@ const ADJ_LABEL = { credit: 'Credit from Gnomie', load: 'Load added by Gnomie', 
 
 async function buildStatement(db, w, forFan) {
   const id = w.id, limit = 1000;
-  const [loads, adjs, drops, duels, toofar, mancala, fiverow, dotsbox, mindread] = await Promise.all([
+  const [loads, adjs, drops, duels, toofar, mancala, fiverow, dotsbox, mindread, shipgame] = await Promise.all([
     db.prepare("SELECT id, platform, amount_cents, external_id, item_name, created_at, updated_at FROM loads WHERE wallet_id = ? AND status = 'credited' ORDER BY id DESC LIMIT ?").bind(id, limit).all(),
     db.prepare('SELECT * FROM adjustments WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
     db.prepare('SELECT id, game, board, path, amount_cents, created_at FROM drops WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
@@ -470,7 +477,8 @@ async function buildStatement(db, w, forFan) {
     db.prepare('SELECT id, amount_cents, held_cents, status, outcome, paid_cents, you_score, gnomie_score, created_at, finished_at FROM mancala WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
     db.prepare('SELECT id, amount_cents, held_cents, status, outcome, paid_cents, created_at, finished_at FROM fiverow WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
     db.prepare('SELECT id, size, amount_cents, held_cents, status, outcome, you_boxes, gnomie_boxes, paid_cents, created_at, finished_at FROM dotsbox WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
-    db.prepare('SELECT id, word, status, outcome, tries, paid_cents, created_at, finished_at FROM mindread WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all()
+    db.prepare('SELECT id, word, status, outcome, tries, paid_cents, created_at, finished_at FROM mindread WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
+    db.prepare('SELECT id, amount_cents, held_cents, status, outcome, you_sunk, gnomie_sunk, paid_cents, created_at, finished_at FROM shipgame WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all()
   ]);
   const rows = [];
   const add = (key, at, label, detail, cents, extra) => rows.push(Object.assign({ key, at, label, detail: detail || '', cents }, extra || {}));
@@ -508,6 +516,10 @@ async function buildStatement(db, w, forFan) {
     if (g.status === 'active' && !g.tries) continue;
     add('r' + g.id, g.finished_at || g.created_at, 'Read My Mind', what, -(g.paid_cents || 0));
   }
+  for (const g of shipgame.results) {
+    if (g.status === 'active') add('k' + g.id, g.created_at, 'Sink My Ship', 'In progress · set aside', -g.held_cents);
+    else if (g.status === 'done') add('k' + g.id, g.finished_at || g.created_at, 'Sink My Ship', (DUEL_RESULT[g.outcome] || g.outcome) + (g.you_sunk == null ? '' : ' · you sank ' + g.you_sunk + ', she sank ' + g.gnomie_sunk) + ' · played for ' + money(g.amount_cents), -(g.paid_cents || 0));
+  }
   for (const g of dotsbox.results) {
     if (g.status === 'active') add('x' + g.id, g.created_at, 'Dots & Boxes', 'In progress · set aside', -g.held_cents);
     else if (g.status === 'done') add('x' + g.id, g.finished_at || g.created_at, 'Dots & Boxes', (DUEL_RESULT[g.outcome] || g.outcome) + (g.you_boxes == null ? '' : ' ' + g.you_boxes + '–' + g.gnomie_boxes) + ' · ' + g.size + '×' + g.size + ' · played for ' + money(g.amount_cents), -(g.paid_cents || 0));
@@ -531,7 +543,7 @@ routes['GET statement'] = async (env, request) => {
 routes['POST close-request'] = async (env, request) => {
   const w = await needWallet(env, request);
   if ((await readJson(request)).agreed !== true) throw new Oops('Please check the box to continue.');
-  if (w.held_duel || w.held_toofar || w.held_mancala || w.held_five || w.held_dots) throw new Oops('Finish your game in progress first.');
+  if (w.held_duel || w.held_toofar || w.held_mancala || w.held_five || w.held_dots || w.held_ships) throw new Oops('Finish your game in progress first.');
   await env.DB.prepare('INSERT OR IGNORE INTO close_requests (wallet_id, balance_cents, created_at) VALUES (?, ?, ?)').bind(w.id, w.balance_cents, Date.now()).run();
   await logEvent(env, request, 'close_requested', w.id, 'Balance ' + money(w.balance_cents) + ' (agreed it can’t be withdrawn)');
   return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
@@ -553,7 +565,7 @@ async function walletUnused(db, id) {
   const used = await db.prepare(`SELECT
       (SELECT COUNT(*) FROM loads WHERE wallet_id = ?) + (SELECT COUNT(*) FROM drops WHERE wallet_id = ?) + (SELECT COUNT(*) FROM duels WHERE wallet_id = ?) +
       (SELECT COUNT(*) FROM toofar WHERE wallet_id = ?) + (SELECT COUNT(*) FROM mancala WHERE wallet_id = ?) + (SELECT COUNT(*) FROM fiverow WHERE wallet_id = ?) +
-      (SELECT COUNT(*) FROM dotsbox WHERE wallet_id = ?) + (SELECT COUNT(*) FROM mindread WHERE wallet_id = ?) + (SELECT COUNT(*) FROM adjustments WHERE wallet_id = ?) AS n`).bind(id, id, id, id, id, id, id, id, id).first();
+      (SELECT COUNT(*) FROM dotsbox WHERE wallet_id = ?) + (SELECT COUNT(*) FROM mindread WHERE wallet_id = ?) + (SELECT COUNT(*) FROM shipgame WHERE wallet_id = ?) + (SELECT COUNT(*) FROM adjustments WHERE wallet_id = ?) AS n`).bind(id, id, id, id, id, id, id, id, id, id).first();
   return used.n === 0;
 }
 async function deleteWalletRows(db, id) {
@@ -1238,7 +1250,8 @@ const HELD_GAMES = {
   'too-far': { table: 'toofar', name: 'Don’t Bust', col: 'held_toofar' },
   'mancala': { table: 'mancala', name: 'Mancala', col: 'held_mancala' },
   'five-in-a-row': { table: 'fiverow', name: '5 in a Row', col: 'held_five' },
-  'dots-and-boxes': { table: 'dotsbox', name: 'Dots & Boxes', col: 'held_dots' }
+  'dots-and-boxes': { table: 'dotsbox', name: 'Dots & Boxes', col: 'held_dots' },
+  'sink-my-ship': { table: 'shipgame', name: 'Sink My Ship', col: 'held_ships' }
 };
 function heldGames(w) {
   return Object.keys(HELD_GAMES).filter(k => w[HELD_GAMES[k].col]).map(k => ({ game: k, name: HELD_GAMES[k].name, cents: w[HELD_GAMES[k].col] }));
@@ -1379,6 +1392,96 @@ routes['POST hq/mind-words'] = async (env, request) => {
   return json({ ok: true, words });
 };
 
+// ---------- routes: Sink My Ship ----------
+// The player places their fleet; Gnomie's is placed here and never sent until
+// the game ends. Both fire in turns; a hit fires again. First to sink all wins.
+function publicShips(row, st, reveal) {
+  if (!row) return null;
+  const her = shipView(st.g, st.ys);    // what the player knows about Gnomie's sea
+  return {
+    amount: row.amount_cents, held: row.held_cents,
+    mine: st.y, herShots: st.gs, myShots: st.ys, herView: her,
+    sunkHers: st.g.filter(s => s.every(([a, b]) => st.ys.some(([x, y]) => x === a && y === b))),
+    hers: reveal ? st.g : undefined
+  };
+}
+async function activeShips(db, walletId) {
+  const row = await db.prepare("SELECT * FROM shipgame WHERE wallet_id = ? AND status = 'active'").bind(walletId).first();
+  return row ? { row, st: JSON.parse(row.state) } : null;
+}
+function sunkCount(ships, shots) { return ships.filter(s => s.every(([a, b]) => shots.some(([x, y]) => x === a && y === b))).length; }
+async function finishShips(env, g, st, outcome) {
+  const pay = Math.round(g.row.amount_cents * SHIPS.PAY[outcome]);
+  const r = await env.DB.prepare(
+    "UPDATE shipgame SET state = ?, status = 'done', outcome = ?, you_sunk = ?, gnomie_sunk = ?, paid_cents = ?, finished_at = ? WHERE id = ? AND state = ? AND status = 'active'"
+  ).bind(JSON.stringify(st), outcome, sunkCount(st.g, st.ys), sunkCount(st.y, st.gs), pay, Date.now(), g.row.id, g.row.state).run();
+  if (r.meta.changes !== 1) throw new Oops('Busy. Please try again.', 409);
+  await env.DB.prepare('UPDATE wallets SET balance_cents = balance_cents + ?, total_drained_cents = total_drained_cents + ? WHERE id = ?')
+    .bind(g.row.held_cents - pay, pay, g.row.wallet_id).run();
+  return { outcome, paidCents: pay, amount: g.row.amount_cents, youSunk: sunkCount(st.g, st.ys), gnomieSunk: sunkCount(st.y, st.gs) };
+}
+routes['GET ships'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const g = await activeShips(env.DB, w.id);
+  return json({ game: g ? publicShips(g.row, g.st) : null });
+};
+routes['POST ships/start'] = async (env, request) => {
+  let w = await needWallet(env, request);
+  const body = await readJson(request), amount = body.amount;
+  if (!shipFleetOk(body.ships)) throw new Oops('Place all four ships (4, 3, 3 and 2 squares) in straight lines without overlapping.');
+  if (!validAmount(amount)) throw new Oops('Pick an amount from $0.01 to $500.00.');
+  const hold = amount * SHIPS.PAY.lose;
+  if (w.balance_cents < hold) throw new Oops('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amount) + '.');
+  const st = { y: body.ships, g: shipRandomFleet(), ys: [], gs: [] };
+  let ins;
+  try {
+    ins = await env.DB.prepare('INSERT INTO shipgame (wallet_id, amount_cents, held_cents, state, status, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(w.id, amount, hold, JSON.stringify(st), 'active', Date.now()).run();
+  } catch (e) { throw new Oops('Finish your current game first.'); }
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (w.balance_cents < hold) break;
+    if (await changeBalance(env.DB, w.id, w.balance_cents, -hold, 0)) {
+      const g = await activeShips(env.DB, w.id);
+      return json({ game: publicShips(g.row, g.st), wallet: publicWallet(await walletById(env.DB, w.id)) });
+    }
+    w = await walletById(env.DB, w.id);
+  }
+  await env.DB.prepare('DELETE FROM shipgame WHERE id = ?').bind(ins.meta.last_row_id).run();
+  throw new Oops('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amount) + '.');
+};
+// Your shot; if it misses, Gnomie fires until she misses (or wins)
+routes['POST ships/fire'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const g = await activeShips(env.DB, w.id);
+  if (!g) throw new Oops('No game in progress.');
+  const b = await readJson(request), r = b.r, c = b.c;
+  if (!Number.isInteger(r) || !Number.isInteger(c) || r < 0 || c < 0 || r >= SHIPS.N || c >= SHIPS.N) throw new Oops('Pick a square.');
+  const st = { y: g.st.y, g: g.st.g, ys: g.st.ys.slice(), gs: g.st.gs.slice() };
+  if (st.ys.some(([x, y]) => x === r && y === c)) throw new Oops('You already fired there.');
+  const mine = shipFire(st.g, st.ys, r, c); st.ys.push([r, c]);
+  const out = { you: { r, c, hit: mine.hit, sunk: mine.sunk }, gnomie: [] };
+  let outcome = mine.won ? 'win' : null;
+  if (!outcome && !mine.hit) {
+    for (let guard = 0; guard < 70; guard++) {
+      const [a, z] = gnomieShipShot(shipView(st.y, st.gs));
+      const f = shipFire(st.y, st.gs, a, z); st.gs.push([a, z]);
+      out.gnomie.push({ r: a, c: z, hit: f.hit, sunk: f.sunk });
+      if (f.won) { outcome = 'lose'; break; }
+      if (!f.hit) break;
+    }
+  }
+  if (outcome) {
+    out.result = await finishShips(env, g, st, outcome);
+    out.final = publicShips(g.row, st, true);
+  } else {
+    const u = await env.DB.prepare("UPDATE shipgame SET state = ? WHERE id = ? AND state = ? AND status = 'active'").bind(JSON.stringify(st), g.row.id, g.row.state).run();
+    if (u.meta.changes !== 1) throw new Oops('Busy. Please try again.', 409);
+    out.game = publicShips(g.row, st);
+  }
+  out.wallet = publicWallet(await walletById(env.DB, w.id));
+  return json(out);
+};
+
 // ---------- routes: Spin the Bottle ----------
 routes['POST bottle/spin'] = async (env, request) => {
   let w = await needWallet(env, request);
@@ -1486,6 +1589,10 @@ const BOARD_SQL = {
                    WHERE w.status = 'active' GROUP BY r.wallet_id HAVING score > 0`,
   'read-my-mind-wins': `SELECT r.wallet_id, COUNT(*) AS score FROM mindread r JOIN wallets w ON w.id = r.wallet_id
                         WHERE r.outcome = 'solved' AND w.status = 'active' GROUP BY r.wallet_id`,
+  'sink-my-ship': `SELECT k.wallet_id, SUM(k.paid_cents) AS score FROM shipgame k JOIN wallets w ON w.id = k.wallet_id
+                   WHERE k.status = 'done' AND w.status = 'active' GROUP BY k.wallet_id HAVING score > 0`,
+  'sink-my-ship-wins': `SELECT k.wallet_id, COUNT(*) AS score FROM shipgame k JOIN wallets w ON w.id = k.wallet_id
+                        WHERE k.outcome = 'win' AND w.status = 'active' GROUP BY k.wallet_id`,
   'dots-and-boxes': `SELECT x.wallet_id, SUM(x.paid_cents) AS score FROM dotsbox x JOIN wallets w ON w.id = x.wallet_id
                      WHERE x.status = 'done' AND w.status = 'active' GROUP BY x.wallet_id HAVING score > 0`,
   'dots-and-boxes-wins': `SELECT x.wallet_id, COUNT(*) AS score FROM dotsbox x JOIN wallets w ON w.id = x.wallet_id
@@ -1908,7 +2015,8 @@ const LAST_ACTIVE_SQL = `MAX(w.created_at,
   COALESCE((SELECT MAX(m.created_at) FROM mancala m WHERE m.wallet_id = w.id), 0),
   COALESCE((SELECT MAX(f.created_at) FROM fiverow f WHERE f.wallet_id = w.id), 0),
   COALESCE((SELECT MAX(x.created_at) FROM dotsbox x WHERE x.wallet_id = w.id), 0),
-  COALESCE((SELECT MAX(r.created_at) FROM mindread r WHERE r.wallet_id = w.id), 0))`;
+  COALESCE((SELECT MAX(r.created_at) FROM mindread r WHERE r.wallet_id = w.id), 0),
+  COALESCE((SELECT MAX(k.created_at) FROM shipgame k WHERE k.wallet_id = w.id), 0))`;
 // How busy a fan has been: everything they did in the last 30 days (sign-ins, loads, games...)
 const ACTIVITY_SQL = `(
   (SELECT COUNT(*) FROM admin_log a WHERE a.wallet_id = w.id AND a.action NOT LIKE 'backstage%' AND a.created_at > (strftime('%s','now') - 2592000) * 1000) +
@@ -1918,7 +2026,8 @@ const ACTIVITY_SQL = `(
   (SELECT COUNT(*) FROM mancala m WHERE m.wallet_id = w.id AND m.created_at > (strftime('%s','now') - 2592000) * 1000) +
   (SELECT COUNT(*) FROM fiverow f WHERE f.wallet_id = w.id AND f.created_at > (strftime('%s','now') - 2592000) * 1000) +
   (SELECT COUNT(*) FROM dotsbox x WHERE x.wallet_id = w.id AND x.created_at > (strftime('%s','now') - 2592000) * 1000) +
-  (SELECT COUNT(*) FROM mindread r WHERE r.wallet_id = w.id AND r.created_at > (strftime('%s','now') - 2592000) * 1000))`;
+  (SELECT COUNT(*) FROM mindread r WHERE r.wallet_id = w.id AND r.created_at > (strftime('%s','now') - 2592000) * 1000) +
+  (SELECT COUNT(*) FROM shipgame k WHERE k.wallet_id = w.id AND k.created_at > (strftime('%s','now') - 2592000) * 1000))`;
 const HQ_SELECT = WALLET_SELECT.replace('SELECT w.*,', 'SELECT w.*, ' + LAST_ACTIVE_SQL + ' AS last_active, ' + ACTIVITY_SQL + ' AS activity_30d,');
 
 async function hqWallet(db, code) {
@@ -1930,7 +2039,7 @@ function hqWalletView(w) {
   return {
     id: w.id, code: w.display_code, name: w.name || ('Anonymous #' + w.anon_number), anonymous: !w.name,
     balanceCents: w.balance_cents, loadedCents: w.total_loaded_cents, spentCents: w.total_drained_cents,
-    heldCents: (w.held_duel || 0) + (w.held_toofar || 0) + (w.held_mancala || 0) + (w.held_five || 0) + (w.held_dots || 0), heldFor: [w.held_duel ? 'Dice Duel' : null, w.held_toofar ? 'Don’t Bust' : null, w.held_mancala ? 'Mancala' : null, w.held_five ? '5 in a Row' : null, w.held_dots ? 'Dots & Boxes' : null].filter(Boolean), duelWins: w.duel_wins || 0, tooFarWins: w.toofar_wins || 0, mancalaWins: w.mancala_wins || 0, fiveWins: w.five_wins || 0, dotsWins: w.dots_wins || 0, hasPin: !!w.pin_hash, pinLength: w.pin_length, twoFactor: !!w.two_factor,
+    heldCents: (w.held_duel || 0) + (w.held_toofar || 0) + (w.held_mancala || 0) + (w.held_five || 0) + (w.held_dots || 0) + (w.held_ships || 0), heldFor: [w.held_duel ? 'Dice Duel' : null, w.held_toofar ? 'Don’t Bust' : null, w.held_mancala ? 'Mancala' : null, w.held_five ? '5 in a Row' : null, w.held_dots ? 'Dots & Boxes' : null, w.held_ships ? 'Sink My Ship' : null].filter(Boolean), duelWins: w.duel_wins || 0, tooFarWins: w.toofar_wins || 0, mancalaWins: w.mancala_wins || 0, fiveWins: w.five_wins || 0, dotsWins: w.dots_wins || 0, hasPin: !!w.pin_hash, pinLength: w.pin_length, twoFactor: !!w.two_factor,
     failedPins: w.failed_pin_count, locked: w.locked_until > Date.now(), lockedUntil: w.locked_until,
     status: w.status, createdAt: w.created_at, closeRequestedAt: w.close_requested_at || null, onBreakSince: w.break_since || null,
     lastActive: w.last_active || w.created_at, activity30d: w.activity_30d || 0, heldGames: heldGames(w), telegram: w.telegram || '', throneName: w.throne_name || '',
@@ -1960,7 +2069,7 @@ routes['GET hq/stats'] = async (env, request, url) => {
          FROM (SELECT * FROM wallets WHERE id NOT IN (SELECT wallet_id FROM spoofs)) AS wallets`, today, d7, d30, now),
     one(`SELECT COALESCE(SUM(balance_cents), 0) AS balances, COALESCE(SUM(total_loaded_cents), 0) AS loaded,
            COALESCE(SUM(total_drained_cents), 0) AS spent,
-           (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM duels WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS duels WHERE status = 'active') + (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM toofar WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS toofar WHERE status = 'active') + (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM mancala WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS mancala WHERE status = 'active') + (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM fiverow WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS fiverow WHERE status = 'active') + (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM dotsbox WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS dotsbox WHERE status = 'active') AS held,
+           (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM duels WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS duels WHERE status = 'active') + (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM toofar WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS toofar WHERE status = 'active') + (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM mancala WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS mancala WHERE status = 'active') + (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM fiverow WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS fiverow WHERE status = 'active') + (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM dotsbox WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS dotsbox WHERE status = 'active') + (SELECT COALESCE(SUM(held_cents), 0) FROM (SELECT * FROM shipgame WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS shipgame WHERE status = 'active') AS held,
            (SELECT COUNT(DISTINCT wallet_id) FROM (
               SELECT wallet_id FROM (SELECT * FROM drops WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS drops WHERE created_at >= ? UNION SELECT wallet_id FROM (SELECT * FROM duels WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS duels WHERE created_at >= ?
               UNION SELECT wallet_id FROM (SELECT * FROM toofar WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS toofar WHERE created_at >= ?
@@ -2055,7 +2164,8 @@ routes['GET hq/stats'] = async (env, request, url) => {
            UNION ALL SELECT 'mancala', wallet_id, paid_cents, finished_at FROM (SELECT * FROM mancala WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS mancala WHERE status = 'done'
            UNION ALL SELECT 'five-in-a-row', wallet_id, paid_cents, finished_at FROM (SELECT * FROM fiverow WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS fiverow WHERE status = 'done'
            UNION ALL SELECT 'dots-and-boxes', wallet_id, paid_cents, finished_at FROM (SELECT * FROM dotsbox WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS dotsbox WHERE status = 'done'
-           UNION ALL SELECT 'read-my-mind', wallet_id, paid_cents, COALESCE(finished_at, created_at) FROM (SELECT * FROM mindread WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS mindread WHERE tries > 0)
+           UNION ALL SELECT 'read-my-mind', wallet_id, paid_cents, COALESCE(finished_at, created_at) FROM (SELECT * FROM mindread WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS mindread WHERE tries > 0
+           UNION ALL SELECT 'sink-my-ship', wallet_id, paid_cents, finished_at FROM (SELECT * FROM shipgame WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS shipgame WHERE status = 'done')
      GROUP BY game ORDER BY plays_period DESC, plays DESC`
   ).bind(since, since).all()).results;
   const fanRequests = (await db.prepare("SELECT COUNT(*) AS n FROM fan_requests WHERE status = 'open'").first()).n;
@@ -2619,7 +2729,7 @@ routes['POST hq/status'] = async (env, request) => {
   const b = await readJson(request);
   if (['active', 'banned', 'closed'].indexOf(b.status) === -1) throw new Oops('Bad status.');
   const w = await hqWallet(env.DB, b.code);
-  if (b.status === 'closed' && (w.held_duel || w.held_toofar || w.held_mancala || w.held_five || w.held_dots)) throw new Oops('They have a game in progress. Try again once it’s finished.');
+  if (b.status === 'closed' && (w.held_duel || w.held_toofar || w.held_mancala || w.held_five || w.held_dots || w.held_ships)) throw new Oops('They have a game in progress. Try again once it’s finished.');
   await env.DB.prepare('UPDATE wallets SET status = ?, failed_pin_count = 0, locked_until = 0 WHERE id = ?').bind(b.status, w.id).run();
   if (b.status !== 'active') await env.DB.prepare('DELETE FROM sessions WHERE wallet_id = ?').bind(w.id).run();
   if (b.status === 'closed') await env.DB.prepare('DELETE FROM close_requests WHERE wallet_id = ?').bind(w.id).run();

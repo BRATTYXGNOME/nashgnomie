@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sink My Ship | NASH | Gnomie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261114h" />
+</head>
+<body>
+  <div id="nav-inject"></div>
+
+  <main class="section duel-page sk-page games-lock">
+    <a class="games-back" href="games.html">&larr; All Games</a>
+    <h1 class="section-title games-heading">Sink My Ship</h1>
+
+    <div class="gallery-age-gate" id="games-gate">
+      <div>
+        <h3>18+ GAMES</h3>
+        <p class="gate-rule">You <strong>MUST</strong> be 18 or older<br />to participate in this feature.<br /><span class="gate-pref">21+ preferred.</span></p>
+        <form id="games-gate-form" autocomplete="off">
+          <label class="gate-label" for="games-gate-birthdate">Your birthdate</label>
+          <input type="date" id="games-gate-birthdate" name="birthdate" required />
+          <div id="games-gate-error" class="age-error" aria-live="polite"></div>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="games-content">
+      <section id="wallet-root"></section>
+
+      <details class="duel-how">
+        <summary>How to play</summary>
+        <ul>
+          <li><strong>Place your fleet:</strong> ships of 4, 3, 3 and 2 squares on your 8&times;8 sea. Drag them, or tap a ship and then tap where it goes. <strong>Rotate</strong> turns it.</li>
+          <li><strong>Type how much you want to play for</strong>, then press Ready.</li>
+          <li><strong>Take turns firing</strong> at one square of Gnomie&rsquo;s sea. You go first.</li>
+          <li><strong>A hit means you fire again.</strong> The same goes for her.</li>
+          <li><strong>First to sink the whole other fleet wins.</strong> There are no ties.</li>
+        </ul>
+      </details>
+
+      <section class="duel-card sk-card" id="sk-root"></section>
+
+      <details class="game-activity" id="game-activity" data-label="Sink My Ship" data-ready="1" hidden></details>
+
+      <section class="lb-card">
+        <h2 class="lb-title">Sink My Ship Leaderboard</h2>
+        <p class="lb-sub">This game only &middot; <a href="games.html">See the overall board</a></p>
+        <div id="lb-game"></div>
+      </section>
+
+      <p class="duel-wins" id="lb-wins"></p>
+    </div>
+  </main>
+
+  <div id="footer-inject"></div>
+  <div id="contact-popup-inject"></div>
+
+  <script src="components.js?v=20261114h"></script>
+  <script src="games.js?v=20261114h"></script>
+  <script src="sink-my-ship.js?v=20261114h"></script>
+</body>
+</html>
