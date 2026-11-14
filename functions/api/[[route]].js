@@ -213,6 +213,7 @@ const WALLET_SELECT = `SELECT w.*,
   (SELECT held_cents FROM dotsbox x WHERE x.wallet_id = w.id AND x.status = 'active') AS held_dots,
   (SELECT COUNT(*) FROM dotsbox x WHERE x.wallet_id = w.id AND x.outcome = 'win') AS dots_wins,
   (SELECT COUNT(*) FROM mindread r WHERE r.wallet_id = w.id AND r.outcome = 'solved') AS mind_wins,
+  (SELECT COUNT(*) FROM mindread r WHERE r.wallet_id = w.id AND r.status = 'active' AND r.tries > 0) AS mind_active,
   (SELECT COUNT(*) FROM toofar t WHERE t.wallet_id = w.id AND t.outcome = 'win') AS toofar_wins,
   (SELECT COUNT(*) FROM duels d WHERE d.wallet_id = w.id AND d.outcome = 'win') AS duel_wins,
   (SELECT t.secret IS NOT NULL FROM wallet_totp t WHERE t.wallet_id = w.id) AS two_factor,
@@ -243,6 +244,7 @@ function publicWallet(w) {
     balanceCents: w.balance_cents, drainedCents: w.total_drained_cents, loadedCents: w.total_loaded_cents,
     heldCents: (w.held_duel || 0) + (w.held_toofar || 0) + (w.held_mancala || 0) + (w.held_five || 0) + (w.held_dots || 0), duelWins: w.duel_wins || 0, twoFactor: !!w.two_factor,
     heldFor: [w.held_duel ? 'Dice Duel' : null, w.held_toofar ? 'Don’t Bust' : null, w.held_mancala ? 'Mancala' : null, w.held_five ? '5 in a Row' : null, w.held_dots ? 'Dots & Boxes' : null].filter(Boolean), tooFarWins: w.toofar_wins || 0, mancalaWins: w.mancala_wins || 0, fiveWins: w.five_wins || 0, dotsWins: w.dots_wins || 0, mindWins: w.mind_wins || 0,
+    unfinished: heldGames(w).map(h => h.game).concat(w.mind_active ? ['read-my-mind'] : []),
     nudge: w.nudge_id && !w.break_since ? { id: w.nudge_id, message: w.nudge_message || '' } : null,
     closeRequested: !!w.close_requested_at, onBreak: !!w.break_since,
     color: colorOf(w), loadCount: w.load_count || 0, telegram: w.telegram || '', throneName: w.throne_name || ''
@@ -738,7 +740,7 @@ routes['POST drop'] = async (env, request) => {
 };
 
 // Games without Sweet/Spicy/Savage boards take any amount the fan types: $1 to $500
-function validAmount(a) { return Number.isInteger(a) && a >= 100 && a <= 50000; }
+function validAmount(a) { return Number.isInteger(a) && a >= 1 && a <= 50000; }   // pennies are fine
 
 // ---------- routes: Dice Duel ----------
 function publicDuel(row, state) {
@@ -763,7 +765,7 @@ routes['GET duel'] = async (env, request) => {
 routes['POST duel/start'] = async (env, request) => {
   let w = await needWallet(env, request);
   const amount = (await readJson(request)).amount;
-  if (!validAmount(amount)) throw new Oops('Pick an amount from $1.00 to $500.00.');
+  if (!validAmount(amount)) throw new Oops('Pick an amount from $0.01 to $500.00.');
   const hold = amount * DUEL.PAY.lose;
   if (w.balance_cents < hold) throw new Oops('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amount) + '.');
   const state = { player: emptyBoard(), gnome: emptyBoard(), die: null };
@@ -995,7 +997,7 @@ routes['GET mancala'] = async (env, request) => {
 routes['POST mancala/start'] = async (env, request) => {
   let w = await needWallet(env, request);
   const amount = (await readJson(request)).amount;
-  if (!validAmount(amount)) throw new Oops('Pick an amount from $1.00 to $500.00.');
+  if (!validAmount(amount)) throw new Oops('Pick an amount from $0.01 to $500.00.');
   const hold = amount * MANCALA.PAY.lose;
   if (w.balance_cents < hold) throw new Oops('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amount) + '.');
   const st = { pits: mancalaStart(), beads: mancalaBeadsStart(), turn: 'you' };
@@ -1084,7 +1086,7 @@ routes['GET five'] = async (env, request) => {
 routes['POST five/start'] = async (env, request) => {
   let w = await needWallet(env, request);
   const amount = (await readJson(request)).amount;
-  if (!validAmount(amount)) throw new Oops('Pick an amount from $1.00 to $500.00.');
+  if (!validAmount(amount)) throw new Oops('Pick an amount from $0.01 to $500.00.');
   const hold = amount * FIVE.PAY.lose;
   if (w.balance_cents < hold) throw new Oops('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amount) + '.');
   const st = { board: fiveStart() };
@@ -1181,7 +1183,7 @@ routes['POST dots/start'] = async (env, request) => {
   let w = await needWallet(env, request);
   const body = await readJson(request), amount = body.amount, n = body.size;
   if (DOTS.SIZES.indexOf(n) === -1) throw new Oops('Pick a board size.');
-  if (!validAmount(amount)) throw new Oops('Pick an amount from $1.00 to $500.00.');
+  if (!validAmount(amount)) throw new Oops('Pick an amount from $0.01 to $500.00.');
   const hold = amount * DOTS.PAY.lose;
   if (w.balance_cents < hold) throw new Oops('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amount) + '.');
   // Coin flip for who starts; if it's Gnomie, her opening turn happens now

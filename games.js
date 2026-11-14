@@ -166,7 +166,7 @@
   // the server (functions/_lib/rules.js holds the same numbers).
   // ==========================================
   var TOOFAR = {
-    MIN_CENTS: 100, MAX_CENTS: 50000,
+    MIN_CENTS: 1, MAX_CENTS: 50000,
     PAY: { win: 1, tie: 1.5, lose: 2, bust: 2.5 },
     TARGET: 31, CARD_MAX: 11 // Gnomie's own rule stays on the server
   };
@@ -356,7 +356,7 @@
     duelStart: async function(amountCents) {
       var s = readStore(), w = currentWallet(s);
       if (!w) throw new Error('Set up your wallet first.');
-      if (!(amountCents >= 100 && amountCents <= 50000)) throw new Error('Pick an amount from $1.00 to $500.00.');
+      if (!(amountCents >= 1 && amountCents <= 50000)) throw new Error('Pick an amount from $0.01 to $500.00.');
       if (w.duel) throw new Error('Finish your current game first.');
       var hold = amountCents * DUEL.PAY.lose;
       if (w.balance_cents < hold) throw new Error('Your wallet needs at least ' + money(hold) + ' to play for ' + money(amountCents) + '.');
@@ -683,7 +683,7 @@
   var AGREE_BOXES =
     '<p class="wl-lead">Before you see your wallet:</p>' +
     '<label><input type="checkbox" required /> <span>I am <strong>18 or older</strong> (21+ preferred).</span></label>' +
-    '<label><input type="checkbox" required /> <span>I <strong>already paid Gnomie</strong> when I sent money on Throne.</span></label>' +
+    '<label><input type="checkbox" required /> <span>Money I send on Throne to load my wallet is <strong>paid to Gnomie</strong> the moment I send it.</span></label>' +
     '<label><input type="checkbox" required /> <span>My wallet balance is <strong>not real money</strong> and has no cash value.</span></label>' +
     '<label><input type="checkbox" required /> <span>My wallet balance can <strong>never be withdrawn, refunded or cashed out.</strong></span></label>' +
     '<label><input type="checkbox" required /> <span>My wallet balance is <strong>shared across all games</strong> on this site.</span></label>' +
@@ -1499,16 +1499,32 @@
   // TYPED AMOUNT BOX (Dice Duel, Mancala, 5 in a Row, Too Far style)
   // worst = how many times the amount they could lose at most (e.g. 2 = Gnomie wins)
   // ==========================================
-  var AMOUNT_MIN = 100, AMOUNT_MAX = 50000;
+  var AMOUNT_MIN = 1, AMOUNT_MAX = 50000;   // pennies are fine
   function amountMax(bal, worst) { return Math.min(AMOUNT_MAX, Math.floor(bal / worst)); }
+  // Suggested amounts grow with the wallet: about 10%, 25%, 50% and 80% of what
+  // the wallet covers in this game (never more), rounded to friendly numbers.
+  // Small wallets get pennies.
+  function niceCents(c) {
+    var step = c < 20 ? 1 : c < 100 ? 5 : c < 1000 ? 100 : c < 5000 ? 500 : c < 10000 ? 1000 : 2500;
+    return Math.max(AMOUNT_MIN, Math.round(c / step) * step);
+  }
+  function suggestedAmounts(max) {
+    var out = [];
+    [0.1, 0.25, 0.5, 0.8].forEach(function(p) {
+      var c = niceCents(max * p);
+      if (c <= max && out.indexOf(c) === -1) out.push(c);
+    });
+    if (!out.length && max >= AMOUNT_MIN) out.push(AMOUNT_MIN);
+    return out;
+  }
   function amountBoxHTML(chosen, bal, worst) {
     var max = amountMax(bal, worst);
     var val = chosen ? (chosen / 100).toFixed(2).replace(/\.00$/, '') : '';
-    var chips = [100, 500, 1000, 2000].filter(function(c) { return c <= max; });
+    var chips = suggestedAmounts(max);
     return '<div class="tf-amount">' +
       '<label class="tf-amount-box"><span class="tf-amount-cur">$</span><input type="text" class="amt-input" inputmode="decimal" autocomplete="off" placeholder="0" value="' + val + '" aria-label="Amount to play for" /></label>' +
       (chips.length ? '<div class="tf-chips">' + chips.map(function(c) { return '<button type="button" class="tf-chip' + (chosen === c ? ' on' : '') + '" data-c="' + c + '">' + shortMoney(c) + '</button>'; }).join('') +
-        (max >= AMOUNT_MIN ? '<button type="button" class="tf-chip" data-c="' + max + '">Max</button>' : '') + '</div>' : '') +
+        '</div>' : '') +
       '<p class="tf-amount-note">' + (max >= AMOUNT_MIN ? 'Suggested amounts above, or type your own: ' + money(AMOUNT_MIN) + ' up to ' + money(max) + '.' : 'Your wallet needs at least ' + money(AMOUNT_MIN * worst) + ' to play.') + '</p>' +
     '</div>';
   }
@@ -1541,7 +1557,7 @@
   }
 
   window.Games = {
-    giveUpHTML: giveUpHTML, wireGiveUp: wireGiveUp,
+    giveUpHTML: giveUpHTML, wireGiveUp: wireGiveUp, suggestedAmounts: suggestedAmounts,
     TOOFAR: TOOFAR, BOTTLE: BOTTLE, MANCALA: MANCALA, mancalaSow: mancalaSow, FIVE: FIVE, DOTS: DOTS,
     DUEL: DUEL, columnScore: columnScore, boardScore: boardScore,
     placeDie: placeDie, cloneBoard: cloneBoard, emptyBoard: emptyBoard, renderGameActivity: renderGameActivity, celebrate: celebrate, autoPass: autoPass,

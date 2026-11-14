@@ -157,7 +157,7 @@ export function normalizeCode(c) { return String(c || '').toUpperCase().replace(
 // You draw or stay; going over 31 costs the most. Gnomie's fixed rule: she
 // keeps drawing until she has 27 or more.
 export const TOOFAR = {
-  MIN_CENTS: 100, MAX_CENTS: 50000,   // they type their own amount: $1 to $500
+  MIN_CENTS: 1, MAX_CENTS: 50000,   // they type their own amount: 1¢ to $500
   PAY: { win: 1, tie: 1.5, lose: 2, bust: 2.5 },
   TARGET: 31, GNOMIE_STOPS: 27, CARD_MAX: 11, COPIES: 4
 };

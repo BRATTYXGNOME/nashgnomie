@@ -116,11 +116,10 @@
   function amountHTML() {
     var w = state.wallet, bal = w ? w.balanceCents : 0, max = maxFor(bal);
     var val = state.chosen ? (state.chosen / 100).toFixed(2).replace(/\.00$/, '') : '';
-    var chips = [100, 500, 1000, 2000].filter(function(c) { return c <= max; });
+    var chips = G.suggestedAmounts(max);   // grows with the wallet, stays small next to it
     return '<div class="tf-amount">' +
         '<label class="tf-amount-box"><span class="tf-amount-cur">$</span><input type="text" id="tf-amt" inputmode="decimal" autocomplete="off" placeholder="0" value="' + val + '" aria-label="Amount to play for" /></label>' +
-        (chips.length ? '<div class="tf-chips">' + chips.map(function(c) { return '<button type="button" class="tf-chip' + (state.chosen === c ? ' on' : '') + '" data-c="' + c + '">' + G.shortMoney(c) + '</button>'; }).join('') +
-          (max >= T.MIN_CENTS ? '<button type="button" class="tf-chip" data-c="' + max + '">Max</button>' : '') + '</div>' : '') +
+        (chips.length ? '<div class="tf-chips">' + chips.map(function(c) { return '<button type="button" class="tf-chip' + (state.chosen === c ? ' on' : '') + '" data-c="' + c + '">' + G.shortMoney(c) + '</button>'; }).join('') + '</div>' : '') +
         '<p class="tf-amount-note">' + (max >= T.MIN_CENTS ? 'From ' + money(T.MIN_CENTS) + ' up to ' + money(max) + ' (your wallet covers a bust on that).' : 'Your wallet needs at least ' + money(Math.round(T.MIN_CENTS * T.PAY.bust)) + ' to play.') + '</p>' +
       '</div>';
   }

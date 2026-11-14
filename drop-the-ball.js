@@ -15,6 +15,7 @@
   var canvas = document.getElementById('drain-canvas');
   var ctx = canvas.getContext('2d');
   var dropBtn = document.getElementById('drain-drop');
+  var aimSlider = document.getElementById('drain-aim-slider');
   var resultEl = document.getElementById('drain-result');
   var chanceEl = document.getElementById('drain-chance');
   var likelyEl = document.getElementById('drain-likely');
@@ -58,7 +59,11 @@
       else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); drop(); }
     });
     canvas.tabIndex = 0;
-    dropBtn.addEventListener('click', drop);
+    dropBtn.addEventListener('click', function() { if (state.ball && !state.ball.anim && !state.busy) resetBall(); else drop(); });
+    // Aim slider and arrows (clearer than dragging the ball)
+    aimSlider.addEventListener('input', function() { setAim(+aimSlider.value); });
+    document.getElementById('drain-aim-left').addEventListener('click', function() { setAim(state.aim - 1); });
+    document.getElementById('drain-aim-right').addEventListener('click', function() { setAim(state.aim + 1); });
     document.getElementById('drain-demo').addEventListener('click', function() { if (!state.demo) runDemo(); });
     G.renderLeaderboard(document.getElementById('lb-game'), GAME);
     G.renderGameActivity(document.getElementById('game-activity'), 'Drop the Ball');
@@ -295,18 +300,30 @@
     }).join('');
 
     var bal = balance();
+    var landedBall = state.ball && !state.ball.anim && !state.busy;
+    dropBtn.innerHTML = landedBall ? '&#8635; Reset Ball' : 'Drop';
+    dropBtn.classList.toggle('drain-reset', !!landedBall);
+    aimSlider.value = state.aim;
+    aimSlider.disabled = state.busy || state.demo;
     if (state.demo) { dropBtn.disabled = true; draw(); return; }
     if (!state.wallet || !state.wallet.hasPin) { statusEl.textContent = 'Set up your wallet above to play.'; dropBtn.disabled = true; }
     else if (bal <= 0) { statusEl.textContent = 'Your wallet is empty. Load it to play.'; dropBtn.disabled = true; }
-    else { statusEl.textContent = ''; dropBtn.disabled = state.busy; }
+    else { statusEl.textContent = landedBall ? 'Press Reset Ball (or move your aim) to drop again.' : ''; dropBtn.disabled = state.busy; }
     draw();
   }
 
-  // ---------- aiming: drag the ball, or tap above the slots ----------
+  // ---------- after a drop: the ball sits in its slot until you reset it ----------
+  function resetBall() {
+    state.ball = null; state.pending = null; resultEl.textContent = '';
+    refresh();
+  }
+  // ---------- aiming: slider, arrows, drag the ball, or tap above the slots ----------
   function aimFromX(x) { return Math.max(-6, Math.min(6, Math.round(((x - geo.pad) / geo.half - 12) / 2))); }
   function setAim(a) {
+    if (!canAim()) { aimSlider.value = state.aim; return; }
     a = Math.max(-6, Math.min(6, a));
-    if (a === state.aim) return;
+    if (state.ball && !state.ball.anim) { state.ball = null; state.pending = null; resultEl.textContent = ''; }   // aiming again resets the last ball
+    if (a === state.aim) { refresh(); return; }
     state.aim = a; state.selected = null; refresh();
   }
   function canAim() { return !state.busy && !state.demo; }
@@ -360,7 +377,7 @@
     }
     if (run === demoRun) stopDemo();
   }
-  function setAimDemo(a) { state.aim = a; draw(); }
+  function setAimDemo(a) { state.aim = a; state.ball = null; aimSlider.value = a; draw(); }
   function stopDemo() {
     state.demo = false; state.busy = false; state.ball = null; resultEl.textContent = '';
     var demoBtn = document.getElementById('drain-demo');

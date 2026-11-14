@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Drop the Ball | NASH | Gnomie</title>
   <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261114f" />
+  <link rel="stylesheet" href="styles.css?v=20261114g" />
 </head>
 <body>
   <div id="nav-inject"></div>
@@ -41,7 +41,13 @@
         </div>
         <p class="drain-chance" id="drain-chance"></p>
 
-        <p class="drain-aim-hint" id="drain-aim-hint">Drag the ball, or tap where you want to drop it.</p>
+        <div class="drain-aim" role="group" aria-label="Aim">
+          <span class="drain-aim-label">Aim</span>
+          <button type="button" class="drain-aim-step" id="drain-aim-left" aria-label="Aim left">&#9664;</button>
+          <input type="range" id="drain-aim-slider" min="-6" max="6" step="1" value="0" aria-label="Where to drop the ball" />
+          <button type="button" class="drain-aim-step" id="drain-aim-right" aria-label="Aim right">&#9654;</button>
+        </div>
+        <p class="drain-aim-hint" id="drain-aim-hint">Slide to choose where the ball drops (or drag the ball itself), then press Drop.</p>
 
         <button type="button" class="btn btn-primary drain-drop" id="drain-drop">Drop</button>
         <p class="drain-status" id="drain-status" aria-live="polite"></p>
@@ -74,8 +80,8 @@
   <div id="footer-inject"></div>
   <div id="contact-popup-inject"></div>
 
-  <script src="components.js?v=20261114f"></script>
-  <script src="games.js?v=20261114f"></script>
-  <script src="drop-the-ball.js?v=20261114f"></script>
+  <script src="components.js?v=20261114g"></script>
+  <script src="games.js?v=20261114g"></script>
+  <script src="drop-the-ball.js?v=20261114g"></script>
 </body>
 </html>

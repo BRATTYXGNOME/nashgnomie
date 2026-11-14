@@ -437,10 +437,17 @@
     div.innerHTML =
       '<div class="modal">' +
         '<button class="modal-close" id="shared-age-close" aria-label="Close">&times;</button>' +
-        '<div class="modal-title">Age Verification Required</div>' +
+        '<div class="modal-title" id="shared-age-title">Age Verification Required</div>' +
         '<div class="modal-desc" id="shared-age-desc"></div>' +
         '<form id="shared-age-form" autocomplete="off" style="display:flex;flex-direction:column;align-items:center;gap:8px;">' +
           '<input type="date" id="shared-age-bd" name="birthdate" required style="width:100%;max-width:240px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--accent-border);border-radius:var(--radius);color:var(--text-light);font-size:14px;font-family:var(--font-body);" />' +
+          // Shown only for DM / Contact buttons: tap every star to agree (once per visit)
+        '<div class="menu-agree-form dm-agree" id="shared-age-agree" hidden>' +
+          '<label class="menu-rule"><input type="checkbox" class="menu-agree-box" /><span class="menu-star" aria-hidden="true">&#10022;</span><span class="menu-rule-text">I&rsquo;m <strong>18 or older</strong> (21+ preferred).</span></label>' +
+          '<label class="menu-rule"><input type="checkbox" class="menu-agree-box" /><span class="menu-star" aria-hidden="true">&#10022;</span><span class="menu-rule-text">DMs are free, but I&rsquo;m <strong>expected to spend money</strong> for Gnomie&rsquo;s time.</span></label>' +
+          '<label class="menu-rule"><input type="checkbox" class="menu-agree-box" /><span class="menu-star" aria-hidden="true">&#10022;</span><span class="menu-rule-text">There&rsquo;s a <strong>$15 minimum</strong>, and chats that go past 24&ndash;48 hours require $15.</span></label>' +
+          '<label class="menu-rule"><input type="checkbox" class="menu-agree-box" /><span class="menu-star" aria-hidden="true">&#10022;</span><span class="menu-rule-text">If it&rsquo;s my <strong>first time</strong>, I may need to verify my age.</span></label>' +
+        '</div>' +
           '<div id="shared-age-error" class="age-error" aria-live="polite"></div>' +
           '<button type="submit" class="btn btn-primary" style="width:100%;max-width:240px;">Continue</button>' +
         '</form>' +
@@ -893,7 +900,11 @@
     var pending = null; // { url, newTab } or { action: 'contact' }
 
     // Wording above the date box: DM gates vs. everything else
-    var DM_TEXT = 'I prefer to chat with individuals 21 or older, but you must be 18+ to DM me. Please confirm your date of birth:';
+    var DM_TEXT = 'I prefer to chat with individuals 21 or older, but you must be 18+ to DM me. Confirm your date of birth and tap each star to agree:';
+    var DM_KEY = 'nashgnomie_dm_agreed';   // agreed this visit (cleared when the browser closes)
+    var agreeBox = document.getElementById('shared-age-agree'), titleEl = document.getElementById('shared-age-title');
+    var dmMode = false;
+    function dmAgreed() { try { return sessionStorage.getItem(DM_KEY) === '1'; } catch (x) { return false; } }
     var DEFAULT_TEXT = 'This contains adult content (18+).<br />Please confirm your birthdate:';
 
     if (bd) bd.max = new Date().toISOString().split('T')[0];
@@ -909,6 +920,16 @@
       e.stopImmediatePropagation();
       var desc = document.getElementById('shared-age-desc');
       var isDm = el.getAttribute('data-age-action') === 'contact' || /t\.me\/nashgnomie\/?$/.test(el.href || '');
+      // Already agreed to the DM terms this visit: go straight through
+      if (isDm && dmAgreed()) {
+        if (window.closeDrawer) window.closeDrawer();
+        if (el.getAttribute('data-age-action') === 'contact') { if (window.openContactPopup) window.openContactPopup(true); }
+        else window.open(el.href, '_blank', 'noopener');
+        return;
+      }
+      dmMode = isDm;
+      if (agreeBox) { agreeBox.hidden = !isDm; agreeBox.querySelectorAll('input').forEach(function(c) { c.checked = false; }); }
+      if (titleEl) titleEl.textContent = isDm ? 'Before you DM me' : 'Age Verification Required';
       if (desc) {
         desc.innerHTML = isDm ? DM_TEXT : DEFAULT_TEXT;
         desc.classList.toggle('modal-desc-center', !isDm);
@@ -930,11 +951,15 @@
         e.preventDefault();
         err.textContent = '';
         if (!bd.value) { err.textContent = 'Please enter your birthdate.'; return; }
+        if (dmMode && agreeBox && Array.prototype.some.call(agreeBox.querySelectorAll('input'), function(c) { return !c.checked; })) {
+          err.textContent = 'Please tap every star to agree.'; return;
+        }
         var result = window.AgeGate.verify(bd.value);
         if (!result.success) {
           window.AgeGate.handleFailure(result, err);
           return;
         }
+        if (dmMode) { try { sessionStorage.setItem(DM_KEY, '1'); } catch (x) {} }
         var next = pending;
         overlay.classList.remove('active');
         document.body.style.overflow = '';

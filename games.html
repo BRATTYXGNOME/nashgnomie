@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Games | NASH | Gnomie</title>
   <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261114f" />
+  <link rel="stylesheet" href="styles.css?v=20261114g" />
 </head>
 <body>
   <div id="nav-inject"></div>
@@ -120,14 +120,34 @@
   <div id="footer-inject"></div>
   <div id="contact-popup-inject"></div>
 
-  <script src="components.js?v=20261114f"></script>
-  <script src="games.js?v=20261114f"></script>
+  <script src="components.js?v=20261114g"></script>
+  <script src="games.js?v=20261114g"></script>
   <script>
     // No birthdate gate on this page; each game has its own.
     Games.mountWallet(document.getElementById('wallet-root'));
     Games.renderLeaderboard(document.getElementById('lb-all'), 'all');
-    document.addEventListener('wallet:change', function() {
+    // A game they left unfinished goes first, with a pill saying so
+    var list = document.querySelector('.games-list');
+    var order = Array.prototype.slice.call(list.querySelectorAll('.game-card'));
+    function markUnfinished(w) {
+      var open = (w && w.unfinished) || [];
+      order.forEach(function(card) { list.appendChild(card); });   // back to the normal order first
+      order.slice().reverse().forEach(function(card) {
+        var key = (card.getAttribute('href') || '').replace('.html', '');
+        var pill = card.querySelector('.game-card-unfinished');
+        if (open.indexOf(key) !== -1) {
+          if (!pill) card.insertAdjacentHTML('afterbegin', '<span class="game-card-unfinished">&#9203; Unfinished game</span>');
+          card.classList.add('has-unfinished');
+          list.insertBefore(card, list.firstChild);
+        } else {
+          if (pill) pill.remove();
+          card.classList.remove('has-unfinished');
+        }
+      });
+    }
+    document.addEventListener('wallet:change', function(e) {
       Games.renderLeaderboard(document.getElementById('lb-all'), 'all');
+      markUnfinished(e.detail);
     });
   </script>
 </body>

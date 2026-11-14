@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Menu | NASH | Gnomie</title>
   <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261114f" />
+  <link rel="stylesheet" href="styles.css?v=20261114g" />
 </head>
 <body>
   <div id="nav-inject"></div>
@@ -13,6 +13,7 @@
   <main class="section menu-page menu-lock">
     <h1 class="section-title menu-heading">Menu</h1>
     <p class="menu-currency">All prices are in USD ($)</p>
+    <p class="menu-minimum"><span class="menu-minimum-amt">$15 minimum</span><span class="menu-minimum-sub">I don&rsquo;t accept anything under $15.</span></p>
 
     <!-- 18+ GATE: the menu shows once the birthdate checks out -->
     <div class="gallery-age-gate" id="menu-gate">
@@ -33,14 +34,14 @@
       <section class="menu-intro">
         <h2 class="menu-intro-title">Before you send money</h2>
         <ul class="menu-rules">
+          <li class="menu-rule-key"><strong>$15 minimum</strong><span class="sep"> &middot; </span>chats past 24&ndash;48 hrs require $15</li>
           <li><strong>18+ only</strong><span class="sep"> &middot; </span>21+ preferred</li>
-          <li><strong>DM me first</strong><span class="sep"> &middot; </span>nothing is sent until we talk</li>
+          <li><strong>DM me first</strong><span class="sep"> &middot; </span>let&rsquo;s talk before you pay</li>
           <li><strong>First time?</strong><span class="sep"> &middot; </span>you may need to verify your age</li>
           <li><strong>Paid before talking?</strong><span class="sep"> &middot; </span>may be treated as a gift</li>
-          <li><strong>$15 minimum</strong><span class="sep"> &middot; </span>chats past 24&ndash;48 hrs require $15</li>
         </ul>
         <div class="menu-actions">
-          <a href="https://t.me/nashgnomie" class="btn btn-primary" target="_blank" rel="noopener">DM Me to Discuss</a>
+          <a href="#" class="btn btn-primary age-gated" data-age-action="contact" id="menu-dm-btn">DM Me to Discuss</a>
           <button type="button" class="btn btn-outline" id="menu-pay-btn">Payment Options</button>
         </div>
       </section>
@@ -123,20 +124,21 @@
   <div id="menu-pay-overlay" class="modal-overlay">
     <div class="modal">
       <button class="modal-close" id="menu-pay-close" aria-label="Close">&times;</button>
-      <div class="modal-title">Payment Options</div>
-      <!-- Step 1: birthdate + every box ticked, then "I agree & confirm my age" -->
-      <form class="pay-agree" id="menu-pay-agree" autocomplete="off" novalidate>
-        <div class="modal-desc">Confirm your birthdate and agree to the following to view payment options:</div>
+      <div class="modal-title" id="menu-pay-title">Before you send money</div>
+      <!-- Step 1: birthdate + tap every star, then "I agree" -->
+      <form class="pay-agree menu-agree-form" id="menu-pay-agree" autocomplete="off" novalidate>
+        <div class="modal-desc" id="menu-agree-desc">Confirm your birthdate and tap each star to agree:</div>
         <label class="pay-agree-date">
           <span>Date of birth</span>
           <input type="date" id="menu-pay-birthdate" required />
         </label>
-        <label><input type="checkbox" required /> <span>I am 18 or older.</span></label>
-        <label><input type="checkbox" required /> <span>I have discussed what I&rsquo;m paying for with Nash on Telegram, or will before sending.</span></label>
-        <label><input type="checkbox" required /> <span>I understand money sent before we talk may be treated as a gift.</span></label>
-        <label><input type="checkbox" required /> <span>I understand content is only sent after we talk, and I may need to verify my age first.</span></label>
+        <label class="menu-rule"><input type="checkbox" class="menu-agree-box" required /><span class="menu-star" aria-hidden="true">&#10022;</span><span class="menu-rule-text">I&rsquo;m <strong>18 or older</strong> (21+ preferred).</span></label>
+        <label class="menu-rule"><input type="checkbox" class="menu-agree-box" required /><span class="menu-star" aria-hidden="true">&#10022;</span><span class="menu-rule-text">I&rsquo;ll <strong>DM Gnomie first</strong> so we can talk about what I&rsquo;m paying for.</span></label>
+        <label class="menu-rule"><input type="checkbox" class="menu-agree-box" required /><span class="menu-star" aria-hidden="true">&#10022;</span><span class="menu-rule-text">If it&rsquo;s my <strong>first time</strong>, I may need to verify my age.</span></label>
+        <label class="menu-rule"><input type="checkbox" class="menu-agree-box" required /><span class="menu-star" aria-hidden="true">&#10022;</span><span class="menu-rule-text">Anything I <strong>pay before we talk</strong> may be treated as a gift.</span></label>
+        <label class="menu-rule"><input type="checkbox" class="menu-agree-box" required /><span class="menu-star" aria-hidden="true">&#10022;</span><span class="menu-rule-text">There&rsquo;s a <strong>$15 minimum</strong>, and chats that go past 24&ndash;48 hours require $15.</span></label>
         <div class="age-error" id="menu-pay-error" aria-live="polite"></div>
-        <button type="submit" class="btn btn-primary pay-agree-btn">I Agree &amp; Confirm My Age</button>
+        <button type="submit" class="btn btn-primary pay-agree-btn" id="menu-agree-go">I Agree</button>
       </form>
       <!-- Step 2: shown only after step 1 passes -->
       <div id="menu-pay-unlocked" hidden>
@@ -149,7 +151,7 @@
   <div id="footer-inject"></div>
   <div id="contact-popup-inject"></div>
 
-  <script src="components.js?v=20261114f"></script>
+  <script src="components.js?v=20261114g"></script>
   <script>
     (function() {
       var page = document.querySelector('.menu-page');
@@ -190,22 +192,30 @@
         if (!payBd.value) { payErr.textContent = 'Please enter your date of birth.'; return; }
         var boxes = agree.querySelectorAll('input[type=checkbox]');
         var allTicked = Array.prototype.every.call(boxes, function(c) { return c.checked; });
-        if (!allTicked) { payErr.textContent = 'Please check every box to continue.'; return; }
+        if (!allTicked) { payErr.textContent = 'Please tap every star to agree.'; return; }
         var result = window.AgeGate.verify(payBd.value);
         if (!result.success) { window.AgeGate.handleFailure(result, payErr); return; }
+        if (wants === 'dm') { closePay(); window.open('https://t.me/nashgnomie', '_blank', 'noopener'); return; }
+        document.getElementById('menu-pay-title').textContent = 'Payment Options';
         agree.hidden = true;
         unlocked.hidden = false;
       });
 
       // Every time the popup opens it starts at step 1 again
-      document.getElementById('menu-pay-btn').addEventListener('click', function() {
+      // Both buttons ask for the same agreement; then DM opens Telegram, Payment shows the list
+      var wants = 'pay';
+      function openAgree(what) {
+        wants = what;
         agree.reset();
         payErr.textContent = '';
         agree.hidden = false;
         unlocked.hidden = true;
+        document.getElementById('menu-pay-title').textContent = what === 'dm' ? 'Before you DM me' : 'Before you send money';
+        document.getElementById('menu-agree-go').textContent = what === 'dm' ? 'I Agree, Open Telegram' : 'I Agree, Show Payment Options';
         payOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
-      });
+      }
+      document.getElementById('menu-pay-btn').addEventListener('click', function() { openAgree('pay'); });
       document.getElementById('menu-pay-close').addEventListener('click', closePay);
       payOverlay.addEventListener('click', function(e) { if (e.target === payOverlay) closePay(); });
       document.addEventListener('keydown', function(e) {
