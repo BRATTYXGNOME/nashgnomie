@@ -75,7 +75,8 @@ export function parseThrone(body) {
   if (out.type === 'gift_purchased' && m) {
     out.isLoad = true;
     const cents = parseInt(m[1], 10) * 100;
-    if (LOAD_AMOUNTS.throne.indexOf(cents) !== -1) out.amountCents = cents;
+    // Any whole-dollar load Gnomie lists (named "LOAD $X" on Throne), $1 to $1,000
+    if (cents >= 100 && cents <= 100000) out.amountCents = cents;
   }
   return out;
 }

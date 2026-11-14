@@ -602,11 +602,18 @@
     ],
     throne: [
       { cents: 500,   url: 'https://throne.com/nashgnomie/item/2a9ef72b-662b-41c4-b16b-d9683fa988b4' },
-      { cents: 2000,  url: 'https://throne.com/nashgnomie/item/e5b7b2a5-860e-42f7-89b1-1b7cda5186a6' },
+      { cents: 2000,  url: 'https://throne.com/nashgnomie/item/b751a554-68cf-42d4-b8fb-9cb078ee059f' },
       { cents: 5000,  url: 'https://throne.com/nashgnomie/item/3f9c6e60-ea92-4ffb-b526-bd017a2971d4' },
       { cents: 10000, url: 'https://throne.com/nashgnomie/item/5a9986ad-bf91-46bf-b9d8-e4556b5c8555' }
     ]
   };
+
+  // The load buttons Gnomie set in Backstage (falls back to the list above)
+  try {
+    fetch('/api/site/loads').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+      if (d && Array.isArray(d.throne) && d.throne.length) LOADS.throne = d.throne;
+    }).catch(function() {});
+  } catch (x) {}
 
   function loadPanelHTML() {
     function buttons(list, platform) {

@@ -223,6 +223,13 @@
     .so-boots .so-lace-line { fill: none; stroke: #fff; stroke-width: 1.2; stroke-linecap: round; }
     .so-jacket { fill: #231d27; }
     .so-shades { fill: #1b1117; }
+    /* Site tab: load buttons */
+    .ld-list { display: flex; flex-direction: column; gap: 8px; }
+    .ld-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .ld-amt { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: var(--accent); }
+    .ld-amt input { width: 70px; }
+    .ld-url { flex: 1; min-width: 240px; }
+    .ld-test { text-decoration: none; padding: 6px 10px; border-radius: 8px; }
     /* Site tab: your look */
     .look-wrap { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; margin: 10px 0 4px; }
     .look-preview { width: 150px; flex: none; padding: 10px; border-radius: 14px; background: radial-gradient(circle at 50% 30%, #2a1b24, #140d12 75%); border: 1px solid var(--border); }
@@ -537,6 +544,21 @@
         </section>
         <section class="card">
           <div class="row" style="justify-content:space-between;align-items:baseline">
+            <h2 style="margin:0">Load buttons (Throne)</h2>
+            <span class="muted" style="font-size:12px">The amounts fans tap to load their wallet</span>
+          </div>
+          <p class="muted" style="margin:6px 0 10px">Each button opens a Throne item. Name the item on Throne <strong>&ldquo;LOAD $20&rdquo;</strong> (with the same amount) so loads reach the right wallet automatically.</p>
+          <div id="ld-list" class="ld-list"></div>
+          <div class="tk-bar">
+            <button type="button" class="ghost" id="ld-add">+ Add a button</button>
+            <span class="grow"></span>
+            <span class="tk-saved" id="ld-saved"></span>
+            <button type="button" id="ld-save">Save load buttons</button>
+          </div>
+          <div class="error" id="ld-error"></div>
+        </section>
+        <section class="card">
+          <div class="row" style="justify-content:space-between;align-items:baseline">
             <h2 style="margin:0">Your look in Spell It Out</h2>
             <span class="muted" style="font-size:12px">How your little cartoon looks to players</span>
           </div>
@@ -604,7 +626,7 @@
   <div class="tip" id="tip" hidden></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="gnomie-figure.js?v=20261114l"></script>
+  <script src="gnomie-figure.js?v=20261114m"></script>
   <script>
     (function() {
       'use strict';
@@ -654,7 +676,7 @@
         terms_agreed: 'Fan agreed to updated terms', pin_changed: 'Fan changed their PIN', pin_change_failed: 'Wrong PIN while changing it',
         issue_reported: 'Fan reported a game problem', new_code_requested: 'Fan asked for a new code', backstage_new_code: 'You gave a new code',
         backstage_request_done: 'You handled a request', backstage_request_declined: 'You declined a request',
-        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note', game_given_up: 'Fan gave up a game', backstage_mind_words: 'You changed the Read My Mind words', backstage_spell_words: 'You changed the Spell It Out words', backstage_look: 'You changed your Spell It Out look', backstage_count_loss: 'You counted an idle game as a loss',
+        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note', game_given_up: 'Fan gave up a game', backstage_mind_words: 'You changed the Read My Mind words', backstage_spell_words: 'You changed the Spell It Out words', backstage_look: 'You changed your Spell It Out look', backstage_loads: 'You changed the load buttons', gift_with_code: 'Gift with a wallet code loaded automatically', backstage_count_loss: 'You counted an idle game as a loss',
         backstage_spoof_on: 'You made a spoof wallet', backstage_spoof_off: 'You made a spoof wallet normal again', backstage_colors: 'You changed color unlocks',
         backstage_deleted: 'You deleted an unused wallet', wallet_deleted: 'Fan deleted their unused wallet', backstage_recorded_load: 'You recorded a Throne load',
         backstage_edited_load: 'You edited a load', backstage_split: 'You split an entry (Throne + credit)', backstage_ticker: 'You changed the homepage ticker',
@@ -978,6 +1000,50 @@
         catch (x) { $('mw-error').textContent = x.message; }
       });
 
+      // ---------- Site: load buttons ----------
+      var ld = [], ldSaved = '';
+      function ldPaint() {
+        $('ld-list').innerHTML = ld.map(function(x, i) {
+          return '<div class="ld-row" data-i="' + i + '">' +
+            '<label class="ld-amt">$<input type="text" inputmode="numeric" data-f="dollars" value="' + (x.cents ? x.cents / 100 : '') + '" placeholder="20" /></label>' +
+            '<input type="text" class="ld-url" data-f="url" value="' + esc(x.url || '') + '" placeholder="https://throne.com/nashgnomie/item/\u2026" />' +
+            '<button type="button" class="ghost small ld-test" data-test>Test &#8599;</button>' +
+            '<button type="button" class="ghost small danger" data-del>Remove</button></div>';
+        }).join('');
+        var dirty = JSON.stringify(ld) !== ldSaved;
+        $('ld-saved').textContent = dirty ? 'Unsaved changes' : ''; $('ld-saved').style.color = dirty ? 'var(--accent)' : '';
+      }
+      async function loadLoadButtons() {
+        try { var d = await api('GET', 'hq/load-buttons'); ld = d.throne; ldSaved = JSON.stringify(ld); ldPaint(); } catch (x) { $('ld-error').textContent = x.message; }
+      }
+      $('ld-list').addEventListener('input', function(e) {
+        var row = e.target.closest('.ld-row'); if (!row) return;
+        var x = ld[+row.dataset.i];
+        if (e.target.dataset.f === 'dollars') { var n = parseFloat(e.target.value.replace(/[$,\s]/g, '')); x.cents = isFinite(n) ? Math.round(n * 100) : 0; }
+        else x.url = e.target.value.trim();
+        $('ld-saved').textContent = 'Unsaved changes'; $('ld-saved').style.color = 'var(--accent)';
+      });
+      $('ld-list').addEventListener('click', async function(e) {
+        // Test always opens the Throne item in a new tab, so Backstage stays put
+        if (e.target.closest('[data-test]')) {
+          var u = ld[+e.target.closest('.ld-row').dataset.i].url;
+          if (!/^https:\/\/throne\.com\//.test(u || '')) { $('ld-error').textContent = 'Paste the Throne link first.'; return; }
+          $('ld-error').textContent = '';
+          window.open(u, '_blank', 'noopener');
+          return;
+        }
+        if (!e.target.closest('[data-del]')) return;
+        var i = +e.target.closest('.ld-row').dataset.i;
+        if (!await uiConfirm('Remove the $' + (ld[i].cents / 100) + ' load button?')) return;
+        ld.splice(i, 1); ldPaint();
+      });
+      $('ld-add').addEventListener('click', function() { ld.push({ cents: 0, url: '' }); ldPaint(); var r = document.querySelector('.ld-row:last-child input'); if (r) r.focus(); });
+      $('ld-save').addEventListener('click', async function() {
+        $('ld-error').textContent = '';
+        try { var d = await api('POST', 'hq/load-buttons', { throne: ld }); ld = d.throne; ldSaved = JSON.stringify(ld); ldPaint(); $('ld-saved').textContent = 'Saved \u2713'; }
+        catch (x) { $('ld-error').textContent = x.message; }
+      });
+
       // ---------- Site: Gnomie's look in Spell It Out ----------
       var HAIRS = [['#5e3f2d', 'Brown (wig)'], ['#3a2419', 'Dark brown'], ['#c99a3e', 'Blonde'], ['#b8101c', 'Red'], ['#ff4f9a', 'Pink'], ['#4b1689', 'Purple'], ['#1f3c8f', 'Blue'], ['#1b1117', 'Black']];
       var LIPS = [['#e3557f', 'Pink'], ['#c8102e', 'Red'], ['#9c2f5e', 'Berry'], ['#d98c8c', 'Nude']];
@@ -1049,7 +1115,7 @@
         if (tab === 'games' && !loaded.games) { loadDrops(true); loadDuels(true); loadBoard(); loaded.games = true; }
         if (tab === 'wallets' && !loaded.wallets) { loadWallets(); loaded.wallets = true; }
         if (tab === 'activity' && !loaded.events) loadEvents(true);
-        if (tab === 'site' && !loaded.site) { loadTicker(); loadMindWords(); loadSpellWords(); loadLook(); loaded.site = true; }
+        if (tab === 'site' && !loaded.site) { loadTicker(); loadLoadButtons(); loadMindWords(); loadSpellWords(); loadLook(); loaded.site = true; }
       });
       var loaded = {};
 
@@ -1278,7 +1344,7 @@
       $('spin-fair-board').addEventListener('change', drawSpinFair);
 
       // ---------- Home: Inbox ----------
-      var INBOX_ICON = { unclear: '&#10067;', report: '&#128680;', newcode: '&#128273;', issue: '&#128736;&#65039;', close: '&#128682;', nudge: '&#128140;', break: '&#127769;' };
+      var INBOX_ICON = { giftload: '&#127873;', unclear: '&#10067;', report: '&#128680;', newcode: '&#128273;', issue: '&#128736;&#65039;', close: '&#128682;', nudge: '&#128140;', break: '&#127769;' };
       async function loadInbox() {
         var items = (await api('GET', 'hq/inbox')).items;
         $('inbox-count').textContent = items.length ? items.length + ' waiting' : '';
@@ -1289,6 +1355,7 @@
             : it.kind === 'newcode' ? '<button type="button" data-ia="newcode">Give new code</button><button type="button" class="ghost small" data-ia="reqdecline">Decline</button>'
             : it.kind === 'issue' ? '<button type="button" data-ia="reqdone">Mark handled</button><button type="button" class="ghost small" data-ia="reqdecline">Couldn&rsquo;t help</button>'
             : it.kind === 'close' ? '<button type="button" class="ghost small" data-ia="open">Open wallet</button>'
+            : it.kind === 'giftload' ? '<button type="button" class="ghost small" data-ia="open">Open wallet</button><button type="button" class="ghost small" data-ia="seen">Seen</button>'
             : '<button type="button" class="ghost small" data-ia="seen">Seen</button>';
           return '<div class="inbox-row inbox-' + it.kind + '" data-i="' + i + '"><span class="inbox-ico">' + (INBOX_ICON[it.kind] || '&#8226;') + '</span>' +
             '<div class="inbox-text"><div><b>' + (it.code ? '<a href="#" data-ia="open">' + esc(it.name) + '</a>' : esc(it.name)) + '</b> ' + esc(it.text) + '</div>' +

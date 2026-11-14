@@ -1666,6 +1666,34 @@ routes['POST hq/look'] = async (env, request) => {
   await logEvent(env, request, 'backstage_look', null, look.length + ' ' + look.hair + (look.roots ? ' + roots' : '') + ' · lips ' + look.lips);
   return json({ ok: true, look });
 };
+// Load buttons in fans' wallets: Throne items named "LOAD $X", edited in Backstage
+const DEFAULT_LOADS = [
+  { cents: 500, url: 'https://throne.com/nashgnomie/item/2a9ef72b-662b-41c4-b16b-d9683fa988b4' },
+  { cents: 2000, url: 'https://throne.com/nashgnomie/item/b751a554-68cf-42d4-b8fb-9cb078ee059f' },
+  { cents: 5000, url: 'https://throne.com/nashgnomie/item/3f9c6e60-ea92-4ffb-b526-bd017a2971d4' },
+  { cents: 10000, url: 'https://throne.com/nashgnomie/item/5a9986ad-bf91-46bf-b9d8-e4556b5c8555' }
+];
+routes['GET site/loads'] = async (env) => json({ throne: await siteGet(env.DB, 'load_links', DEFAULT_LOADS) }, 200, { 'cache-control': 'public, max-age=30' });
+routes['GET hq/load-buttons'] = async (env, request) => { await needHQ(env, request); return json({ throne: await siteGet(env.DB, 'load_links', DEFAULT_LOADS) }); };
+routes['POST hq/load-buttons'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
+  if (!Array.isArray(b.throne) || !b.throne.length || b.throne.length > 8) throw new Oops('Keep between 1 and 8 load buttons.');
+  const seen = {};
+  const list = b.throne.map((x, i) => {
+    const cents = Math.round(Number(x.cents));
+    if (!Number.isInteger(cents) || cents < 100 || cents > 100000 || cents % 100) throw new Oops('Button ' + (i + 1) + ': use a whole-dollar amount from $1 to $1,000.');
+    if (seen[cents]) throw new Oops('There are two $' + cents / 100 + ' buttons.');
+    seen[cents] = 1;
+    const url = String(x.url || '').trim();
+    if (!/^https:\/\/throne\.com\/nashgnomie\/item\/[A-Za-z0-9-]{8,60}$/.test(url)) throw new Oops('Button ' + (i + 1) + ': paste the Throne item link, like https://throne.com/nashgnomie/item/\u2026');
+    return { cents, url };
+  }).sort((p, q) => p.cents - q.cents);
+  await env.DB.prepare('INSERT INTO site_content (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
+    .bind('load_links', JSON.stringify(list), Date.now()).run();
+  await logEvent(env, request, 'backstage_loads', null, list.map(x => '$' + x.cents / 100).join(', '));
+  return json({ ok: true, throne: list });
+};
 routes['GET site/ticker'] = async (env) => {
   const t = await siteGet(env.DB, 'ticker', DEFAULT_TICKER);
   const items = (t.items || []).filter(i => i.on !== false).map(i => ({ text: i.text, kind: i.kind, url: i.url || '', code: i.code || '', after: i.after || '', highlight: i.highlight || 'none' }));
@@ -1808,6 +1836,8 @@ async function recordLoad(env, request, load) {
     const chunk = candidates.slice(i, i + 90);
     wallet = await db.prepare(`SELECT id FROM wallets WHERE code IN (${chunk.map(() => '?').join(',')}) LIMIT 1`).bind(...chunk).first();
   }
+  // A normal gift (not a LOAD item) only matters if its message has a real wallet code
+  if (load.gift && !wallet) return 'not_a_load';
   const ok = wallet && Number.isInteger(load.amountCents) && load.amountCents > 0;
   const ins = await db.prepare(
     `INSERT OR IGNORE INTO loads (platform, external_id, wallet_id, amount_cents, paid_cents, currency, gifter, message, item_name, status, created_at, updated_at)
@@ -1820,7 +1850,8 @@ async function recordLoad(env, request, load) {
   if (!ok) { await logEvent(env, request, 'load_needs_review', wallet ? wallet.id : null, label + (wallet ? ' (amount unclear)' : ' (no wallet code found)')); return 'needs_review'; }
   await db.prepare('UPDATE wallets SET balance_cents = balance_cents + ?, total_loaded_cents = total_loaded_cents + ? WHERE id = ?')
     .bind(load.amountCents, load.amountCents, wallet.id).run();
-  await logEvent(env, request, 'load_credited', wallet.id, label);
+  await logEvent(env, request, load.gift ? 'gift_with_code' : 'load_credited', wallet.id,
+    load.gift ? 'Throne gift \u201c' + (load.itemName || 'gift') + '\u201d with their wallet code, loaded ' + money(load.amountCents) + (load.gifter ? ' (from ' + load.gifter + ')' : '') : label);
   return 'credited';
 }
 
@@ -1846,7 +1877,18 @@ routes['POST webhooks/throne'] = async (env, request) => {
   let body;
   try { body = JSON.parse(raw); } catch (e) { return json({ error: 'bad json' }, 400); }
   const t = parseThrone(body);
-  if (!t.isLoad) { // a normal gift, not a wallet load
+  if (!t.isLoad) {
+    // Not a LOAD item. If the gift message has a real wallet code, they most likely
+    // meant to load their wallet: it loads automatically (the item price Throne reports),
+    // and Gnomie gets an Inbox heads-up.
+    if (t.type === 'gift_purchased' && t.message) {
+      const held = await recordLoad(env, request, {
+        platform: 'throne', externalId: t.eventId || ('raw:' + await sha256(raw)),
+        amountCents: t.paidCents, paidCents: t.paidCents, currency: t.currency,
+        gifter: t.gifter, message: t.message, itemName: t.itemName, gift: true
+      });
+      if (held !== 'not_a_load') return json({ ok: true, status: held });
+    }
     await logEvent(env, request, 'throne_gift', null, (t.itemName || t.type) + (t.gifter ? ' from ' + t.gifter : ''));
     return json({ ok: true, ignored: true });
   }
@@ -2525,8 +2567,9 @@ routes['GET hq/inbox'] = async (env, request) => {
   await db.prepare('CREATE TABLE IF NOT EXISTS inbox_seen (key TEXT PRIMARY KEY, at INTEGER NOT NULL)').run();
   const seen = new Set((await db.prepare('SELECT key FROM inbox_seen').all()).results.map(r => r.key));
   const who = "w.display_code AS code, COALESCE(w.name, 'Anonymous #' || w.anon_number) AS name";
+  const giftLoads = (await db.prepare(`SELECT l.*, ${who} FROM loads l JOIN wallets w ON w.id = l.wallet_id WHERE l.platform = 'throne' AND l.status = 'credited' AND l.item_name != '' AND l.item_name NOT LIKE '%LOAD%' AND l.item_name != 'correction' AND l.created_at >= ? ORDER BY l.id DESC LIMIT 50`).bind(monthAgo).all()).results;
   const [unclear, reports, reqs, closes, nudges, breaks] = await Promise.all([
-    db.prepare("SELECT l.*, w.display_code AS code FROM loads l LEFT JOIN wallets w ON w.id = l.wallet_id WHERE l.status = 'needs_review' ORDER BY l.id DESC LIMIT 50").all(),
+    db.prepare("SELECT l.*, w.display_code AS code, COALESCE(w.name, 'Anonymous #' || w.anon_number) AS wname FROM loads l LEFT JOIN wallets w ON w.id = l.wallet_id WHERE l.status = 'needs_review' ORDER BY l.id DESC LIMIT 50").all(),
     db.prepare(`SELECT r.*, ${who} FROM load_reports r JOIN wallets w ON w.id = r.wallet_id WHERE r.status = 'open' ORDER BY r.id DESC LIMIT 50`).all(),
     db.prepare(`SELECT r.*, ${who} FROM fan_requests r JOIN wallets w ON w.id = r.wallet_id WHERE r.status = 'open' ORDER BY r.id DESC LIMIT 50`).all(),
     db.prepare(`SELECT c.*, ${who}, w.balance_cents FROM close_requests c JOIN wallets w ON w.id = c.wallet_id ORDER BY c.created_at DESC LIMIT 50`).all(),
@@ -2534,8 +2577,18 @@ routes['GET hq/inbox'] = async (env, request) => {
     db.prepare(`SELECT k.*, ${who} FROM breaks k JOIN wallets w ON w.id = k.wallet_id WHERE k.created_at >= ? ORDER BY k.created_at DESC LIMIT 50`).bind(monthAgo).all()
   ]);
   const items = [];
-  unclear.results.forEach(l => items.push({ key: 'unclear:' + l.id, kind: 'unclear', at: l.created_at, id: l.id, code: l.code || '', name: l.gifter || 'Someone',
-    text: (l.platform === 'youpay' ? 'YouPay' : 'Throne') + ' payment' + (l.amount_cents ? ' of ' + money(l.amount_cents) : '') + ' came in, but the wallet code wasn’t clear', note: l.message || '', cents: l.amount_cents }));
+  unclear.results.forEach(l => {
+    const giftWithCode = l.wallet_id && l.item_name && !/\bLOAD\b/i.test(l.item_name);
+    items.push({ key: 'unclear:' + l.id, kind: 'unclear', at: l.created_at, id: l.id, code: l.code || '',
+      name: giftWithCode ? l.wname : (l.gifter || 'Someone'),
+      text: giftWithCode
+        ? 'sent a Throne gift (\u201c' + l.item_name + '\u201d' + (l.amount_cents ? ', ' + money(l.amount_cents) : '') + ') with their wallet code. Meant as a load?'
+        : (l.platform === 'youpay' ? 'YouPay' : 'Throne') + ' payment' + (l.amount_cents ? ' of ' + money(l.amount_cents) : '') + ' came in, but the wallet code wasn\u2019t clear',
+      note: (l.gifter ? 'Throne: ' + l.gifter + ' \u00b7 ' : '') + (l.message || ''), cents: l.amount_cents });
+  });
+  giftLoads.forEach(l => { const k = 'giftload:' + l.id; if (!seen.has(k)) items.push({ key: k, kind: 'giftload', at: l.created_at, code: l.code, name: l.name,
+    text: 'sent a Throne gift (\u201c' + l.item_name + '\u201d) with their wallet code. It loaded ' + money(l.amount_cents) + ' automatically.',
+    note: 'Open the wallet if you want to change the amount.' + (l.gifter ? ' \u00b7 Throne: ' + l.gifter : ''), cents: l.amount_cents }); });
   reports.results.forEach(r => items.push({ key: 'report:' + r.id, kind: 'report', at: r.created_at, id: r.id, code: r.code, name: r.name,
     text: 'says a LOAD ' + money(r.amount_cents) + ' didn’t show up', note: [r.sent_when ? 'sent ' + r.sent_when : '', r.throne ? 'Throne: ' + r.throne : '', r.note || ''].filter(Boolean).join(' · '), cents: r.amount_cents }));
   reqs.results.forEach(r => items.push({ key: 'req:' + r.id, kind: r.kind === 'new_code' ? 'newcode' : 'issue', at: r.created_at, id: r.id, code: r.code, name: r.name,
@@ -2552,7 +2605,7 @@ routes['GET hq/inbox'] = async (env, request) => {
 routes['POST hq/inbox-seen'] = async (env, request) => {
   await needHQ(env, request);
   const key = String((await readJson(request)).key || '').slice(0, 80);
-  if (!/^(nudge|break):/.test(key)) throw new Oops('That one goes away once it’s handled.');
+  if (!/^(nudge|break|giftload):/.test(key)) throw new Oops('That one goes away once it’s handled.');
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS inbox_seen (key TEXT PRIMARY KEY, at INTEGER NOT NULL)').run();
   await env.DB.prepare('INSERT OR IGNORE INTO inbox_seen (key, at) VALUES (?, ?)').bind(key, Date.now()).run();
   return json({ ok: true });
