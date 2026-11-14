@@ -5429,3 +5429,7 @@ body.wl-modal-open { overflow: hidden; }
 .gc-spell i.e { border-bottom-color: rgba(255, 255, 255, 0.35); }
 .gc-spell-cat { padding: 2px 10px; border-radius: 999px; border: 1px solid rgba(255, 95, 162, 0.45); color: #ff5fa2; font: 700 9px/1.4 Inter, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; }
 @media (max-width: 520px) { .gc-spell i { width: 15px; height: 20px; font-size: 12px; } }
+/* Spoof loads box: note sits under the heading, with even space before the buttons */
+.wl-spoof .wl-fine { text-align: center; margin: 4px 0 14px; line-height: 1.45; }
+.wl-spoof .wl-load-head { justify-content: center; }
+.wl-spoof .wl-spoof-msg:empty { display: none; }

@@ -242,6 +242,7 @@ const WALLET_SELECT = `SELECT w.*,
    COALESCE((SELECT u.bonus FROM color_unlocks u WHERE u.wallet_id = w.id), 0) +
    (CASE WHEN EXISTS (SELECT 1 FROM spoofs x WHERE x.wallet_id = w.id) THEN 99 ELSE 0 END)) AS load_count,
   (SELECT 1 FROM spoofs x WHERE x.wallet_id = w.id) AS spoof,
+  (SELECT MAX(a.created_at) FROM adjustments a WHERE a.wallet_id = w.id AND a.kind = 'spoof') AS spoof_last,
   (SELECT c.telegram FROM wallet_contacts c WHERE c.wallet_id = w.id) AS telegram,
   (SELECT c.throne FROM wallet_contacts c WHERE c.wallet_id = w.id) AS throne_name
   FROM wallets w`;
@@ -258,6 +259,8 @@ function publicWallet(w) {
     balanceCents: w.balance_cents, drainedCents: w.total_drained_cents, loadedCents: w.total_loaded_cents,
     heldCents: (w.held_duel || 0) + (w.held_toofar || 0) + (w.held_mancala || 0) + (w.held_five || 0) + (w.held_dots || 0) + (w.held_ships || 0) + (w.held_spell || 0), duelWins: w.duel_wins || 0, twoFactor: !!w.two_factor,
     heldFor: [w.held_duel ? 'Dice Duel' : null, w.held_toofar ? 'Don’t Bust' : null, w.held_mancala ? 'Mancala' : null, w.held_five ? '5 in a Row' : null, w.held_dots ? 'Dots & Boxes' : null, w.held_ships ? 'Sink My Ship' : null, w.held_spell ? 'Spell It Out' : null].filter(Boolean), tooFarWins: w.toofar_wins || 0, mancalaWins: w.mancala_wins || 0, fiveWins: w.five_wins || 0, dotsWins: w.dots_wins || 0, mindWins: w.mind_wins || 0, shipsWins: w.ships_wins || 0, spellWins: w.spell_wins || 0,
+    // Only a spoof wallet ever gets this flag (it's how its own wallet shows the spoof load buttons)
+    ...(w.spoof ? { spoof: true, spoofWait: Math.max(0, Math.ceil(((w.spoof_last || 0) + 30000 - Date.now()) / 1000)) } : {}),
     unfinished: heldGames(w).map(h => h.game).concat(w.mind_active ? ['read-my-mind'] : []),
     nudge: w.nudge_id && !w.break_since ? { id: w.nudge_id, message: w.nudge_message || '' } : null,
     closeRequested: !!w.close_requested_at, onBreak: !!w.break_since,
@@ -471,7 +474,7 @@ routes['POST 2fa/off'] = async (env, request) => {
 const BOARD_NAMES = { sweet: 'Sweet', spicy: 'Spicy', savage: 'Savage' };
 const DUEL_RESULT = { win: 'You won', tie: 'Tie', lose: 'Gnomie won', gave_up: 'You gave up', counted_loss: 'Unfinished, counted as a loss' };
 const TOOFAR_RESULT = { win: 'You won', tie: 'Tie', lose: 'Gnomie won', bust: 'Bust', gave_up: 'You gave up', counted_loss: 'Unfinished, counted as a loss' };
-const ADJ_LABEL = { credit: 'Credit from Gnomie', load: 'Load added by Gnomie', adjust: 'Balance adjusted by Gnomie', set: 'Balance set by Gnomie', bonus: 'Correction: bonus from Gnomie' };
+const ADJ_LABEL = { spoof: 'Load added', credit: 'Credit from Gnomie', load: 'Load added by Gnomie', adjust: 'Balance adjusted by Gnomie', set: 'Balance set by Gnomie', bonus: 'Correction: bonus from Gnomie' };
 
 async function buildStatement(db, w, forFan) {
   const id = w.id, limit = 1000;
@@ -728,6 +731,27 @@ routes['POST nudge/close'] = async (env, request) => {
 };
 
 // Local testing only (never turned on in Cloudflare)
+// Spoof wallets load play money themselves. ONLY wallets on Gnomie's spoof list;
+// checked here on every press, so a real wallet can never use it.
+const SPOOF_LOADS = [500, 1500, 3000, 5500], SPOOF_COOLDOWN_MS = 30 * 1000;
+routes['POST spoof-load'] = async (env, request) => {
+  const w = await needWallet(env, request);
+  const isSpoof = await env.DB.prepare('SELECT 1 AS yes FROM spoofs WHERE wallet_id = ?').bind(w.id).first();
+  if (!isSpoof) throw new Oops('Not available.', 403);
+  const cents = (await readJson(request)).cents;
+  if (SPOOF_LOADS.indexOf(cents) === -1) throw new Oops('Pick one of the spoof amounts.');
+  // No spamming: one spoof load every 30 seconds
+  const last = await env.DB.prepare("SELECT MAX(created_at) AS at FROM adjustments WHERE wallet_id = ? AND kind = 'spoof'").bind(w.id).first();
+  const waitMs = last && last.at ? last.at + SPOOF_COOLDOWN_MS - Date.now() : 0;
+  if (waitMs > 0) throw new Oops('Wait ' + Math.ceil(waitMs / 1000) + ' more seconds.', 429, { waitSeconds: Math.ceil(waitMs / 1000) });
+  await env.DB.batch([
+    env.DB.prepare('UPDATE wallets SET balance_cents = balance_cents + ? WHERE id = ?').bind(cents, w.id),
+    env.DB.prepare('INSERT INTO adjustments (wallet_id, cents, kind, note, public, created_at) VALUES (?, ?, ?, ?, 0, ?)').bind(w.id, cents, 'spoof', 'Spoof load', Date.now())
+  ]);
+  await logEvent(env, request, 'spoof_load', w.id, money(cents));
+  return json({ wallet: publicWallet(await walletById(env.DB, w.id)) });
+};
+
 routes['POST test-credit'] = async (env, request) => {
   if (env.ALLOW_TEST_CREDIT !== '1') throw new Oops('Not found.', 404);
   const w = await needWallet(env, request);

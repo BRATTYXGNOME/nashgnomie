@@ -506,6 +506,7 @@
     dotsState: async function() { return (await call('GET', 'dots')).game; },
     dotsStart: async function(size, amountCents) { return call('POST', 'dots/start', { size: size, amount: amountCents }); },
     dotsMove: async function(line) { return call('POST', 'dots/move', { line: line }); },
+    spoofLoad: async function(cents) { return (await call('POST', 'spoof-load', { cents: cents })).wallet; },
     mindState: async function() { return (await call('GET', 'mind')).game; },
     mindStart: async function() { return call('POST', 'mind/start', {}); },
     mindGuess: async function(word, amountCents) { return call('POST', 'mind/guess', { word: word, amount: amountCents }); },
@@ -961,7 +962,34 @@
       container.appendChild(top);
       container.appendChild(codeBlock(w.code, false));
 
-      if (state.loadOpen) {
+      if (state.loadOpen && w.spoof) {
+        // Spoof wallets only: play money in one tap, no Throne
+        var sp = el('div', { class: 'wl-load-wrap' },
+          '<div class="wl-load wl-load-single wl-spoof"><div class="wl-load-option">' +
+            '<div class="wl-load-head"><span class="wl-load-name">&#127917; Spoof loads</span></div>' +
+            '<p class="wl-fine">Only spoof wallets see this. It adds play money instantly, once every 30 seconds.</p>' +
+            '<div class="wl-load-grid">' + [500, 1500, 3000, 5500].map(function(c) {
+              return '<button type="button" class="wl-load-btn" data-spoof="' + c + '"><span class="wl-load-amt">' + shortMoney(c) + '</span><span class="wl-load-sub">Add now</span></button>';
+            }).join('') + '</div>' +
+            '<p class="wl-error wl-spoof-msg" aria-live="polite"></p>' +
+          '</div></div>');
+        // 30-second wait between spoof loads: buttons count down until they're ready
+        var spBtns = sp.querySelectorAll('[data-spoof]'), spMsg = sp.querySelector('.wl-spoof-msg');
+        var spReadyAt = Date.now() + (w.spoofWait || 0) * 1000;
+        (function tick() {
+          var left = Math.ceil((spReadyAt - Date.now()) / 1000);
+          spBtns.forEach(function(b) { b.disabled = left > 0; b.querySelector('.wl-load-sub').textContent = left > 0 ? 'Ready in ' + left + 's' : 'Add now'; });
+          if (left > 0 && sp.isConnected) setTimeout(tick, 1000);
+        })();
+        sp.querySelectorAll('[data-spoof]').forEach(function(b) {
+          b.addEventListener('click', async function() {
+            if (b.disabled) return; b.disabled = true;
+            try { state.wallet = await GamesAPI.spoofLoad(+b.dataset.spoof); render(); emit(state.wallet); }
+            catch (x) { b.disabled = false; if (spMsg) spMsg.textContent = x.message; }
+          });
+        });
+        container.appendChild(sp);
+      } else if (state.loadOpen) {
         var panel = el('div', { class: 'wl-load-wrap' }, loadPanelHTML());
         panel.querySelectorAll('.wl-load-btn').forEach(function(b) {
           b.addEventListener('click', function() {
