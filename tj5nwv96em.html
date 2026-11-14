@@ -196,6 +196,11 @@
     .dlg-btns { display: flex; justify-content: flex-end; gap: 8px; }
     .dlg-choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
     .dlg-choice { text-align: left; padding: 11px 14px; font-size: 14px; }
+    .split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 12px; }
+    .split-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+    .split-grid input { width: 100%; }
+    .split-grid .full { grid-column: 1 / -1; }
+    .split-err { color: #ff6b8a; font-size: 13px; min-height: 18px; margin: 0 0 8px; }
     td.plus { color: var(--good); }
     .h-note { color: var(--body); max-width: 320px; }
     .vis { display: inline-block; margin-left: 4px; padding: 0 7px; border-radius: 999px; font-size: 11px; white-space: nowrap; }
@@ -381,7 +386,7 @@
           <div class="table-wrap"><table id="duel-amounts"></table></div>
         </section>
         <section class="card">
-          <h2>Too Far</h2>
+          <h2>Don&rsquo;t Bust</h2>
           <div class="tiles" id="tf-tiles"></div>
           <h3>By amount</h3>
           <div class="table-wrap"><table id="tf-amounts"></table></div>
@@ -397,7 +402,7 @@
         <section class="card">
           <div class="row" style="justify-content:space-between;margin-bottom:8px">
             <h2 style="margin:0">Leaderboards (with amounts, only you see these)</h2>
-            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Dice Duel wins against Gnomie</option><option value="too-far">Too Far</option><option value="too-far-wins">Too Far wins against Gnomie</option><option value="spin-the-bottle">Spin the Bottle</option><option value="mancala">Mancala</option><option value="mancala-wins">Mancala wins against Gnomie</option><option value="five-in-a-row">5 in a Row</option><option value="five-in-a-row-wins">5 in a Row wins against Gnomie</option></select>
+            <select id="lb-board"><option value="all">All games</option><option value="drop-the-ball">Drop the Ball</option><option value="dice-duel">Dice Duel</option><option value="dice-duel-wins">Dice Duel wins against Gnomie</option><option value="too-far">Don&rsquo;t Bust</option><option value="too-far-wins">Don&rsquo;t Bust wins against Gnomie</option><option value="spin-the-bottle">Spin the Bottle</option><option value="mancala">Mancala</option><option value="mancala-wins">Mancala wins against Gnomie</option><option value="five-in-a-row">5 in a Row</option><option value="five-in-a-row-wins">5 in a Row wins against Gnomie</option></select>
           </div>
           <p class="muted spoof-rule">&#127917; Spoof rule: real players who put in at least <input type="text" id="spoof-th" inputmode="decimal" style="width:70px" /> rank above every spoof wallet. <button type="button" class="ghost small" id="spoof-th-go">Save</button></p>
           <div class="table-wrap"><table id="lb"></table></div>
@@ -559,6 +564,39 @@
           document.body.appendChild(wrap);
         });
       }
+      // Split an entry: how much was the Throne load, the rest is a credit from you.
+      // Resolves to { throne, order } (throne in cents), or null.
+      function uiSplit(total, startThrone, startOrder) {
+        return new Promise(function(resolve) {
+          var wrap = document.createElement('div');
+          wrap.className = 'dlg-wrap';
+          wrap.innerHTML = '<div class="dlg" role="dialog" aria-modal="true">' +
+            '<p class="dlg-msg">This entry added <strong>' + money(total) + '</strong>. How much of it was a Throne load? The rest stays as a credit from you. Their balance doesn’t change.</p>' +
+            '<div class="split-grid"><label>Throne load ($)<input type="text" inputmode="decimal" data-t /></label>' +
+            '<label>Credit from you ($)<input type="text" inputmode="decimal" data-c /></label>' +
+            '<label class="full">Throne order # (optional)<input type="text" data-o /></label></div>' +
+            '<p class="split-err" data-e></p>' +
+            '<div class="dlg-btns"><button type="button" class="ghost" data-x>Cancel</button><button type="button" data-ok>Save</button></div></div>';
+          var t = wrap.querySelector('[data-t]'), c = wrap.querySelector('[data-c]'), o = wrap.querySelector('[data-o]'), e = wrap.querySelector('[data-e]');
+          t.value = (startThrone / 100).toFixed(2); c.value = ((total - startThrone) / 100).toFixed(2); o.value = startOrder || '';
+          t.addEventListener('input', function() { var v = cents(t.value); if (!isNaN(v) && v >= 0 && v <= total) c.value = ((total - v) / 100).toFixed(2); });
+          c.addEventListener('input', function() { var v = cents(c.value); if (!isNaN(v) && v >= 0 && v <= total) t.value = ((total - v) / 100).toFixed(2); });
+          function close(v) { wrap.remove(); document.removeEventListener('keydown', key); resolve(v); }
+          function save() {
+            var v = cents(t.value), cr = cents(c.value);
+            if (isNaN(v) || v < 0 || v > total) { e.textContent = 'The Throne load has to be between $0.00 and ' + money(total) + '.'; return; }
+            if (isNaN(cr) || v + cr !== total) { e.textContent = 'The two parts need to add up to ' + money(total) + '.'; return; }
+            close({ throne: v, order: o.value.trim() });
+          }
+          function key(ev) { if (ev.key === 'Escape') close(null); if (ev.key === 'Enter') { ev.preventDefault(); save(); } }
+          wrap.querySelector('[data-ok]').addEventListener('click', save);
+          wrap.querySelector('[data-x]').addEventListener('click', function() { close(null); });
+          wrap.addEventListener('click', function(ev) { if (ev.target === wrap) close(null); });
+          document.addEventListener('keydown', key);
+          document.body.appendChild(wrap);
+          setTimeout(function() { t.focus(); t.select(); }, 20);
+        });
+      }
       function uiConfirm(msg) { return uiDialog(msg, { cancel: true, ok: 'Yes' }); }
       function uiPrompt(msg, value) { return uiDialog(msg, { cancel: true, input: true, value: value, ok: 'OK' }); }
       function uiAlert(msg) { return uiDialog(msg, {}); }
@@ -718,7 +756,7 @@
         if (wb) wb.remove();
         if (s.closeRequests) $('tabs').querySelector('[data-tab=wallets]').insertAdjacentHTML('beforeend', '<span class="badge" title="Asked to close">' + s.closeRequests + '</span>');
 
-        var GAME_NAMES = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Too Far', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala' };
+        var GAME_NAMES = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala' };
         table($('popular'), [{ t: 'Game' }, { t: 'Plays (period)', num: 1 }, { t: 'Taken (period)', num: 1 }, { t: 'Plays (all time)', num: 1 }, { t: 'Players', num: 1 }, { t: 'Taken (all time)', num: 1 }],
           (s.popular || []).map(function(g) {
             return '<tr><td>' + esc(GAME_NAMES[g.game] || g.game) + '</td><td class="num">' + num(g.plays_period || 0) + '</td><td class="num">' + money(g.cents_period || 0) + '</td><td class="num">' + num(g.plays) + '</td><td class="num">' + num(g.players) + '</td><td class="num">' + money(g.cents) + '</td></tr>';
@@ -801,11 +839,11 @@
           { label: 'Players won', value: pct(tf.wins, tfPlayed), sub: num(tf.wins) + ' games (incl. Gnomie going over)' },
           { label: 'Ties', value: pct(tf.ties, tfPlayed), sub: num(tf.ties) + ' games' },
           { label: 'Gnomie won', value: pct(tf.losses, tfPlayed), sub: num(tf.losses) + ' games' },
-          { label: 'Went too far', value: pct(tf.busts, tfPlayed), sub: num(tf.busts) + ' games' },
+          { label: 'Busted', value: pct(tf.busts, tfPlayed), sub: num(tf.busts) + ' games' },
           { label: 'Average total', value: tfPlayed ? Math.round(tf.avg_you) + ' vs ' + Math.round(tf.avg_gnomie) : '—', sub: 'player vs Gnomie' },
           { label: 'Players', value: num(tf.players) }
         ]);
-        table($('tf-amounts'), [{ t: 'Played for' }, { t: 'Games', num: 1 }, { t: 'Won', num: 1 }, { t: 'Tied', num: 1 }, { t: 'Lost', num: 1 }, { t: 'Too far', num: 1 }, { t: 'Paid', num: 1 }],
+        table($('tf-amounts'), [{ t: 'Played for' }, { t: 'Games', num: 1 }, { t: 'Won', num: 1 }, { t: 'Tied', num: 1 }, { t: 'Lost', num: 1 }, { t: 'Busted', num: 1 }, { t: 'Paid', num: 1 }],
           s.toofar.byAmount.map(function(r) {
             return '<tr><td>' + money(r.amount_cents) + '</td><td class="num">' + num(r.n) + '</td><td class="num">' + pct(r.wins, r.n) + '</td><td class="num">' + pct(r.ties, r.n) +
               '</td><td class="num">' + pct(r.losses, r.n) + '</td><td class="num">' + pct(r.busts, r.n) + '</td><td class="num">' + money(r.cents) + '</td></tr>';
@@ -840,7 +878,7 @@
         var hr = new Date().getHours();
         $('hello').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Gnomie';
         var fav = (s.popular || [])[0];
-        var GN = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Too Far (31)', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row' };
+        var GN = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust (31)', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row' };
         $('home-nums').innerHTML =
           '<div><span>Sent this week</span><b>' + money(credited.d7) + '</b></div>' +
           '<div><span>Played this week</span><b>' + money((s.series || []).slice(-7).reduce(function(t, d) { return t + (d.spent || 0); }, 0)) + '</b></div>' +
@@ -1337,11 +1375,11 @@
         document.querySelectorAll('[data-hist]').forEach(function(b) {
           b.addEventListener('click', async function() {
             var r = hist[+b.dataset.hist], opts = [];
-            if (r.loadId) opts.push(['load', 'Change the amount or order #']);
+            if (r.loadId) { opts.push(['load', 'Change the amount or order #']); if (r.cents > 0) opts.push(['split', 'Split into Throne load + credit']); }
             if (r.adjId) {
               opts.push(['note', r.note ? 'Edit the note' : 'Add a note']);
               if (r.note) opts.push(['vis', r.notePublic ? 'Make the note private' : 'Show the note to them']);
-              if (r.cents > 0 && (r.adjKind === 'load' || r.adjKind === 'adjust')) opts.push(['convert', 'Make it a Throne load']);
+              if (r.cents > 0 && r.adjKind !== 'set') opts.push(['split', 'Split into Throne load + credit']);
             }
             var pick = await uiChoose(r.label + ' · ' + (r.cents > 0 ? '+' : '') + money(r.cents), opts);
             if (!pick) return;
@@ -1354,13 +1392,10 @@
               act('hq/adjustment-note', { id: r.adjId, note: t, public: !!r.notePublic });
             } else if (pick === 'vis') {
               act('hq/adjustment-note', { id: r.adjId, note: r.note, public: !r.notePublic });
-            } else if (pick === 'convert') {
-              var total = r.cents;
-              var a2 = await uiPrompt('This added ' + money(total) + '. How much of it was the Throne load ($)? The rest becomes a bonus.', (total / 100).toFixed(2)); if (a2 == null) return;
-              var load = cents(a2); if (isNaN(load) || load < 0 || load > total) { err.textContent = 'The load has to be between $0 and ' + money(total) + '.'; return; }
-              var o2 = await uiPrompt('Throne order number (optional):', ''); if (o2 == null) return;
-              act('hq/adjustment-to-load', { id: r.adjId, cents: load, bonus: total - load, order: o2 },
-                'Record ' + money(load) + ' as a Throne load' + (total - load ? ' and ' + money(total - load) + ' as a bonus' : '') + '? Their balance stays the same.');
+            } else if (pick === 'split') {
+              var sp = await uiSplit(r.cents, r.loadId ? r.cents : 0, r.order || '');
+              if (!sp) return;
+              act('hq/split', { type: r.loadId ? 'load' : 'adj', id: r.loadId || r.adjId, throne: sp.throne, order: sp.order });
             }
           });
         });

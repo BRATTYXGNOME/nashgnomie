@@ -353,3 +353,74 @@ export function gnomieFive(b) {
   }
   return best[randomBelow(best.length)];
 }
+
+// ---------- Dots and Boxes vs Gnomie ----------
+// A board of N x N boxes (the fan picks 3, 4 or 5). Players take turns drawing
+// one line between two dots. Close a box and it's yours, and you go again.
+// When every line is drawn, most boxes wins (4x4 can tie 8-8).
+// Lines: h[r][c] = horizontal line above box row r (r 0..N), col c (0..N-1);
+//        v[r][c] = vertical line left of box col c (0..N), row r (0..N-1).
+export const DOTS = { SIZES: [3, 4, 5], PAY: { win: 1, tie: 1.5, lose: 2 } };
+export function dotsStart(n) {
+  return { n, h: Array.from({ length: n + 1 }, () => new Array(n).fill(0)), v: Array.from({ length: n }, () => new Array(n + 1).fill(0)),
+           boxes: Array.from({ length: n }, () => new Array(n).fill(0)) };   // 0 / 'y' / 'g'
+}
+function dotsCopy(b) { return { n: b.n, h: b.h.map(r => r.slice()), v: b.v.map(r => r.slice()), boxes: b.boxes.map(r => r.slice()) }; }
+export function dotsMoves(b) {
+  const out = [];
+  for (let r = 0; r <= b.n; r++) for (let c = 0; c < b.n; c++) if (!b.h[r][c]) out.push(['h', r, c]);
+  for (let r = 0; r < b.n; r++) for (let c = 0; c <= b.n; c++) if (!b.v[r][c]) out.push(['v', r, c]);
+  return out;
+}
+function sidesOf(b, r, c) { return (b.h[r][c] ? 1 : 0) + (b.h[r + 1][c] ? 1 : 0) + (b.v[r][c] ? 1 : 0) + (b.v[r][c + 1] ? 1 : 0); }
+function boxesBy(kind, r, c, n) {   // the 1 or 2 boxes a line touches
+  const out = [];
+  if (kind === 'h') { if (r > 0) out.push([r - 1, c]); if (r < n) out.push([r, c]); }
+  else { if (c > 0) out.push([r, c - 1]); if (c < n) out.push([r, c]); }
+  return out;
+}
+// Draws a line for `who`; returns { board, closed: [[r,c]...], again }
+export function dotsPlay(b, move, who) {
+  const [kind, r, c] = move, n = dotsCopy(b);
+  (kind === 'h' ? n.h : n.v)[r][c] = who;
+  const closed = [];
+  for (const [br, bc] of boxesBy(kind, r, c, b.n)) if (sidesOf(n, br, bc) === 4 && !n.boxes[br][bc]) { n.boxes[br][bc] = who; closed.push([br, bc]); }
+  return { board: n, closed, again: closed.length > 0 };
+}
+export function dotsDone(b) { return dotsMoves(b).length === 0; }
+export function dotsScore(b) { let y = 0, g = 0; b.boxes.forEach(row => row.forEach(x => { if (x === 'y') y++; else if (x === 'g') g++; })); return { y, g }; }
+export function dotsValid(b, m) {
+  if (!Array.isArray(m) || m.length !== 3) return false;
+  const [k, r, c] = m;
+  if (k === 'h') return Number.isInteger(r) && Number.isInteger(c) && r >= 0 && r <= b.n && c >= 0 && c < b.n && !b.h[r][c];
+  if (k === 'v') return Number.isInteger(r) && Number.isInteger(c) && r >= 0 && r < b.n && c >= 0 && c <= b.n && !b.v[r][c];
+  return false;
+}
+// Gnomie: takes boxes she can close (usually), avoids handing you a box
+// (usually), and when every move gives something away she gives the least.
+// She's fair but beatable: sometimes she plays loose.
+function givesAway(b, m) {   // how many boxes a move leaves one line from closing
+  const after = dotsPlay(b, m, 'g').board;
+  return boxesBy(m[0], m[1], m[2], b.n).filter(([r, c]) => !after.boxes[r][c] && sidesOf(after, r, c) === 3).length;
+}
+function chainSize(b, m) {   // roughly how many boxes you'd collect after this move
+  let cur = dotsPlay(b, m, 'g').board, total = 0;
+  for (let guard = 0; guard < 60; guard++) {
+    const take = dotsMoves(cur).find(x => dotsPlay(cur, x, 'y').closed.length);
+    if (!take) break;
+    const p = dotsPlay(cur, take, 'y'); total += p.closed.length; cur = p.board;
+  }
+  return total;
+}
+export function gnomieDots(b) {
+  const moves = dotsMoves(b);
+  const closers = moves.filter(m => dotsPlay(b, m, 'g').closed.length);
+  if (closers.length && randomBelow(100) < 85) return closers[randomBelow(closers.length)];
+  if (randomBelow(100) < 22) return moves[randomBelow(moves.length)];        // a loose move now and then
+  const safe = moves.filter(m => !dotsPlay(b, m, 'g').closed.length && givesAway(b, m) === 0);
+  if (safe.length && randomBelow(100) < 80) return safe[randomBelow(safe.length)];
+  // everything gives something away: give the smallest chain
+  let best = [], bestV = Infinity;
+  for (const m of moves) { const v = chainSize(b, m); if (v < bestV) { bestV = v; best = [m]; } else if (v === bestV) best.push(m); }
+  return best[randomBelow(best.length)];
+}

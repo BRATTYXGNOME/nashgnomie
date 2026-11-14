@@ -227,7 +227,7 @@ function publicWallet(w) {
     name: w.name, anonymous: !w.name, anonNumber: w.anon_number,
     balanceCents: w.balance_cents, drainedCents: w.total_drained_cents, loadedCents: w.total_loaded_cents,
     heldCents: (w.held_duel || 0) + (w.held_toofar || 0) + (w.held_mancala || 0) + (w.held_five || 0), duelWins: w.duel_wins || 0, twoFactor: !!w.two_factor,
-    heldFor: [w.held_duel ? 'Dice Duel' : null, w.held_toofar ? 'Too Far' : null, w.held_mancala ? 'Mancala' : null, w.held_five ? '5 in a Row' : null].filter(Boolean), tooFarWins: w.toofar_wins || 0, mancalaWins: w.mancala_wins || 0, fiveWins: w.five_wins || 0,
+    heldFor: [w.held_duel ? 'Dice Duel' : null, w.held_toofar ? 'Don’t Bust' : null, w.held_mancala ? 'Mancala' : null, w.held_five ? '5 in a Row' : null].filter(Boolean), tooFarWins: w.toofar_wins || 0, mancalaWins: w.mancala_wins || 0, fiveWins: w.five_wins || 0,
     nudge: w.nudge_id && !w.break_since ? { id: w.nudge_id, message: w.nudge_message || '' } : null,
     closeRequested: !!w.close_requested_at, onBreak: !!w.break_since,
     color: colorOf(w), loadCount: w.load_count || 0, telegram: w.telegram || '', throneName: w.throne_name || ''
@@ -439,8 +439,8 @@ routes['POST 2fa/off'] = async (env, request) => {
 // Active games show the amount set aside; finished games show what was paid.
 const BOARD_NAMES = { sweet: 'Sweet', spicy: 'Spicy', savage: 'Savage' };
 const DUEL_RESULT = { win: 'You won', tie: 'Tie', lose: 'Gnomie won' };
-const TOOFAR_RESULT = { win: 'You won', tie: 'Tie', lose: 'Gnomie won', bust: 'Went too far' };
-const ADJ_LABEL = { load: 'Load added by Gnomie', adjust: 'Balance adjusted by Gnomie', set: 'Balance set by Gnomie', bonus: 'Correction: bonus from Gnomie' };
+const TOOFAR_RESULT = { win: 'You won', tie: 'Tie', lose: 'Gnomie won', bust: 'Bust' };
+const ADJ_LABEL = { credit: 'Credit from Gnomie', load: 'Load added by Gnomie', adjust: 'Balance adjusted by Gnomie', set: 'Balance set by Gnomie', bonus: 'Correction: bonus from Gnomie' };
 
 async function buildStatement(db, w, forFan) {
   const id = w.id, limit = 1000;
@@ -475,8 +475,8 @@ async function buildStatement(db, w, forFan) {
     else if (g.status === 'done') add('u' + g.id, g.finished_at || g.created_at, 'Dice Duel', (DUEL_RESULT[g.outcome] || g.outcome) + ' · played for ' + money(g.amount_cents), -(g.paid_cents || 0));
   }
   for (const g of toofar.results) {
-    if (g.status === 'active') add('t' + g.id, g.created_at, 'Too Far', 'In progress · set aside', -g.held_cents);
-    else if (g.status === 'done') add('t' + g.id, g.finished_at || g.created_at, 'Too Far', (TOOFAR_RESULT[g.outcome] || g.outcome) + ' · played for ' + money(g.amount_cents), -(g.paid_cents || 0));
+    if (g.status === 'active') add('t' + g.id, g.created_at, 'Don’t Bust', 'In progress · set aside', -g.held_cents);
+    else if (g.status === 'done') add('t' + g.id, g.finished_at || g.created_at, 'Don’t Bust', (TOOFAR_RESULT[g.outcome] || g.outcome) + ' · played for ' + money(g.amount_cents), -(g.paid_cents || 0));
   }
   for (const g of mancala.results) {
     if (g.status === 'active') add('m' + g.id, g.created_at, 'Mancala', 'In progress · set aside', -g.held_cents);
@@ -2126,6 +2126,45 @@ routes['POST hq/adjustment-to-load'] = async (env, request) => {
     env.DB.prepare('UPDATE wallets SET balance_cents = balance_cents - ?, total_loaded_cents = total_loaded_cents - ? WHERE id = ?').bind(a.cents, a.kind === 'load' ? a.cents : 0, a.wallet_id)
   ]);
   await recordManualLoad(env, request, w, cents, cleanOrder(b.order), bonus, a.note);
+  return json({ ok: true });
+};
+
+// Split one history entry into a Throne load + a credit from Gnomie (the balance
+// stays the same). Works on a hand-added change (type 'adj') or a load (type 'load').
+// `throne` is how much of the entry was the Throne load; the rest becomes a credit.
+routes['POST hq/split'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
+  const throne = Math.round(Number(b.throne)), order = cleanOrder(b.order), now = Date.now();
+  let w, total, credit, ext, loadId = null, note = '', pub = 1;
+  const stmts = [];
+  if (b.type === 'load') {
+    const l = await env.DB.prepare("SELECT * FROM loads WHERE id = ? AND status = 'credited'").bind(b.id).first();
+    if (!l || !l.wallet_id) throw new Oops('That load can’t be split.');
+    total = l.amount_cents; w = l.wallet_id; loadId = l.id;
+    ext = order ? 'manual:' + order + ':' + l.id : l.external_id;
+  } else {
+    const a = await env.DB.prepare('SELECT * FROM adjustments WHERE id = ?').bind(b.id).first();
+    if (!a || a.cents <= 0 || a.kind === 'set') throw new Oops('That change can’t be split.');
+    total = a.cents; w = a.wallet_id; note = a.note || ''; pub = a.public ? 1 : 0;
+    stmts.push(env.DB.prepare('DELETE FROM adjustments WHERE id = ?').bind(a.id));
+    // what this change already counted as money sent comes out; the Throne part goes back in below
+    if (a.kind === 'load') stmts.push(env.DB.prepare('UPDATE wallets SET total_loaded_cents = total_loaded_cents - ? WHERE id = ?').bind(a.cents, w));
+  }
+  if (!Number.isInteger(throne) || throne < 0 || throne > total) throw new Oops('The Throne part has to be between $0 and ' + money(total) + '.');
+  credit = total - throne;
+  if (loadId) {
+    if (throne > 0) stmts.push(env.DB.prepare("UPDATE loads SET amount_cents = ?, paid_cents = ?, external_id = ?, item_name = 'correction', updated_at = ? WHERE id = ?").bind(throne, throne, ext, now, loadId));
+    else stmts.push(env.DB.prepare('DELETE FROM loads WHERE id = ?').bind(loadId));
+    stmts.push(env.DB.prepare('UPDATE wallets SET total_loaded_cents = total_loaded_cents - ? WHERE id = ?').bind(credit, w));
+  } else if (throne > 0) {
+    stmts.push(env.DB.prepare(`INSERT INTO loads (platform, external_id, wallet_id, amount_cents, paid_cents, currency, gifter, message, item_name, status, created_at, updated_at)
+      VALUES ('throne', ?, ?, ?, ?, 'USD', '', '', 'correction', 'credited', ?, ?)`).bind('manual:' + (order || now) + ':' + now, w, throne, throne, now, now));
+    stmts.push(env.DB.prepare('UPDATE wallets SET total_loaded_cents = total_loaded_cents + ? WHERE id = ?').bind(throne, w));
+  }
+  if (credit > 0) stmts.push(env.DB.prepare('INSERT INTO adjustments (wallet_id, cents, kind, note, public, created_at) VALUES (?, ?, ?, ?, ?, ?)').bind(w, credit, 'credit', note, pub, now));
+  await env.DB.batch(stmts);
+  await logEvent(env, request, 'backstage_split', w, money(total) + ' → Throne ' + money(throne) + (order ? ' · order #' + order : '') + ' + credit ' + money(credit));
   return json({ ok: true });
 };
 

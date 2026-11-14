@@ -52,7 +52,7 @@
   function boards() {
     G.renderLeaderboard(document.getElementById('lb-game'), GAME);
     renderWins();
-    G.renderGameActivity(document.getElementById('game-activity'), 'Too Far');
+    G.renderGameActivity(document.getElementById('game-activity'), 'Don’t Bust');
   }
 
   // Small, low-key "Most wins against Gnomie" strip (this game only)
@@ -115,7 +115,7 @@
         '<label class="tf-amount-box"><span class="tf-amount-cur">$</span><input type="text" id="tf-amt" inputmode="decimal" autocomplete="off" placeholder="0" value="' + val + '" aria-label="Amount to play for" /></label>' +
         (chips.length ? '<div class="tf-chips">' + chips.map(function(c) { return '<button type="button" class="tf-chip' + (state.chosen === c ? ' on' : '') + '" data-c="' + c + '">' + G.shortMoney(c) + '</button>'; }).join('') +
           (max >= T.MIN_CENTS ? '<button type="button" class="tf-chip" data-c="' + max + '">Max</button>' : '') + '</div>' : '') +
-        '<p class="tf-amount-note">' + (max >= T.MIN_CENTS ? 'From ' + money(T.MIN_CENTS) + ' up to ' + money(max) + ' (your wallet covers going too far on that).' : 'Your wallet needs at least ' + money(Math.round(T.MIN_CENTS * T.PAY.bust)) + ' to play.') + '</p>' +
+        '<p class="tf-amount-note">' + (max >= T.MIN_CENTS ? 'From ' + money(T.MIN_CENTS) + ' up to ' + money(max) + ' (your wallet covers a bust on that).' : 'Your wallet needs at least ' + money(Math.round(T.MIN_CENTS * T.PAY.bust)) + ' to play.') + '</p>' +
       '</div>';
   }
   function readAmount() {
@@ -128,7 +128,7 @@
     if (!c) return 'Type an amount to play for.';
     if (c < T.MIN_CENTS) return 'The smallest amount is ' + money(T.MIN_CENTS) + '.';
     if (c > T.MAX_CENTS) return 'The biggest amount is ' + money(T.MAX_CENTS) + '.';
-    if (Math.round(c * T.PAY.bust) > bal) return 'Your wallet covers up to ' + money(maxFor(bal)) + ' (going too far costs 2.5&times;).';
+    if (Math.round(c * T.PAY.bust) > bal) return 'Your wallet covers up to ' + money(maxFor(bal)) + ' (a bust costs 2.5&times;).';
     return '';
   }
 
@@ -138,7 +138,7 @@
       '<div class="win"><span>' + (small ? 'Win' : 'If You Win') + '</span><strong>' + money(-p.win) + '</strong></div>' +
       '<div class="tie"><span>' + (small ? 'Tie' : 'If We Tie') + '</span><strong>' + money(-p.tie) + '</strong></div>' +
       '<div class="lose"><span>' + (small ? 'Lose' : 'If Gnomie Wins') + '</span><strong>' + money(-p.lose) + '</strong></div>' +
-      '<div class="lose bust"><span>Too Far</span><strong>' + money(-p.bust) + '</strong></div>' +
+      '<div class="lose bust"><span>Bust</span><strong>' + money(-p.bust) + '</strong></div>' +
     '</div>';
   }
 
@@ -241,7 +241,7 @@
       var you = state.view.you.concat([res.card]);
       await wait(250);
       if (res.result && res.result.outcome === 'bust') {
-        show({ you: you, newYou: you.length - 1, stagger: 0, status: 'You drew ' + aOrAn(res.card.v) + '… that&rsquo;s ' + total(you) + '. Too far!' });
+        show({ you: you, newYou: you.length - 1, stagger: 0, status: 'You drew ' + aOrAn(res.card.v) + '… that&rsquo;s ' + total(you) + '. Bust!' });
         document.dispatchEvent(new CustomEvent('wallet:change', { detail: res.wallet }));
         await wait(500);
         splat();
@@ -300,7 +300,7 @@
     state.finalView = { you: state.view.you, gnomie: state.view.gnomie };
     var oc = result.outcome;
     if (oc !== 'bust') G.celebrate(oc === 'win' || oc === 'gnomie_bust' ? 'win' : oc === 'tie' ? 'tie' : 'lose',
-      oc === 'win' ? 'You Won!' : oc === 'gnomie_bust' ? 'She Went Too Far!' : oc === 'tie' ? 'Tie!' : 'Gnomie Wins!', money(-result.paidCents));
+      oc === 'win' ? 'You Won!' : oc === 'gnomie_bust' ? 'Gnomie Busted!' : oc === 'tie' ? 'Tie!' : 'Gnomie Wins!', money(-result.paidCents));
     state.result = result; state.game = null; state.view = null; state.busy = false;
     boards();
     render();
@@ -310,7 +310,7 @@
   function renderResult() {
     var r = state.result, fv = state.finalView;
     if (state.chosen == null) state.chosen = r.amount;
-    var titles = { win: 'You Won!', gnomie_bust: 'Gnomie Went Too Far!', tie: 'It&rsquo;s a tie', lose: 'Gnomie Won!', bust: 'Too Far!' };
+    var titles = { win: 'You Won!', gnomie_bust: 'Gnomie Busted!', tie: 'It&rsquo;s a tie', lose: 'Gnomie Won!', bust: 'Bust!' };
     var notes = {
       win: money(-r.paidCents),
       gnomie_bust: 'She went over ' + T.TARGET + ', so you win: ' + money(-r.paidCents),
@@ -370,7 +370,7 @@
     var el = document.createElement('div');
     el.className = 'tf-splat';
     el.setAttribute('aria-hidden', 'true');
-    el.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><g class="goo">' + shapes + drips + '</g>' + shine + '</svg><span class="tf-splat-word">TOO FAR!</span>';
+    el.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><g class="goo">' + shapes + drips + '</g>' + shine + '</svg><span class="tf-splat-word">BUST!</span>';
     document.body.appendChild(el);
     setTimeout(function() { el.classList.add('fade'); }, 2300);
     setTimeout(function() { el.remove(); }, 3100);
@@ -396,7 +396,7 @@
       [{ gnomie: [C(7), C(10), C(4)], newGnomie: 2, newYou: null, status: 'Gnomie draws a 4. She has 21&hellip;' }, 1700],
       [{ newGnomie: null, status: 'Close enough. Press <strong>Stay</strong>, and Gnomie keeps playing by her own rule.' }, 2400],
       [{ gnomie: [C(7), C(10), C(4), C(8)], newGnomie: 3, status: 'Gnomie stops on 29. Closer to 31 wins, so she wins this one.' }, 2800],
-      [{ newGnomie: null, status: 'If YOU go over 31, that&rsquo;s <strong>too far</strong>, and you lose the most&hellip;' }, 2000],
+      [{ newGnomie: null, status: 'If YOU go over 31, you <strong>bust</strong>, and you lose the most&hellip;' }, 2000],
       ['splat', 2600],
       [{ status: 'That&rsquo;s it! Pick an amount to play for real.' }, 2000]
     ];

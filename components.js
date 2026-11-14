@@ -312,7 +312,7 @@
             '<a href="games.html" class="nav-all-games">All Games</a>' +
             '<a href="drop-the-ball.html">Drop the Ball</a>' +
             '<a href="dice-duel.html">Dice Duel</a>' +
-            '<a href="too-far.html">Too Far (31) <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
+            '<a href="too-far.html">Don’t Bust (31) <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
             '<a href="spin-the-bottle.html">Spin the Bottle <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
             '<a href="mancala.html">Mancala <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
             '<a href="five-in-a-row.html">5 in a Row <span class="nav-new" data-new-until="2026-12-05">NEW</span></a>' +
@@ -363,7 +363,7 @@
         '<a href="games.html" class="nav-all-games">All Games</a>' +
         '<a href="drop-the-ball.html">Drop the Ball</a>' +
         '<a href="dice-duel.html">Dice Duel</a>' +
-        '<a href="too-far.html">Too Far (31) <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
+        '<a href="too-far.html">Don’t Bust (31) <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
         '<a href="spin-the-bottle.html">Spin the Bottle <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
         '<a href="mancala.html">Mancala <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
         '<a href="five-in-a-row.html">5 in a Row <span class="nav-new" data-new-until="2026-12-05">NEW</span></a>' +

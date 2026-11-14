@@ -1269,7 +1269,7 @@
       }
       if (kind === 'issue') {
         var reqs = [];
-        var GAMES = ['Drop the Ball', 'Dice Duel', 'Too Far', 'Spin the Bottle', 'Something else'];
+        var GAMES = ['Drop the Ball', 'Dice Duel', 'Don’t Bust', 'Spin the Bottle', 'Something else'];
         var intro2 = el('p', { class: 'wl-modal-lead' }, 'Did a game freeze, glitch, or charge you the wrong amount? Tell Gnomie what happened and she&rsquo;ll look into it.');
         var tw2 = twoWays('Send Gnomie an alert',
           '<label class="wl-field"><span>Which game?</span><select name="game">' + GAMES.map(function(g) { return '<option>' + g + '</option>'; }).join('') + '</select></label>' +
