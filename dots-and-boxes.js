@@ -16,6 +16,12 @@
   var PFP = 'https://i.ibb.co/7Nj6352Q/pfp.jpg';
   var page = document.querySelector('.dx-page');
   var root = document.getElementById('dx-root');
+  // Give up: counts as a loss (the amount set aside), then back to the start screen
+  G.wireGiveUp(root, GAME, function() { return state.game && state.game.held; }, function() {
+    state.game = null; state.view = null; state.result = null; state.finalView = null; state.busy = false;
+    if (typeof boards === 'function') boards();
+    render();
+  });
   var CELL = 60, PAD = 16, INSET = 13;   // INSET: the tap area for a line stops this far short of each dot
   var lastPointer = 'mouse';
 
@@ -213,7 +219,7 @@
       '</div>' +
       '<div class="dx-wrap">' + boardHTML(v, canPlay) + (v.coin ? coinHTML(v.coin) : '') + '</div>' +
       '<p class="duel-status-line dx-status">' + v.status + '</p>' +
-      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : '');
+      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : G.giveUpHTML());
     root.querySelectorAll('.dx-hit').forEach(function(el) {
       var key = el.getAttribute('data-line');
       var go = function() { state.pending = null; var p = key.split(','); play([p[0], +p[1], +p[2]]); };

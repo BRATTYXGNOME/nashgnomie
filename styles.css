@@ -5218,3 +5218,56 @@ body.wl-modal-open { overflow: hidden; }
 .ticker-glow { text-shadow: 0 0 8px rgba(255, 95, 162, 0.9); animation: ticker-glow 1.8s ease-in-out infinite alternate; }
 @keyframes ticker-glow { from { text-shadow: 0 0 4px rgba(255, 95, 162, 0.5); } to { text-shadow: 0 0 12px rgba(255, 95, 162, 1); } }
 .ticker-copy { cursor: copy; }
+
+/* Give up a game in progress */
+.game-giveup { display: block; margin: 14px auto 0; font-size: 12px; opacity: 0.7; }
+.game-giveup:hover { opacity: 1; }
+
+/* =========================================
+   READ MY MIND (read-my-mind.html)
+   ========================================= */
+.rm-head { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 4px 0 12px; text-align: center; }
+.rm-head p { margin: 0; font-size: 14px; color: var(--text-body); }
+.rm-board { display: flex; flex-direction: column; gap: 6px; align-items: center; margin: 0 auto 8px; }
+.rm-board.shake .rm-row.current { animation: rm-shake 0.35s; }
+@keyframes rm-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.rm-row { display: grid; grid-template-columns: repeat(6, 46px) 58px; gap: 6px; align-items: center; padding-left: 64px; }
+.rm-tile { display: grid; place-items: center; height: 46px; border-radius: 9px; border: 2px solid rgba(255, 255, 255, 0.1); font: 800 21px var(--font-body); color: var(--text-light); background: rgba(255, 255, 255, 0.02); text-transform: uppercase; }
+.rm-row.current .rm-tile { border-color: rgba(255, 95, 162, 0.28); }
+.rm-tile.typed { border-color: rgba(255, 255, 255, 0.5); animation: rm-pop 0.12s ease-out; }
+@keyframes rm-pop { from { transform: scale(1.12); } to { transform: scale(1); } }
+.rm-tile.m-g, .rm-key.m-g, .rm-legend i.m-g { background: var(--you); border-color: var(--you); color: #fff; }
+.rm-tile.m-y, .rm-key.m-y, .rm-legend i.m-y { background: #d9a425; border-color: #d9a425; color: #fff; }
+.rm-tile.m-x, .rm-key.m-x, .rm-legend i.m-x { background: #2a2228; border-color: #2a2228; color: rgba(255, 255, 255, 0.55); }
+.rm-tile.flip { animation: rm-flip 0.45s ease-in-out both; animation-delay: var(--d, 0s); }
+@keyframes rm-flip { 0% { transform: rotateX(0); background: rgba(255, 255, 255, 0.02); border-color: rgba(255, 255, 255, 0.5); color: var(--text-light); } 49% { transform: rotateX(90deg); background: rgba(255, 255, 255, 0.02); border-color: rgba(255, 255, 255, 0.5); color: var(--text-light); } 51% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+.rm-cost { font-size: 12px; color: var(--text-muted); text-align: left; padding-left: 4px; }
+.rm-legend { display: flex; justify-content: center; gap: 14px; font-size: 11.5px; color: var(--text-muted); margin: 4px 0 14px; flex-wrap: wrap; }
+.rm-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.rm-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.rm-amount { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 10px; }
+.rm-amount-label { font-size: 13px; color: var(--text-body); }
+.rm-amount-box { display: flex; align-items: center; gap: 3px; padding: 6px 14px; background: var(--bg); border: 1.5px solid var(--accent-dim); border-radius: 12px; font: 700 22px var(--font-body); color: var(--accent); }
+.rm-amount-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+.rm-amount-box input { width: 100px; background: none; border: 0; outline: none; color: var(--text-light); font: 700 24px var(--font-body); }
+.rm-keys { display: flex; flex-direction: column; gap: 6px; align-items: center; margin: 14px 0 4px; }
+.rm-krow { display: flex; gap: 5px; }
+.rm-key { min-width: 34px; height: 46px; padding: 0 4px; border-radius: 7px; border: 0; background: #3a2f36; color: #fff; font: 700 14px var(--font-body); cursor: pointer; transition: transform 0.08s; }
+.rm-key:active { transform: scale(0.94); }
+.rm-key.wide { min-width: 58px; font-size: 12px; }
+.rm-again { margin: 4px 0 14px; }
+@media (max-width: 520px) {
+  .rm-row { grid-template-columns: repeat(6, 40px) 50px; gap: 5px; padding-left: 50px; }
+  .rm-tile { height: 40px; font-size: 18px; }
+  .rm-key { min-width: 0; width: 8.6vw; height: 44px; font-size: 13px; padding: 0; }
+  .rm-key.wide { width: 13vw; font-size: 11px; }
+  .rm-krow { gap: 4px; }
+}
+/* Games page card art */
+.game-card-mind { display: grid; place-items: center; background: radial-gradient(circle at 50% 120%, rgba(255, 95, 162, 0.25), transparent 60%), var(--bg); }
+.gc-mind { display: grid; grid-template-columns: repeat(6, 18px); gap: 4px; }
+.gc-mind i { height: 18px; border-radius: 4px; background: #2a2228; font: 800 10px/18px Inter, sans-serif; font-style: normal; color: #fff; text-align: center; }
+.gc-mind i.g { background: #a78bfa; }
+.gc-mind i.y { background: #d9a425; }
+.gc-mind i.e { background: transparent; border: 1.5px solid rgba(255, 255, 255, 0.14); }
+@media (max-width: 520px) { .gc-mind { grid-template-columns: repeat(6, 14px); gap: 3px; } .gc-mind i { height: 14px; line-height: 14px; font-size: 8px; } }

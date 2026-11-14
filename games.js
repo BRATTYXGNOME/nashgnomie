@@ -506,6 +506,10 @@
     dotsState: async function() { return (await call('GET', 'dots')).game; },
     dotsStart: async function(size, amountCents) { return call('POST', 'dots/start', { size: size, amount: amountCents }); },
     dotsMove: async function(line) { return call('POST', 'dots/move', { line: line }); },
+    mindState: async function() { return (await call('GET', 'mind')).game; },
+    mindStart: async function() { return call('POST', 'mind/start', {}); },
+    mindGuess: async function(word, amountCents) { return call('POST', 'mind/guess', { word: word, amount: amountCents }); },
+    mindGiveUp: async function() { return call('POST', 'mind/give-up', {}); },
     bottleSpin: async function(boardKey, pick) { return call('POST', 'bottle/spin', { board: boardKey, pick: pick }); },
     leaderboard: async function(boardKey) { return (await call('GET', 'leaderboard?board=' + encodeURIComponent(boardKey))).rows; },
     statement: async function() { return (await call('GET', 'statement')).rows; },
@@ -655,6 +659,24 @@
     });
   }
   function uiConfirm(msg) { return uiDialog(msg, { cancel: true, ok: 'Yes' }); }
+  // GIVE UP: ends a game in progress as a loss. The player sees exactly what
+  // comes off their balance first and can cancel.
+  function giveUpHTML() { return '<button type="button" class="wl-link game-giveup" data-giveup>Give up this game</button>'; }
+  function wireGiveUp(root, game, heldNow, onDone) {
+    root.addEventListener('click', async function(e) {
+      if (!e.target.closest('[data-giveup]')) return;
+      var held = heldNow() || 0;
+      var ok = await uiDialog('Give up this game? It counts as a loss, and ' + money(held) + ' (the most this game could cost) comes off your balance. This can’t be undone.',
+        { cancel: true, ok: 'Give up · ' + money(-held) });
+      if (!ok) return;
+      try {
+        var res = await call('POST', 'give-up', { game: game, confirm: true });
+        document.dispatchEvent(new CustomEvent('wallet:change', { detail: res.wallet }));
+        celebrate('lose', 'You gave up', money(-res.result.paidCents));
+        onDone(res.result);
+      } catch (x) { uiDialog(x.message, {}); }
+    });
+  }
   function uiPrompt(msg, value) { return uiDialog(msg, { cancel: true, input: true, value: value, ok: 'OK' }); }
   function uiAlert(msg) { return uiDialog(msg, {}); }
 
@@ -665,7 +687,8 @@
     '<label><input type="checkbox" required /> <span>My wallet balance is <strong>not real money</strong> and has no cash value.</span></label>' +
     '<label><input type="checkbox" required /> <span>My wallet balance can <strong>never be withdrawn, refunded or cashed out.</strong></span></label>' +
     '<label><input type="checkbox" required /> <span>My wallet balance is <strong>shared across all games</strong> on this site.</span></label>' +
-    '<label><input type="checkbox" required /> <span>There are <strong>no prizes.</strong> The games make my send feel worth it.</span></label>';
+    '<label><input type="checkbox" required /> <span>There are <strong>no prizes.</strong> The games make my send feel worth it.</span></label>' +
+    '<label><input type="checkbox" required /> <span>If I <strong>give up or leave a game unfinished</strong>, it can count as a loss, and <strong>the most that game could cost</strong> comes off my balance.</span></label>';
   var AGREE_BUTTON = 'I Get It, Show Me My Wallet';
   function allChecked(box) { return Array.prototype.every.call(box.querySelectorAll('.wl-agree input[type=checkbox], input[type=checkbox][required]'), function(c) { return c.checked; }); }
 
@@ -682,11 +705,12 @@
       '<h4>5. No prizes</h4><p>There is nothing to win. Every game ends with an amount taken from your balance; a better result just means a smaller amount. Leaderboards are only for fun and bragging rights.</p>' +
       '<h4>6. How games are decided</h4><p>Every game is played and scored by the site itself, using the rules in its How to Play. Gnomie can&rsquo;t see or change a game while you&rsquo;re playing. If something goes wrong, like a glitch or an outage, let Gnomie know: she may fix your balance or cancel the game.</p>' +
       '<div class="wl-terms-act" data-help="issue"></div>' +
-      '<h4>7. Your code and PIN</h4><p>Keep your wallet code and PIN private. Gnomie never sees your PIN and can&rsquo;t recover it. Your code is always in your Throne gift history. You can change your PIN or ask for a new code in Wallet settings. If you lose access, it may not be restored, and the balance in that wallet is gone. (Remember: you already sent it, so all you lose is the fun.)</p>' +
-      '<h4>8. Throne payments and chargebacks</h4><p>Payments are handled entirely by Throne, under Throne&rsquo;s own terms. This site doesn&rsquo;t take payments, give refunds or handle disputes. Filing a chargeback or dispute on a Throne gift may cost you your wallet and your access to the games.</p>' +
-      '<h4>9. Closing your wallet</h4><p>You can ask Gnomie to close your wallet at any time. Gnomie may close, pause or remove any wallet at any time, including unused, empty or long-inactive ones. When a wallet is closed, its balance is simply cleared.</p>' +
-      '<h4>10. Privacy</h4><p>The site keeps the basic records it needs to run your wallet and the games, like what you do here and general information about your visit. These records are never sold or shared by Gnomie.</p>' +
-      '<h4>11. Changes</h4><p>These terms, the games and their prices may change at any time. If the terms change, you&rsquo;ll be asked to agree again before you see your wallet. The site is offered as-is, with no promise it will always be available.</p>' +
+      '<h4>7. Giving up and unfinished games</h4><p>Some games set aside the most they could cost when they start. You can give up a game in progress at any time: you&rsquo;ll see exactly how much will come off your balance first, and you can cancel. If you leave a game unfinished, Gnomie may count it as a loss. Either way, the full amount set aside for that game comes off your balance.</p>' +
+      '<h4>8. Your code and PIN</h4><p>Keep your wallet code and PIN private. Gnomie never sees your PIN and can&rsquo;t recover it. Your code is always in your Throne gift history. You can change your PIN or ask for a new code in Wallet settings. If you lose access, it may not be restored, and the balance in that wallet is gone. (Remember: you already sent it, so all you lose is the fun.)</p>' +
+      '<h4>9. Throne payments and chargebacks</h4><p>Payments are handled entirely by Throne, under Throne&rsquo;s own terms. This site doesn&rsquo;t take payments, give refunds or handle disputes. Filing a chargeback or dispute on a Throne gift may cost you your wallet and your access to the games.</p>' +
+      '<h4>10. Closing your wallet</h4><p>You can ask Gnomie to close your wallet at any time. Gnomie may close, pause or remove any wallet at any time, including unused, empty or long-inactive ones. When a wallet is closed, its balance is simply cleared.</p>' +
+      '<h4>11. Privacy</h4><p>The site keeps the basic records it needs to run your wallet and the games, like what you do here and general information about your visit. These records are never sold or shared by Gnomie.</p>' +
+      '<h4>12. Changes</h4><p>These terms, the games and their prices may change at any time. If the terms change, you&rsquo;ll be asked to agree again before you see your wallet. The site is offered as-is, with no promise it will always be available.</p>' +
       '<p class="wl-fine">Questions? <a class="wl-tg-link" href="https://t.me/nashgnomie" target="_blank" rel="noopener">Message Gnomie on Telegram</a>.</p>' +
     '</div>';
 
@@ -1274,7 +1298,7 @@
       }
       if (kind === 'issue') {
         var reqs = [];
-        var GAMES = ['Drop the Ball', 'Dice Duel', 'Don’t Bust', 'Spin the Bottle', 'Mancala', '5 in a Row', 'Dots & Boxes', 'Something else'];
+        var GAMES = ['Drop the Ball', 'Dice Duel', 'Don’t Bust', 'Spin the Bottle', 'Mancala', '5 in a Row', 'Dots & Boxes', 'Read My Mind', 'Something else'];
         var intro2 = el('p', { class: 'wl-modal-lead' }, 'Did a game freeze, glitch, or charge you the wrong amount? Tell Gnomie what happened and she&rsquo;ll look into it.');
         var tw2 = twoWays('Send Gnomie an alert',
           '<label class="wl-field"><span>Which game?</span><select name="game">' + GAMES.map(function(g) { return '<option>' + g + '</option>'; }).join('') + '</select></label>' +
@@ -1516,6 +1540,7 @@
   }
 
   window.Games = {
+    giveUpHTML: giveUpHTML, wireGiveUp: wireGiveUp,
     TOOFAR: TOOFAR, BOTTLE: BOTTLE, MANCALA: MANCALA, mancalaSow: mancalaSow, FIVE: FIVE, DOTS: DOTS,
     DUEL: DUEL, columnScore: columnScore, boardScore: boardScore,
     placeDie: placeDie, cloneBoard: cloneBoard, emptyBoard: emptyBoard, renderGameActivity: renderGameActivity, celebrate: celebrate, autoPass: autoPass,

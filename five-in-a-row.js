@@ -15,6 +15,12 @@
   var PFP = 'https://i.ibb.co/7Nj6352Q/pfp.jpg';
   var page = document.querySelector('.fv-page');
   var root = document.getElementById('fv-root');
+  // Give up: counts as a loss (the amount set aside), then back to the start screen
+  G.wireGiveUp(root, GAME, function() { return state.game && state.game.held; }, function() {
+    state.game = null; state.view = null; state.result = null; state.finalView = null; state.busy = false;
+    if (typeof boards === 'function') boards();
+    render();
+  });
 
   // view: { board, drop: {col,row}, line: [[c,r]...], status }
   var state = { wallet: null, game: null, chosen: null, busy: false, result: null, error: '', view: null, finalView: null, demo: false, hover: null };
@@ -151,7 +157,7 @@
       '<span class="duel-who"><span class="duel-name">You</span><i class="fv-dot you"></i></span></div>' +
       boardHTML(v, canPlay) +
       '<p class="duel-status-line fv-status">' + v.status + '</p>' +
-      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : '');
+      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : G.giveUpHTML());
     root.querySelectorAll('.fv-col.open').forEach(function(b) { b.addEventListener('click', function() { play(+b.dataset.col); }); });
     var stop = document.getElementById('demo-stop');
     if (stop) stop.addEventListener('click', endDemo);

@@ -424,3 +424,61 @@ export function gnomieDots(b) {
   for (const m of moves) { const v = chainSize(b, m); if (v < bestV) { bestV = v; best = [m]; } else if (v === bestV) best.push(m); }
   return best[randomBelow(best.length)];
 }
+
+// ---------- Read My Mind (guess Gnomie's 6-letter word in 6 tries) ----------
+// Before each guess the player types how much it's worth to them (pennies are
+// fine). Every guess, right or wrong, takes that amount. A right guess ends it.
+export const MIND = { LETTERS: 6, TRIES: 6, MIN_CENTS: 1, MAX_CENTS: 50000 };
+// Everyday words to start with; Gnomie can edit the list in Backstage
+export const MIND_WORDS = [
+  'ACTION', 'ACTIVE', 'ADVICE', 'AFRAID', 'AGENCY', 'ALMOST', 'ALWAYS', 'AMOUNT', 'ANIMAL', 'ANSWER',
+  'ANYONE', 'APPEAR', 'AROUND', 'ARRIVE', 'ARTIST', 'ASLEEP', 'ATTACK', 'AUTUMN', 'AVENUE', 'BANANA',
+  'BASKET', 'BATTLE', 'BEAUTY', 'BECOME', 'BEFORE', 'BEHIND', 'BELIEF', 'BETTER', 'BEYOND', 'BOTTLE',
+  'BOTTOM', 'BRANCH', 'BREATH', 'BRIDGE', 'BRIGHT', 'BROKEN', 'BUBBLE', 'BUCKET', 'BUDGET', 'BUTTER',
+  'BUTTON', 'CAMERA', 'CANDLE', 'CARPET', 'CARROT', 'CASTLE', 'CASUAL', 'CAUGHT', 'CENTER', 'CHANCE',
+  'CHANGE', 'CHARGE', 'CHEESE', 'CHERRY', 'CHOICE', 'CIRCLE', 'CLEVER', 'CLIENT', 'CLOSET', 'COFFEE',
+  'COLLAR', 'COLUMN', 'COMEDY', 'COMMON', 'COOKIE', 'CORNER', 'COTTON', 'COUNTY', 'COUPLE', 'COURSE',
+  'COUSIN', 'CRAYON', 'CREATE', 'CREDIT', 'CRISPY', 'CRUISE', 'CUSTOM', 'DAMAGE', 'DANCER', 'DANGER',
+  'DEBATE', 'DECIDE', 'DEGREE', 'DESERT', 'DESIGN', 'DETAIL', 'DEVICE', 'DINNER', 'DIRECT', 'DOCTOR',
+  'DOLLAR', 'DOUBLE', 'DRAGON', 'DRAWER', 'DRIVER', 'EASILY', 'EFFECT', 'EFFORT', 'ELEVEN', 'EMPIRE',
+  'ENERGY', 'ENGINE', 'ENOUGH', 'ENTIRE', 'ESCAPE', 'ESTATE', 'EXCEPT', 'EXPERT', 'FABRIC', 'FACTOR',
+  'FAIRLY', 'FAMILY', 'FAMOUS', 'FARMER', 'FATHER', 'FIGURE', 'FINGER', 'FINISH', 'FLIGHT', 'FLOWER',
+  'FOLLOW', 'FOREST', 'FORGET', 'FORMAL', 'FORMAT', 'FRIEND', 'FROZEN', 'FUTURE', 'GALAXY', 'GARAGE',
+  'GARDEN', 'GATHER', 'GENTLE', 'GINGER', 'GLANCE', 'GLOBAL', 'GOLDEN', 'GOSSIP', 'GROUND', 'GROWTH',
+  'GUITAR', 'HAMMER', 'HANDLE', 'HAPPEN', 'HARBOR', 'HEALTH', 'HEATER', 'HELMET', 'HIDDEN', 'HOCKEY',
+  'HONEST', 'HUNGRY', 'HUNTER', 'ISLAND', 'JACKET', 'JERSEY', 'JIGSAW', 'JUNGLE', 'JUNIOR', 'KETTLE',
+  'KIDNEY', 'KITTEN', 'LADDER', 'LAUNCH', 'LAWYER', 'LEADER', 'LEGEND', 'LEMONS', 'LESSON', 'LETTER',
+  'LIKELY', 'LIQUID', 'LISTEN', 'LITTLE', 'LIZARD', 'LOVELY', 'MAGNET', 'MANAGE', 'MANNER', 'MARBLE',
+  'MARKET', 'MASTER', 'MATTER', 'MEADOW', 'MEDIUM', 'MEMORY', 'METHOD', 'MIDDLE', 'MINUTE', 'MIRROR',
+  'MITTEN', 'MODERN', 'MOMENT', 'MONKEY', 'MOSTLY', 'MOTHER', 'MOTION', 'MUFFIN', 'MUSEUM', 'MYSELF',
+  'NARROW', 'NATION', 'NATIVE', 'NATURE', 'NEARBY', 'NEEDLE', 'NEPHEW', 'NOBODY', 'NORMAL', 'NOTICE',
+  'NUMBER', 'OBJECT', 'OFFICE', 'ONLINE', 'ORANGE', 'ORIGIN', 'OUTPUT', 'OXYGEN', 'PACKET', 'PALACE',
+  'PARADE', 'PARENT', 'PASTRY', 'PENCIL', 'PEOPLE', 'PEPPER', 'PERIOD', 'PERSON', 'PICKLE', 'PILLOW',
+  'PLANET', 'PLAYER', 'PLEASE', 'POCKET', 'POETRY', 'POLICE', 'POLICY', 'POTATO', 'POWDER', 'PRINCE',
+  'PRISON', 'PROFIT', 'PUBLIC', 'PUPPET', 'PURPLE', 'PUZZLE', 'QUIVER', 'RABBIT', 'RACING', 'RANDOM',
+  'RATHER', 'REASON', 'RECIPE', 'RECORD', 'REDUCE', 'REMOTE', 'REPAIR', 'REPORT', 'RESCUE', 'RESULT',
+  'RETURN', 'REVEAL', 'RHYTHM', 'RIBBON', 'ROCKET', 'RUBBER', 'SADDLE', 'SAFETY', 'SALMON', 'SAMPLE',
+  'SCHOOL', 'SCREEN', 'SCRIPT', 'SEASON', 'SECOND', 'SECRET', 'SELECT', 'SENIOR', 'SERIES', 'SERVER',
+  'SETTLE', 'SHADOW', 'SHOWER', 'SIGNAL', 'SILENT', 'SILVER', 'SIMPLE', 'SINGER', 'SISTER', 'SKETCH',
+  'SMOOTH', 'SOCCER', 'SOCIAL', 'SOURCE', 'SPEECH', 'SPIDER', 'SPIRIT', 'SPRING', 'SQUARE', 'STABLE',
+  'STATUE', 'STICKY', 'STREAM', 'STREET', 'STRIKE', 'STRING', 'STRONG', 'STUDIO', 'SUBMIT', 'SUDDEN',
+  'SUMMER', 'SUNSET', 'SUPPLY', 'SURVEY', 'SWITCH', 'SYMBOL', 'SYSTEM', 'TABLET', 'TALENT', 'TARGET',
+  'TEAPOT', 'TEMPLE', 'TENNIS', 'THIRTY', 'THREAD', 'THRONE', 'TICKET', 'TIMBER', 'TOMATO', 'TONGUE',
+  'TOWARD', 'TRAVEL', 'TREATY', 'TUNNEL', 'TURKEY', 'TURTLE', 'TWELVE', 'UNIQUE', 'UPDATE', 'USEFUL',
+  'VALLEY', 'VELVET', 'VENDOR', 'VIOLIN', 'VIRTUE', 'VISION', 'VOLUME', 'VOYAGE', 'WAFFLE', 'WALLET',
+  'WALNUT', 'WANDER', 'WARMTH', 'WEEKLY', 'WEIGHT', 'WINDOW', 'WINNER', 'WINTER', 'WISDOM', 'WIZARD',
+  'WONDER', 'WOODEN', 'WORTHY', 'WRITER', 'YELLOW', 'ZIPPER'
+];
+// Marks for one guess: 'g' right spot, 'y' in the word elsewhere, 'x' not in it
+// (repeated letters only count as many times as the word has them)
+export function mindMarks(answer, guess) {
+  const a = answer.split(''), g = guess.split(''), out = new Array(g.length).fill('x'), left = {};
+  for (let i = 0; i < g.length; i++) { if (g[i] === a[i]) out[i] = 'g'; else left[a[i]] = (left[a[i]] || 0) + 1; }
+  for (let i = 0; i < g.length; i++) if (out[i] !== 'g' && left[g[i]]) { out[i] = 'y'; left[g[i]]--; }
+  return out.join('');
+}
+export function mindPick(words, used) {
+  const fresh = words.filter(w => used.indexOf(w) === -1);
+  const pool = fresh.length ? fresh : words;          // every word used: start over
+  return pool[randomBelow(pool.length)];
+}

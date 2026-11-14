@@ -16,6 +16,12 @@
   var PFP = 'https://i.ibb.co/7Nj6352Q/pfp.jpg';
   var page = document.querySelector('.duel-page');
   var root = document.getElementById('duel-root');
+  // Give up: counts as a loss (the amount set aside), then back to the start screen
+  G.wireGiveUp(root, GAME, function() { return state.duel && state.duel.held; }, function() {
+    state.duel = null; state.view = null; state.result = null; state.finalView = null; state.busy = false;
+    if (typeof boards === 'function') boards();
+    render();
+  });
 
   // view: what's on screen right now (boards can differ from the server
   // state for a moment while a move is being shown)
@@ -194,7 +200,7 @@
         '<button type="button" class="btn btn-primary duel-roll-btn" id="duel-roll"' + (yourTurnToRoll ? '' : ' disabled') + '>Roll</button>' +
         '<span class="duel-who"><span class="duel-name">You</span><span class="duel-total">' + G.boardScore(v.player) + '</span></span>' +
       '</div>' +
-      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : '');
+      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : G.giveUpHTML());
     var stop = document.getElementById('demo-stop');
     if (stop) stop.addEventListener('click', endDemo);
 

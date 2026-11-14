@@ -15,6 +15,12 @@
   var PFP = 'https://i.ibb.co/7Nj6352Q/pfp.jpg';
   var page = document.querySelector('.mc-page');
   var root = document.getElementById('mc-root');
+  // Give up: counts as a loss (the amount set aside), then back to the start screen
+  G.wireGiveUp(root, GAME, function() { return state.game && state.game.held; }, function() {
+    state.game = null; state.view = null; state.result = null; state.finalView = null; state.busy = false;
+    if (typeof boards === 'function') boards();
+    render();
+  });
 
   // view: { pits, hot (pit being dropped into), from (pit just emptied), cap: [pits captured], status }
   var state = { wallet: null, game: null, chosen: null, busy: false, result: null, error: '', view: null, finalView: null, demo: false };
@@ -210,7 +216,7 @@
       boardHTML(v, canPlay) +
       '<div class="duel-player duel-player-you"><span class="duel-who"><span class="duel-name">You</span><span class="duel-total">' + v.beads[6].length + '</span></span></div>' +
       '<p class="duel-status-line mc-status">' + v.status + '</p>' +
-      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : '');
+      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : G.giveUpHTML());
     root.querySelectorAll('.mc-pit.open').forEach(function(b) { b.addEventListener('click', function() { play(+b.dataset.pit); }); });
     var stop = document.getElementById('demo-stop');
     if (stop) stop.addEventListener('click', endDemo);

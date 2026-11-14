@@ -317,6 +317,7 @@
             '<a href="mancala.html">Mancala <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
             '<a href="five-in-a-row.html">5 in a Row <span class="nav-new" data-new-until="2026-12-05">NEW</span></a>' +
             '<a href="dots-and-boxes.html">Dots &amp; Boxes <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
+            '<a href="read-my-mind.html">Read My Mind <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
           '</div>' +
         '</div>' +
         '<div class="nav-dropdown">' +
@@ -369,6 +370,7 @@
         '<a href="mancala.html">Mancala <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
         '<a href="five-in-a-row.html">5 in a Row <span class="nav-new" data-new-until="2026-12-05">NEW</span></a>' +
             '<a href="dots-and-boxes.html">Dots &amp; Boxes <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
+            '<a href="read-my-mind.html">Read My Mind <span class="nav-new" data-new-until="2026-11-28">NEW</span></a>' +
       '</div>' +
       '<a href="#" class="drawer-services-toggle" id="drawer-expenses-toggle">Expenses &#9662;</a>' +
       '<div class="drawer-services-sub" id="drawer-expenses-sub">' +

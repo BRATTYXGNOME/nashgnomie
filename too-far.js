@@ -16,6 +16,12 @@
   var PFP = 'https://i.ibb.co/7Nj6352Q/pfp.jpg';
   var page = document.querySelector('.tf-page');
   var root = document.getElementById('tf-root');
+  // Give up: counts as a loss (the amount set aside), then back to the start screen
+  G.wireGiveUp(root, GAME, function() { return state.game && state.game.held; }, function() {
+    state.game = null; state.view = null; state.result = null; state.finalView = null; state.busy = false;
+    if (typeof boards === 'function') boards();
+    render();
+  });
 
   // view: what's on screen right now
   var state = { wallet: null, game: null, chosen: null, busy: false, result: null, error: '', view: null, finalView: null, demo: false };
@@ -205,7 +211,7 @@
         '<button type="button" class="btn btn-primary" id="tf-draw"' + (canAct && yt < T.TARGET ? '' : ' disabled') + '>Draw</button>' +
         '<button type="button" class="btn btn-outline" id="tf-stay"' + (canAct ? '' : ' disabled') + '>Stay</button>' +
       '</div>' +
-      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : '');
+      (state.demo ? '<div class="game-demo-bar"><span>Demo &middot; no money involved</span><button type="button" class="wl-link" id="demo-stop">End demo</button></div>' : G.giveUpHTML());
     var stopBtn = document.getElementById('demo-stop');
     if (stopBtn) stopBtn.addEventListener('click', endDemo);
     document.getElementById('tf-draw').addEventListener('click', draw);
