@@ -66,6 +66,8 @@ export function parseThrone(body) {
     itemName: String(d.item_name || ''),
     message: String(d.message || ''),
     gifter: String(d.gifter_username || ''),
+    // Throne's order number, if the notice includes one (field name varies, so check the likely ones)
+    orderRef: String(d.order_id || d.orderId || d.order_number || d.orderNumber || (d.order && (d.order.id || d.order.number)) || '').replace(/[^A-Za-z0-9\-]/g, '').slice(0, 60) || null,
     paidCents: Number.isInteger(d.price) ? d.price : null,
     currency: d.currency ? String(d.currency) : null,
     amountCents: null,

@@ -292,6 +292,104 @@
     .vis { display: inline-block; margin-left: 4px; padding: 0 7px; border-radius: 999px; font-size: 11px; white-space: nowrap; }
     .vis.shown { background: rgba(111, 220, 154, 0.12); color: var(--good); }
     .vis.private { background: rgba(255, 255, 255, 0.06); color: var(--muted); }
+
+    /* ===== Backstage v4: full-height side menu, top bar, two-column Home, phone tab bar ===== */
+    main:has(> #app:not([hidden])) { max-width: none; padding: 0; }
+    main:has(> #app:not([hidden])) > h1 { display: none; }
+    #app:not([hidden]) { grid-template-columns: 236px minmax(0, 1fr); gap: 0; min-height: 100vh; }
+    .side { position: sticky; top: 0; height: 100vh; overflow-y: auto; gap: 14px; padding: 20px 14px 14px; background: #111115; border-right: 1px solid rgba(255, 255, 255, 0.06); }
+    .side-brand { font: 400 28px 'Bokor', serif; color: var(--accent); padding: 0 8px; line-height: 1.1; }
+    .side-find { position: relative; margin: 0; }
+    .side-find input { width: 100%; padding: 9px 12px 9px 34px; border-radius: 10px; background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.08); }
+    .side-find input:focus { outline: none; border-color: rgba(255, 95, 162, 0.5); }
+    .find-ico { position: absolute; left: 11px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .side .tabs { gap: 2px; }
+    .side .tabs button { padding: 9px 12px; font-weight: 500; color: var(--body); border-radius: 10px; }
+    .side .tabs button:hover { background: rgba(255, 255, 255, 0.04); color: var(--light); }
+    .side .tabs button.on { background: rgba(255, 95, 162, 0.14); color: #fff; border-color: transparent; box-shadow: inset 3px 0 0 var(--accent); }
+    .side .tabs button.on .ico { color: var(--accent); }
+    svg.ico { width: 19px; height: 19px; flex: none; }
+    .side .tabs .badge { background: var(--accent); color: #fff; font-weight: 700; }
+    .side-acct { margin-top: auto; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 10px; }
+    .acct-btn { width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; color: var(--light); padding: 8px; border-radius: 10px; font-weight: 500; }
+    .acct-btn:hover { background: rgba(255, 255, 255, 0.04); }
+    .acct-av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 95, 162, 0.2); color: var(--accent); font-weight: 700; flex: none; }
+    .acct-btn .chev { width: 16px; height: 16px; margin-left: auto; color: var(--muted); }
+    .acct-menu { position: fixed; z-index: 60; min-width: 220px; display: flex; flex-direction: column; gap: 2px; padding: 6px; background: var(--card); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55); }
+    .acct-menu button { background: transparent; color: var(--light); text-align: left; font-weight: 500; padding: 9px 12px; border-radius: 8px; }
+    .acct-menu button:hover { background: rgba(255, 255, 255, 0.05); }
+    .acct-menu button.danger { color: var(--bad); }
+    .acct-menu hr { border: 0; border-top: 1px solid rgba(255, 255, 255, 0.08); margin: 4px 0; }
+    #app > .main { padding: 0 32px 60px; min-width: 0; max-width: 1320px; width: 100%; }
+    .topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; margin: 0 0 18px; padding: 16px 0 14px; background: rgba(13, 13, 15, 0.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 12.5px; }
+    .tb-title { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+    .tb-brand { display: none; font: 400 22px 'Bokor', serif; color: var(--accent); }
+    .tb-title h2 { margin: 0; font-size: 22px; font-weight: 600; color: var(--light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tb-right { display: flex; align-items: center; gap: 8px; flex: none; }
+    .tb-updated { color: var(--muted); white-space: nowrap; }
+    .topbar select { padding: 7px 10px; border-radius: 10px; }
+    .side-refresh { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); background: transparent; color: var(--light); font: 600 13px 'Inter', sans-serif; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+    .side-refresh:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 95, 162, 0.5); }
+    .side-refresh .side-refresh-ico { width: 16px; height: 16px; }
+    .side-refresh.busy .side-refresh-ico { animation: side-spin 0.8s linear infinite; }
+    .side-refresh.done { border-color: #4ade80; color: #4ade80; }
+    .side-refresh.failed { border-color: #ff6b8a; color: #ff6b8a; }
+    @keyframes side-spin { to { transform: rotate(360deg); } }
+    .tb-acct { display: none; }
+    .card { scroll-margin-top: 84px; border-color: rgba(255, 255, 255, 0.07); background: #17171c; }
+    .hello { display: none; }
+    .home-nums { gap: 14px; margin-bottom: 16px; }
+    .home-nums > div { background: #17171c; border-color: rgba(255, 255, 255, 0.07); padding: 16px 18px; gap: 4px; }
+    .home-nums b { font-size: 26px; font-weight: 700; }
+    .home-nums .tr { font-size: 12px; color: var(--muted); }
+    .home-nums .tr.up { color: var(--good); }
+    .home-nums .tr.down { color: var(--bad); }
+    .home-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 16px; align-items: start; }
+    .home-grid .card { margin-bottom: 16px; }
+    .inbox-card { border-color: rgba(255, 95, 162, 0.3); }
+    .home-rail { display: flex; flex-direction: column; }
+    .qa { display: flex; flex-direction: column; gap: 6px; }
+    .qa-btn { display: flex; align-items: center; gap: 12px; text-align: left; background: rgba(255, 255, 255, 0.03); color: var(--light); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px; padding: 10px 12px; font-weight: 600; }
+    .qa-btn:hover { border-color: rgba(255, 95, 162, 0.5); background: rgba(255, 95, 162, 0.07); }
+    .qa-btn small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 1px; }
+    .qa-ico { width: 34px; height: 34px; padding: 7px; border-radius: 9px; background: rgba(255, 95, 162, 0.13); color: var(--accent); flex: none; }
+    .tg-row { display: grid; grid-template-columns: 110px minmax(0, 1fr) 42px; align-items: center; gap: 10px; padding: 6px 0; font-size: 13px; }
+    .tg-name { color: var(--light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tg-bar { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
+    .tg-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+    .tg-n { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .tg-note { margin: 8px 0 0; }
+    .w-back { background: transparent; color: var(--muted); padding: 0; margin: 0 0 14px; font-weight: 600; font-size: 13px; }
+    .w-back:hover { color: var(--accent); }
+    @media (max-width: 1100px) { .home-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) {
+      #app:not([hidden]) { display: block; }
+      .side { display: contents; }
+      .side-brand, .side-find, .side-acct, .tab-saved { display: none; }
+      .side .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: space-around; gap: 0; padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); background: rgba(17, 17, 21, 0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid rgba(255, 255, 255, 0.08); }
+      .side .tabs button { position: relative; flex: 1 1 0; min-width: 0; flex-direction: column; gap: 3px; padding: 6px 2px; font-size: 10.5px; font-weight: 600; border-radius: 10px; background: transparent; box-shadow: none; color: var(--muted); }
+      .side .tabs button.on { background: transparent; box-shadow: none; color: var(--accent); }
+      .side .tabs button .lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+      .side .tabs button svg.ico { width: 22px; height: 22px; }
+      .side .tabs .grip { display: none; }
+      .side .tabs .badge { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; min-width: 16px; font-size: 10px; line-height: 16px; padding: 0 4px; }
+      #app > .main { padding: 0 14px calc(90px + env(safe-area-inset-bottom)); }
+      .topbar { padding: 12px 0 10px; margin-bottom: 14px; gap: 8px; }
+      .tb-brand { display: inline; }
+      .tb-title h2 { font-size: 16px; font-weight: 500; color: var(--body); }
+      .tb-title h2::before { content: '\00b7'; margin-right: 8px; color: var(--muted); }
+      .tb-acct { display: inline-grid; padding: 0; background: transparent; }
+      .home-nums { gap: 10px; }
+      .home-nums > div { padding: 12px 14px; }
+      .home-nums b { font-size: 21px; }
+    }
+    @media (max-width: 600px) {
+      .tb-updated, .side-refresh .side-refresh-txt { display: none; }
+      .side-refresh { padding: 8px; }
+      .topbar select { max-width: 132px; }
+      .tb-title h2 { display: none; }
+      .card { padding: 14px; }
+    }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -345,28 +443,36 @@
 
     <div id="app" hidden>
       <aside class="side">
+        <div class="side-brand">Backstage</div>
+        <form class="side-find" id="side-find" autocomplete="off"><svg class="find-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M21 21l-6-6"/></svg><input type="search" id="side-q" placeholder="Find a wallet" aria-label="Find a wallet" /></form>
         <nav class="tabs" id="tabs">
-          <button type="button" data-tab="overview" class="on"><span class="ico">&#127968;</span> Home</button>
-          <button type="button" data-tab="site"><span class="ico">&#127760;</span> Site</button>
-          <button type="button" data-tab="money"><span class="ico">&#128184;</span> Money</button>
-          <button type="button" data-tab="games"><span class="ico">&#127922;</span> Games</button>
-          <button type="button" data-tab="wallets"><span class="ico">&#128091;</span> Wallets</button>
-          <button type="button" data-tab="activity"><span class="ico">&#128220;</span> Activity</button>
+          <button type="button" data-tab="overview" class="on"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8l9 8"/><path d="M5 10v10h5v-6h4v6h5v-10"/></svg><span class="lbl">Home</span></button>
+          <button type="button" data-tab="site"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/></svg><span class="lbl">Site</span></button>
+          <button type="button" data-tab="money"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v.01M18 14.5v.01"/></svg><span class="lbl">Money</span></button>
+          <button type="button" data-tab="games"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/><circle cx="9" cy="15" r="1" fill="currentColor"/><circle cx="15" cy="15" r="1" fill="currentColor"/></svg><span class="lbl">Games</span></button>
+          <button type="button" data-tab="wallets"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8v-3a1 1 0 0 0-1-1h-10a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1-1 1h-12a2 2 0 0 1-2-2v-12"/><path d="M20 12v4h-4a2 2 0 0 1 0-4h4"/></svg><span class="lbl">Wallets</span></button>
+          <button type="button" data-tab="activity"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3 8l4-16l3 8h4"/></svg><span class="lbl">Activity</span></button>
         </nav>
-        <div class="side-foot">
-          <button type="button" class="ghost small" id="pw-change">Change password</button>
-          <button type="button" class="ghost small" id="logout">Sign out</button>
-          <button type="button" class="ghost small" id="signout-all">Sign out everywhere</button>
-          <button type="button" class="ghost small danger" id="lockdown">Lock Backstage</button>
+        <div class="side-acct">
+          <button type="button" class="acct-btn" id="acct-btn" aria-haspopup="true"><span class="acct-av">G</span><span>Gnomie</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6l6 6"/></svg></button>
         </div>
       </aside>
+      <div class="acct-menu" id="acct-menu" hidden>
+        <button type="button" id="pw-change">Change password</button>
+        <button type="button" id="logout">Sign out</button>
+        <button type="button" id="signout-all">Sign out everywhere</button>
+        <hr />
+        <button type="button" class="danger" id="lockdown">Lock Backstage</button>
+      </div>
       <div class="main">
       <div class="topbar">
-        <span id="updated"></span>
-        <span class="row">
-          <select id="days"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last year</option></select>
-          <button type="button" class="ghost small" id="refresh">Refresh</button>
-        </span>
+        <div class="tb-title"><span class="tb-brand">Backstage</span><h2 id="page-title">Home</h2></div>
+        <div class="tb-right">
+          <span class="tb-updated" id="updated"></span>
+          <button type="button" class="side-refresh" id="refresh" title="Refresh everything"><svg class="side-refresh-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2m-.5-4v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/></svg><span class="side-refresh-txt">Refresh</span></button>
+          <select id="days" aria-label="Time period"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last year</option></select>
+          <button type="button" class="tb-acct" id="acct-btn-m" aria-label="Account" aria-haspopup="true"><span class="acct-av">G</span></button>
+        </div>
       </div>
       <section class="card lock-card" id="lock-card" hidden>
         <h2>Lock Backstage</h2>
@@ -385,11 +491,28 @@
       <div data-panel="overview">
         <h2 class="hello" id="hello">Hi, Gnomie</h2>
         <div class="home-nums" id="home-nums"></div>
-        <section class="card inbox-card">
-          <div class="row" style="justify-content:space-between"><h2 style="margin:0">Inbox <span class="muted" style="font-weight:400">&middot; things that need you</span></h2><span class="muted" id="inbox-count"></span></div>
-          <div id="inbox"></div>
-        </section>
-        <section class="card"><h2>Most popular games</h2><div class="table-wrap"><table id="popular"></table></div></section>
+        <div class="home-grid">
+          <section class="card inbox-card">
+            <div class="row" style="justify-content:space-between"><h2 style="margin:0">Inbox <span class="muted" style="font-weight:400">&middot; things that need you</span></h2><span class="muted" id="inbox-count"></span></div>
+            <div id="inbox"></div>
+          </section>
+          <div class="home-rail">
+            <section class="card">
+              <h2>Quick actions</h2>
+              <div class="qa" id="qa">
+                <button type="button" class="qa-btn" data-qa="load"><svg class="qa-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v.01M18 14.5v.01"/></svg><span>Record a Throne load<small>When one didn&rsquo;t come in on its own</small></span></button>
+                <button type="button" class="qa-btn" data-qa="msg"><svg class="qa-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6l9-6"/></svg><span>Message or nudge a fan<small>Find their wallet, then Message</small></span></button>
+                <button type="button" class="qa-btn" data-qa="teasers"><svg class="qa-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M3 17l5-5l4 4l3-3l6 6"/></svg><span>Teaser pictures<small>Upload, remove or reorder</small></span></button>
+                <button type="button" class="qa-btn" data-qa="ticker"><svg class="qa-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>Homepage ticker<small>Change what scrolls across the top</small></span></button>
+              </div>
+            </section>
+            <section class="card">
+              <div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">Top games</h2><button type="button" class="ghost small" id="pop-all">See all</button></div>
+              <div id="top-games"></div>
+            </section>
+          </div>
+        </div>
+        <section class="card" id="popular-card" hidden><h2>Most popular games</h2><div class="table-wrap"><table id="popular"></table></div></section>
         <div hidden>
         <section class="card" id="review-card" hidden>
           <h2>Loads that need you</h2>
@@ -502,7 +625,7 @@
 
       <!-- WALLETS -->
       <div data-panel="wallets" hidden>
-        <section class="card">
+        <section class="card" id="wallet-list">
           <div class="row" style="margin-bottom:8px">
             <input type="search" id="w-q" placeholder="Search code, name, Telegram, Throne or your notes" />
             <select id="w-sort"><option value="active">Most active</option><option value="recent">Recently active</option><option value="newest">Newest</option><option value="balance">Biggest balance</option><option value="loaded">Most loaded</option><option value="spent">Most spent</option><option value="name">Name</option><option value="quiet">Quietest first</option></select>
@@ -563,6 +686,7 @@
             <label class="ghost tz-upload" id="tz-upload-btn">&#128228; Upload pictures<input type="file" id="tz-file" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden /></label>
             <input type="text" id="tz-link" placeholder="&hellip;or paste a picture link (https://)" style="flex:1;min-width:200px" />
             <button type="button" class="ghost" id="tz-add-link">Add link</button>
+            <button type="button" class="ghost" id="tz-originals">Add back my original pictures</button>
             <span class="tk-saved" id="tz-saved"></span>
             <button type="button" id="tz-save">Save order</button>
           </div>
@@ -652,7 +776,7 @@
   <div class="tip" id="tip" hidden></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="gnomie-figure.js?v=20261114w"></script>
+  <script src="gnomie-figure.js?v=20261119a"></script>
   <script>
     (function() {
       'use strict';
@@ -702,7 +826,7 @@
         terms_agreed: 'Fan agreed to updated terms', pin_changed: 'Fan changed their PIN', pin_change_failed: 'Wrong PIN while changing it',
         issue_reported: 'Fan reported a game problem', new_code_requested: 'Fan asked for a new code', backstage_new_code: 'You gave a new code',
         backstage_request_done: 'You handled a request', backstage_request_declined: 'You declined a request',
-        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note', game_given_up: 'Fan gave up a game', backstage_mind_words: 'You changed the Read My Mind words', backstage_spell_words: 'You changed the Spell It Out words', backstage_look: 'You changed your Spell It Out look', backstage_loads: 'You changed the load buttons', backstage_teasers: 'You changed the teaser pictures', backstage_note_sent: 'You sent a message', note_thanks: 'Fan thanked you for your message', backstage_teaser_upload: 'You uploaded a teaser picture', gift_with_code: 'Gift with a wallet code loaded automatically', spoof_load: 'Spoof wallet loaded play money', backstage_count_loss: 'You counted an idle game as a loss',
+        nudge_break: 'Fan answered a nudge: taking a break', nudge_promise: 'Fan answered a nudge: “I’ll do better”', load_reported: 'Fan reported a missing load', backstage_report_credited: 'You added a reported load', backstage_report_declined: 'You couldn’t find a reported load', contacts_set: 'Fan added their usernames', backstage_note_changed: 'You changed a balance note', game_given_up: 'Fan gave up a game', backstage_mind_words: 'You changed the Read My Mind words', backstage_spell_words: 'You changed the Spell It Out words', backstage_look: 'You changed your Spell It Out look', backstage_loads: 'You changed the load buttons', backstage_teasers: 'You changed the teaser pictures', backstage_note_sent: 'You sent a message', backstage_nudge_cancel: 'You canceled a nudge before they saw it', note_thanks: 'Fan thanked you for your message', backstage_teaser_upload: 'You uploaded a teaser picture', gift_with_code: 'Gift with a wallet code loaded automatically', spoof_load: 'Spoof wallet loaded play money', backstage_count_loss: 'You counted an idle game as a loss',
         backstage_spoof_on: 'You made a spoof wallet', backstage_spoof_off: 'You made a spoof wallet normal again', backstage_colors: 'You changed color unlocks',
         backstage_deleted: 'You deleted an unused wallet', wallet_deleted: 'Fan deleted their unused wallet', backstage_recorded_load: 'You recorded a Throne load',
         backstage_edited_load: 'You edited a load', backstage_split: 'You split an entry (Throne + credit)', backstage_ticker: 'You changed the homepage ticker',
@@ -1045,7 +1169,7 @@
       }
       async function loadTeasers() {
         try {
-          var d = await api('GET', 'hq/teasers'); tz = d.items; tzSaved = JSON.stringify(tz); tzStorage = d.storage; tzPaint();
+          var d = await api('GET', 'hq/teasers'); tz = d.items; tzSaved = JSON.stringify(tz); tzStorage = d.storage; tzOriginals = d.originals || []; tzPaint();
           if (!tzStorage) $('tz-note').innerHTML = 'Drag pictures to reorder. &times; removes one. <strong>Uploading needs the Cloudflare picture storage connected</strong> &mdash; until then you can paste links.';
         } catch (x) { $('tz-error').textContent = x.message; }
       }
@@ -1090,6 +1214,13 @@
         $('tz-error').textContent = ''; tz.push({ url: u }); $('tz-link').value = ''; tzPaint();
       });
       $('tz-save').addEventListener('click', function() { tzSave(false); });
+      var tzOriginals = [];
+      $('tz-originals').addEventListener('click', function() {
+        var have = tz.map(function(x) { return x.url; }), add = tzOriginals.filter(function(x) { return have.indexOf(x.url) === -1; });
+        if (!add.length) { $('tz-error').textContent = 'All of your original pictures are already in the list.'; return; }
+        $('tz-error').textContent = ''; tz = tz.concat(add); tzPaint();
+        $('tz-saved').textContent = 'Added ' + add.length + ' back. Press Save order to show them.'; $('tz-saved').style.color = 'var(--accent)';
+      });
 
       // ---------- Site: load buttons ----------
       var ld = [], ldSaved = '';
@@ -1199,9 +1330,12 @@
       var tab = 'overview';
       $('tabs').addEventListener('click', function(e) {
         var b = e.target.closest('button[data-tab]'); if (!b) return;
+        var changed = tab !== b.dataset.tab;
+        if (!changed && tab === 'wallets' && e.isTrusted && !$('wallet-card').hidden) { closeWallet(); return; }
         tab = b.dataset.tab;
         document.querySelectorAll('#tabs button').forEach(function(x) { x.classList.toggle('on', x === b); });
         document.querySelectorAll('[data-panel]').forEach(function(p) { p.hidden = p.dataset.panel !== tab; });
+        setTitle(); if (changed) window.scrollTo(0, 0);
         if (tab === 'money' && !loaded.loads) loadLoads(true);
         if (tab === 'games' && !loaded.games) { loadDrops(true); loadDuels(true); loadBoard(); loaded.games = true; }
         if (tab === 'wallets' && !loaded.wallets) { loadWallets(); loaded.wallets = true; }
@@ -1209,6 +1343,52 @@
         if (tab === 'site' && !loaded.site) { loadTicker(); loadTeasers(); loadLoadButtons(); loadMindWords(); loadSpellWords(); loadLook(); loaded.site = true; }
       });
       var loaded = {};
+      // Big title at the top: a greeting on Home, the page name everywhere else
+      function setTitle() {
+        var b = $('tabs').querySelector('button.on .lbl');
+        $('page-title').textContent = tab === 'overview' ? $('hello').textContent : (b ? b.textContent : '');
+      }
+
+      // Find a wallet (side menu): jumps to Wallets with the search filled in
+      var findTimer;
+      function findWallet() {
+        $('w-q').value = $('side-q').value;
+        if (!$('wallet-card').hidden) closeWallet();
+        if (tab !== 'wallets') $('tabs').querySelector('[data-tab=wallets]').click();
+        if (loaded.wallets) loadWallets();
+      }
+      $('side-find').addEventListener('submit', function(e) { e.preventDefault(); clearTimeout(findTimer); findWallet(); });
+      $('side-q').addEventListener('input', function() { clearTimeout(findTimer); findTimer = setTimeout(findWallet, 350); });
+
+      // Account menu (Gnomie at the bottom of the side menu, or the G at the top on a phone)
+      function toggleAcct(btn) {
+        var m = $('acct-menu');
+        if (!m.hidden) { m.hidden = true; return; }
+        m.hidden = false;
+        var r = btn.getBoundingClientRect();
+        m.style.top = m.style.bottom = m.style.left = m.style.right = '';
+        if (r.top > innerHeight / 2) { m.style.bottom = (innerHeight - r.top + 6) + 'px'; m.style.left = r.left + 'px'; }
+        else { m.style.top = (r.bottom + 6) + 'px'; m.style.right = Math.max(8, innerWidth - r.right) + 'px'; }
+      }
+      $('acct-btn').addEventListener('click', function(e) { e.stopPropagation(); toggleAcct(this); });
+      $('acct-btn-m').addEventListener('click', function(e) { e.stopPropagation(); toggleAcct(this); });
+      document.addEventListener('click', function(e) { if (!$('acct-menu').hidden && !e.target.closest('#acct-menu')) $('acct-menu').hidden = true; });
+      $('acct-menu').addEventListener('click', function(e) { if (e.target.closest('button')) $('acct-menu').hidden = true; });
+
+      // Home: quick actions
+      $('qa').addEventListener('click', function(e) {
+        var b = e.target.closest('[data-qa]'); if (!b) return;
+        function go(t) { $('tabs').querySelector('[data-tab="' + t + '"]').click(); }
+        var k = b.dataset.qa;
+        if (k === 'load') { go('money'); $('rl-code').closest('section').scrollIntoView({ block: 'start' }); $('rl-code').focus({ preventScroll: true }); }
+        if (k === 'msg') { go('wallets'); if (!$('wallet-card').hidden) closeWallet(); $('w-q').focus(); }
+        if (k === 'teasers') { go('site'); setTimeout(function() { $('tz-grid').closest('section').scrollIntoView({ block: 'start' }); }, 60); }
+        if (k === 'ticker') go('site');
+      });
+      $('pop-all').addEventListener('click', function() {
+        var c = $('popular-card'); c.hidden = !c.hidden; this.textContent = c.hidden ? 'See all' : 'Hide';
+        if (!c.hidden) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
 
       // ---------- charts ----------
       var tip = $('tip');
@@ -1396,11 +1576,32 @@
         $('hello').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Gnomie';
         var fav = (s.popular || [])[0];
         var GN = { 'drop-the-ball': 'Drop the Ball', 'dice-duel': 'Dice Duel', 'too-far': 'Don’t Bust (31)', 'spin-the-bottle': 'Spin the Bottle', 'mancala': 'Mancala', 'five-in-a-row': '5 in a Row', 'dots-and-boxes': 'Dots & Boxes', 'read-my-mind': 'Read My Mind', 'sink-my-ship': 'Sink My Ship', 'spell-it-out': 'Spell It Out' };
+        var ser = s.series || [];
+        function sumOf(a, f) { return a.reduce(function(t, d) { return t + f(d); }, 0); }
+        function sentOf(d) { return (d.throne || 0) + (d.youpay || 0); }
+        function playedOf(d) { return d.spent || 0; }
+        function trend(f) {
+          if (ser.length < 14) return '<small class="tr">Pick 30 days or more to compare</small>';
+          var dlt = sumOf(ser.slice(-7), f) - sumOf(ser.slice(-14, -7), f);
+          if (!dlt) return '<small class="tr">Same as last week</small>';
+          return '<small class="tr ' + (dlt > 0 ? 'up' : 'down') + '">' + (dlt > 0 ? '+' : '') + money(dlt) + ' vs last week</small>';
+        }
         $('home-nums').innerHTML =
-          '<div><span>Sent this week</span><b>' + money(credited.d7) + '</b></div>' +
-          '<div><span>Played this week</span><b>' + money((s.series || []).slice(-7).reduce(function(t, d) { return t + (d.spent || 0); }, 0)) + '</b></div>' +
-          '<div><span>Active fans this week</span><b>' + num(m.active_7d) + '</b></div>' +
-          '<div><span>Favorite game</span><b class="small">' + (fav ? esc(GN[fav.game] || fav.game) : '&mdash;') + '</b></div>';
+          '<div><span>Sent this week</span><b>' + money(credited.d7) + '</b>' + trend(sentOf) + '</div>' +
+          '<div><span>Played this week</span><b>' + money(sumOf(ser.slice(-7), playedOf)) + '</b>' + trend(playedOf) + '</div>' +
+          '<div><span>Active fans this week</span><b>' + num(m.active_7d) + '</b><small class="tr">Wallets that did something</small></div>' +
+          '<div><span>Favorite game</span><b class="small">' + (fav ? esc(GN[fav.game] || fav.game) : '&mdash;') + '</b>' + (fav ? '<small class="tr">' + num(fav.plays) + ' plays all time</small>' : '') + '</div>';
+        var pop = (s.popular || []).slice(), byPeriod = pop.some(function(g) { return g.plays_period > 0; });
+        function playsOf(g) { return byPeriod ? (g.plays_period || 0) : (g.plays || 0); }
+        pop.sort(function(a, b) { return playsOf(b) - playsOf(a); });
+        pop = pop.filter(function(g) { return playsOf(g) > 0; }).slice(0, 5);
+        var topMax = Math.max(1, ...pop.map(playsOf));
+        $('top-games').innerHTML = pop.length
+          ? pop.map(function(g) {
+              return '<div class="tg-row"><span class="tg-name">' + esc(GN[g.game] || g.game) + '</span><span class="tg-bar"><i style="width:' + Math.max(3, playsOf(g) / topMax * 100) + '%"></i></span><span class="tg-n">' + num(playsOf(g)) + '</span></div>';
+            }).join('') + '<p class="muted tg-note">' + (byPeriod ? 'Plays in the time period you picked' : 'Plays, all time') + '</p>'
+          : '<p class="muted">No games played yet.</p>';
+        setTitle();
       }
 
       function drawFair() {
@@ -1741,15 +1942,27 @@
         var st = n.response === 'thanks' ? '♡ thanked you ' + when(n.closed_at) : n.response === 'promise' ? '“I’ll do better” ' + when(n.closed_at) : n.response === 'break' ? 'started a break ' + when(n.closed_at) :
                  n.closed_at ? 'closed ' + when(n.closed_at) : n.seen_at ? 'seen ' + when(n.seen_at) : 'not seen yet';
         return '<li><span>' + esc(when(n.created_at)) + ' · ' + (n.kind === 'note' ? '&#128140; ' : '&#128276; ') + (n.message ? esc(n.message) : '<span class="muted">no message</span>') + '</span>' +
-          '<span class="muted" style="white-space:nowrap">' + esc(st) + (n.loadedAfter ? ' · <span class="ok">loaded</span>' : '') + '</span></li>';
+          '<span class="muted" style="white-space:nowrap">' + esc(st) + (n.loadedAfter ? ' · <span class="ok">loaded</span>' : '') +
+          (!n.seen_at && !n.closed_at ? ' <button type="button" class="ghost small danger" data-nudge-cancel="' + n.id + '">Cancel</button>' : '') + '</span></li>';
       }
 
+      var listScroll = 0;
+      function closeWallet() {
+        $('wallet-card').hidden = true; $('wallet-list').hidden = false;
+        window.__openWallet = null;
+        window.scrollTo(0, listScroll);
+      }
       async function showWallet(code) {
+        var fresh = $('wallet-card').hidden || window.__openWallet !== code;
+        if (!$('wallet-list').hidden) listScroll = window.scrollY;
+        window.__openWallet = code;
         var d = await api('GET', 'hq/wallet?code=' + encodeURIComponent(code));
         var w = d.wallet;
         var game = {}; d.perGame.forEach(function(g) { game[g.game] = g; });
+        $('wallet-list').hidden = true;
         $('wallet-card').hidden = false;
         $('wallet').innerHTML =
+          '<button type="button" class="w-back" id="w-close">&larr; All wallets</button>' +
           // ---- header: who, status badges ----
           '<div class="w-head">' +
             '<div class="w-avatar" style="background:' + esc(COLOR_HEX[w.color] || COLOR_HEX.purple) + '">' + esc((w.name || '?').replace(/^[^A-Za-z0-9]+/, '').slice(0, 1).toUpperCase() || '?') + '</div>' +
@@ -1761,7 +1974,6 @@
               (w.locked ? '<span class="badge-pill warn">Locked</span>' : '') +
               '<span class="tag ' + esc(w.status) + '">' + esc(w.status) + '</span>' +
             '</div>' +
-            '<button type="button" class="ghost small" id="w-close" aria-label="Close this wallet view">&times;</button>' +
           '</div>' +
           (w.closeRequestedAt ? '<div class="w-note warn">They asked you to close their wallet on ' + esc(when(w.closeRequestedAt)) + '. They agreed their ' + money(w.balanceCents) + ' balance can’t be withdrawn. Use <strong>Close wallet</strong> when you’re ready.</div>' : '') +
           (w.onBreakSince ? '<div class="w-note break">On a financial break since ' + esc(when(w.onBreakSince)) + '. Nudges are paused. They’ve sent ' + money(w.loadedCents) + ' in total.</div>' : '') +
@@ -1873,7 +2085,7 @@
           try { await api('POST', path, Object.assign({ code: w.code }, body)); showWallet(w.code); refresh(); }
           catch (x) { err.textContent = x.message; }
         }
-        $('w-close').addEventListener('click', function() { $('wallet-card').hidden = true; });
+        $('w-close').addEventListener('click', closeWallet);
         // Action row: tools open below the row, one at a time
         document.querySelectorAll('[data-tool]').forEach(function(b) {
           b.addEventListener('click', function() {
@@ -1896,7 +2108,7 @@
         });
         if ($('delete-go')) $('delete-go').addEventListener('click', async function() {
           if (!await uiConfirm('Delete ' + w.name + '’s wallet for good? It was never used. This can’t be undone.')) return;
-          try { await api('POST', 'hq/delete', { code: w.code }); $('wallet-card').hidden = true; refresh(); } catch (x) { err.textContent = x.message; }
+          try { await api('POST', 'hq/delete', { code: w.code }); closeWallet(); refresh(); } catch (x) { err.textContent = x.message; }
         });
         document.querySelectorAll('[data-hist]').forEach(function(b) {
           b.addEventListener('click', async function() {
@@ -1989,6 +2201,9 @@
           $('nudge-go').textContent = nudgeKind === 'note' ? 'Send message' : 'Send nudge';
           $('nudge-go').disabled = w.status !== 'active' || (nudgeKind === 'nudge' && !!w.onBreakSince);
         }
+        document.querySelectorAll('[data-nudge-cancel]').forEach(function(b) {
+          b.addEventListener('click', function() { act('hq/nudge-cancel', { id: +b.dataset.nudgeCancel }, 'Cancel this before they see it? It disappears from their wallet.'); });
+        });
         $('nudge-kind').addEventListener('click', function(e) { var b = e.target.closest('button[data-k]'); if (!b) return; nudgeKind = b.dataset.k; paintNudgeKind(); });
         $('nudge-go').addEventListener('click', function() {
           act('hq/nudge', { message: $('nudge-msg').value, kind: nudgeKind },
@@ -2015,18 +2230,31 @@
           act('hq/status', { status: 'closed' }, 'Close ' + w.name + '’s wallet?\n\nTheir code stops working, they’re signed out everywhere and they leave the leaderboards.' +
             (w.balanceCents ? ' Their ' + money(w.balanceCents) + ' balance stays on record.' : '') + '\n\nYou can reopen it later.');
         });
-        $('wallet-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (fresh) window.scrollTo(0, 0);
       }
 
       // ---------- refresh ----------
+      // Refresh shows that it's working (spinning arrow) and when it's done
       async function refresh() {
+        var btn = $('refresh'), txt = btn.querySelector('.side-refresh-txt');
+        if (btn.classList.contains('busy')) return;
+        btn.classList.add('busy'); btn.classList.remove('done', 'failed'); txt.textContent = 'Refreshing\u2026';
         try {
-          await loadStats();
-          if (loaded.loads) loadLoads(true);
-          if (loaded.games) { loadDrops(true); loadDuels(true); loadBoard(); }
-          if (loaded.wallets) loadWallets();
-          if (loaded.events) loadEvents(true);
-        } catch (x) { console.error(x); }
+          await Promise.all([
+            loadStats(),
+            loadInbox(),
+            loaded.loads ? loadLoads(true) : null,
+            loaded.games ? Promise.all([loadDrops(true), loadDuels(true), loadBoard()]) : null,
+            loaded.wallets ? loadWallets() : null,
+            loaded.events ? loadEvents(true) : null
+          ]);
+          if (!$('wallet-card').hidden && window.__openWallet) await showWallet(window.__openWallet);
+          btn.classList.add('done'); txt.textContent = '\u2713 Updated';
+        } catch (x) {
+          console.error(x); btn.classList.add('failed'); txt.textContent = 'Couldn\u2019t refresh. Try again';
+        }
+        btn.classList.remove('busy');
+        setTimeout(function() { btn.classList.remove('done', 'failed'); txt.textContent = 'Refresh'; }, 2500);
       }
       $('refresh').addEventListener('click', refresh);
       $('days').addEventListener('change', refresh);

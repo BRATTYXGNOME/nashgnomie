@@ -167,6 +167,8 @@ async function ensureSchema(db) {
   try { await db.prepare('ALTER TABLE nudges ADD COLUMN kind TEXT').run(); } catch (e) {}
   // When the fan confirmed they saved their wallet code (a reminder shows until then)
   try { await db.prepare('ALTER TABLE wallets ADD COLUMN code_saved_at INTEGER').run(); } catch (e) {}
+  // Throne's order number for a load, when Throne includes one in its notice
+  try { await db.prepare('ALTER TABLE loads ADD COLUMN order_ref TEXT').run(); } catch (e) {}
   await carryOverOldAdjustments(db);
   schemaReady = true;
 }
@@ -497,7 +499,7 @@ const ADJ_LABEL = { spoof: 'Load added', credit: 'Credit from Gnomie', load: 'Lo
 async function buildStatement(db, w, forFan) {
   const id = w.id, limit = 1000;
   const [loads, adjs, drops, duels, toofar, mancala, fiverow, dotsbox, mindread, shipgame, spellgame] = await Promise.all([
-    db.prepare("SELECT id, platform, amount_cents, external_id, item_name, created_at, updated_at FROM loads WHERE wallet_id = ? AND status = 'credited' ORDER BY id DESC LIMIT ?").bind(id, limit).all(),
+    db.prepare("SELECT id, platform, amount_cents, external_id, item_name, order_ref, created_at, updated_at FROM loads WHERE wallet_id = ? AND status = 'credited' ORDER BY id DESC LIMIT ?").bind(id, limit).all(),
     db.prepare('SELECT * FROM adjustments WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
     db.prepare('SELECT id, game, board, path, amount_cents, created_at FROM drops WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
     db.prepare('SELECT id, amount_cents, held_cents, status, outcome, paid_cents, created_at, finished_at FROM duels WHERE wallet_id = ? ORDER BY id DESC LIMIT ?').bind(id, limit).all(),
@@ -515,7 +517,7 @@ async function buildStatement(db, w, forFan) {
     const order = /^manual:([^:]+):/.exec(l.external_id || '');
     const fix = l.item_name === 'correction';
     add('l' + l.id, l.updated_at || l.created_at, (fix ? 'Correction: ' : '') + 'Load from ' + (l.platform === 'youpay' ? 'YouPay' : 'Throne'),
-      order && !/^\d{13}$/.test(order[1]) ? 'Order #' + order[1] : '', l.amount_cents, forFan ? null : { loadId: l.id, order: order ? order[1] : '' });
+      order && !/^\d{13}$/.test(order[1]) ? 'Order #' + order[1] : l.order_ref ? 'Order #' + l.order_ref : '', l.amount_cents, forFan ? null : { loadId: l.id, order: order ? order[1] : (l.order_ref || '') });
   }
   for (const a of adjs.results) {
     const show = !!a.public;
@@ -1756,7 +1758,7 @@ routes['GET media'] = async (env, request, url) => {
 };
 routes['GET hq/teasers'] = async (env, request) => {
   await needHQ(env, request);
-  return json({ items: await siteGet(env.DB, 'teasers', DEFAULT_TEASERS), storage: !!env.TEASERS });
+  return json({ items: await siteGet(env.DB, 'teasers', DEFAULT_TEASERS), storage: !!env.TEASERS, originals: DEFAULT_TEASERS });
 };
 // Upload one picture (the raw file is the request body). Returns its new address.
 routes['POST hq/teaser-upload'] = async (env, request) => {
@@ -1937,11 +1939,11 @@ async function recordLoad(env, request, load) {
   if (load.gift && !wallet) return 'not_a_load';
   const ok = wallet && Number.isInteger(load.amountCents) && load.amountCents > 0;
   const ins = await db.prepare(
-    `INSERT OR IGNORE INTO loads (platform, external_id, wallet_id, amount_cents, paid_cents, currency, gifter, message, item_name, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT OR IGNORE INTO loads (platform, external_id, wallet_id, amount_cents, paid_cents, currency, gifter, message, item_name, status, order_ref, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(load.platform, load.externalId, wallet ? wallet.id : null, load.amountCents || 0, load.paidCents ?? null,
          load.currency || null, (load.gifter || '').slice(0, 100), (load.message || '').slice(0, 1000),
-         (load.itemName || '').slice(0, 200), ok ? 'credited' : 'needs_review', now, now).run();
+         (load.itemName || '').slice(0, 200), ok ? 'credited' : 'needs_review', load.orderRef || null, now, now).run();
   const label = (load.platform === 'youpay' ? 'YouPay' : 'Throne') + ' ' + (load.amountCents ? money(load.amountCents) : '(amount unclear)') + (load.gifter ? ' from ' + load.gifter : '');
   if (ins.meta.changes !== 1) { await logEvent(env, request, 'load_duplicate', wallet ? wallet.id : null, label + ' (already counted)'); return 'duplicate'; }
   if (!ok) { await logEvent(env, request, 'load_needs_review', wallet ? wallet.id : null, label + (wallet ? ' (amount unclear)' : ' (no wallet code found)')); return 'needs_review'; }
@@ -1962,7 +1964,10 @@ routes['POST webhooks/throne'] = async (env, request) => {
   if (raw.length > 100000) return json({ error: 'too big' }, 413);
   // Record every arrival before any checks, so Backstage shows whether Throne got through
   const h = request.headers;
-  await logEvent(env, request, 'notice_received', null, 'Throne · ' + raw.length + ' bytes · timestamp ' + (h.get('x-signature-timestamp') || 'missing') +
+  // Which fields Throne sent (names only, no values): shows whether an order number comes through
+  let fieldNames = '';
+  try { const pj = JSON.parse(raw); fieldNames = ' · fields: ' + Object.keys(pj || {}).join(', ') + (pj && pj.data ? ' / data: ' + Object.keys(pj.data).join(', ') : ''); } catch (e) {}
+  await logEvent(env, request, 'notice_received', null, 'Throne · ' + raw.length + ' bytes' + fieldNames + ' · timestamp ' + (h.get('x-signature-timestamp') || 'missing') +
     ' · signature ' + ((h.get('x-signature-ed25519') || '').length || 'missing') + ' chars · ' + (h.get('user-agent') || 'no user agent').slice(0, 60));
   let genuine = false;
   try { genuine = await verifyThrone(request, raw, env.THRONE_TEST_PUBLIC_KEY); }
@@ -1982,7 +1987,7 @@ routes['POST webhooks/throne'] = async (env, request) => {
       const held = await recordLoad(env, request, {
         platform: 'throne', externalId: t.eventId || ('raw:' + await sha256(raw)),
         amountCents: t.paidCents, paidCents: t.paidCents, currency: t.currency,
-        gifter: t.gifter, message: t.message, itemName: t.itemName, gift: true
+        gifter: t.gifter, message: t.message, itemName: t.itemName, orderRef: t.orderRef, gift: true
       });
       if (held !== 'not_a_load') return json({ ok: true, status: held });
     }
@@ -1992,7 +1997,7 @@ routes['POST webhooks/throne'] = async (env, request) => {
   const status = await recordLoad(env, request, {
     platform: 'throne', externalId: t.eventId || ('raw:' + await sha256(raw)),
     amountCents: t.amountCents, paidCents: t.paidCents, currency: t.currency,
-    gifter: t.gifter, message: t.message, itemName: t.itemName
+    gifter: t.gifter, message: t.message, itemName: t.itemName, orderRef: t.orderRef
   });
   return json({ ok: true, status });
 };
@@ -2426,26 +2431,42 @@ routes['GET hq/stats'] = async (env, request, url) => {
   dailyDrops.forEach(r => { const s = series[r.day]; if (s) { s.drops += r.n; s.spent += r.cents; } });
   dailyDuels.forEach(r => { const s = series[r.day]; if (s) { s.duels += r.n; s.spent += r.cents; } });
   dailyTooFar.forEach(r => { const s = series[r.day]; if (s) { s.spent += r.cents; } });
+  // The newer games count toward "Spent in games per day" too
+  const moreDaily = await Promise.all([
+    ['mancala', 'finished_at', "status = 'done'"], ['fiverow', 'finished_at', "status = 'done'"], ['dotsbox', 'finished_at', "status = 'done'"],
+    ['shipgame', 'finished_at', "status = 'done'"], ['spellgame', 'finished_at', "status = 'done'"], ['mindread', 'COALESCE(finished_at, created_at)', 'tries > 0']
+  ].map(([table, at, cond]) => db.prepare(
+    `SELECT CAST((${at} - ?) / ${DAY} AS INTEGER) AS day, COALESCE(SUM(paid_cents), 0) AS cents FROM ${table}
+     WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs) AND ${cond} AND ${at} >= ? GROUP BY day`
+  ).bind(since, since).all()));
+  moreDaily.forEach(res => res.results.forEach(r => { const s = series[r.day]; if (s) s.spent += r.cents; }));
   dailyWallets.forEach(r => { const s = series[r.day]; if (s) s.wallets += r.n; });
 
   const nm = r => ({ code: r.display_code, name: r.name || ('Anonymous #' + r.anon_number), cents: r.cents });
   const closeReqs = (await db.prepare('SELECT COUNT(*) AS n FROM close_requests').first()).n;
   const loadReports = (await db.prepare("SELECT COUNT(*) AS n FROM load_reports WHERE status = 'open'").first()).n;
   // Most popular games: plays, players and total, in the chosen period and all time
-  const popular = (await db.prepare(
-    `SELECT game, COUNT(*) AS plays, COUNT(DISTINCT wallet_id) AS players, COALESCE(SUM(cents), 0) AS cents,
-            SUM(at >= ?) AS plays_period, COALESCE(SUM(CASE WHEN at >= ? THEN cents END), 0) AS cents_period
-     FROM (SELECT game, wallet_id, amount_cents AS cents, created_at AS at FROM (SELECT * FROM drops WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS drops
-           UNION ALL SELECT 'dice-duel', wallet_id, paid_cents, finished_at FROM (SELECT * FROM duels WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS duels WHERE status = 'done'
-           UNION ALL SELECT 'too-far', wallet_id, paid_cents, finished_at FROM (SELECT * FROM toofar WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS toofar WHERE status = 'done'
-           UNION ALL SELECT 'mancala', wallet_id, paid_cents, finished_at FROM (SELECT * FROM mancala WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS mancala WHERE status = 'done'
-           UNION ALL SELECT 'five-in-a-row', wallet_id, paid_cents, finished_at FROM (SELECT * FROM fiverow WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS fiverow WHERE status = 'done'
-           UNION ALL SELECT 'dots-and-boxes', wallet_id, paid_cents, finished_at FROM (SELECT * FROM dotsbox WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS dotsbox WHERE status = 'done'
-           UNION ALL SELECT 'read-my-mind', wallet_id, paid_cents, COALESCE(finished_at, created_at) FROM (SELECT * FROM mindread WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS mindread WHERE tries > 0
-           UNION ALL SELECT 'sink-my-ship', wallet_id, paid_cents, finished_at FROM (SELECT * FROM shipgame WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS shipgame WHERE status = 'done'
-           UNION ALL SELECT 'spell-it-out', wallet_id, paid_cents, finished_at FROM (SELECT * FROM spellgame WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)) AS spellgame WHERE status = 'done')
-     GROUP BY game ORDER BY plays_period DESC, plays DESC`
-  ).bind(since, since).all()).results;
+  // Most popular games: one small question per game, added up here. (The database
+  // refuses one giant combined question once there are this many games.)
+  const GAME_SOURCES = [
+    ["game", "drops", "amount_cents", "created_at", ""],
+    ["'dice-duel'", "duels", "paid_cents", "finished_at", "status = 'done'"],
+    ["'too-far'", "toofar", "paid_cents", "finished_at", "status = 'done'"],
+    ["'mancala'", "mancala", "paid_cents", "finished_at", "status = 'done'"],
+    ["'five-in-a-row'", "fiverow", "paid_cents", "finished_at", "status = 'done'"],
+    ["'dots-and-boxes'", "dotsbox", "paid_cents", "finished_at", "status = 'done'"],
+    ["'read-my-mind'", "mindread", "paid_cents", "COALESCE(finished_at, created_at)", "tries > 0"],
+    ["'sink-my-ship'", "shipgame", "paid_cents", "finished_at", "status = 'done'"],
+    ["'spell-it-out'", "spellgame", "paid_cents", "finished_at", "status = 'done'"]
+  ];
+  const perGame = await Promise.all(GAME_SOURCES.map(([g, table, cents, at, cond]) => db.prepare(
+    `SELECT ${g} AS game, COUNT(*) AS plays, COALESCE(SUM(${cents}), 0) AS cents, SUM(${at} >= ?) AS plays_period,
+            COALESCE(SUM(CASE WHEN ${at} >= ? THEN ${cents} END), 0) AS cents_period, GROUP_CONCAT(DISTINCT wallet_id) AS who
+     FROM ${table} WHERE wallet_id NOT IN (SELECT wallet_id FROM spoofs)${cond ? ' AND ' + cond : ''} GROUP BY ${g}`
+  ).bind(since, since).all()));
+  const popular = [].concat(...perGame.map(r => r.results)).filter(r => r.plays > 0).map(r => ({
+    game: r.game, plays: r.plays, players: r.who ? String(r.who).split(',').length : 0, cents: r.cents, plays_period: r.plays_period || 0, cents_period: r.cents_period || 0
+  })).sort((a, b) => (b.plays_period - a.plays_period) || (b.plays - a.plays));
   const fanRequests = (await db.prepare("SELECT COUNT(*) AS n FROM fan_requests WHERE status = 'open'").first()).n;
   return json({
     generatedAt: now, days, wallets, money, loads: loadsBy, closeRequests: closeReqs, loadReports, fanRequests, popular,
@@ -2524,6 +2545,14 @@ routes['GET hq/events'] = async (env, request, url) => {
     `SELECT a.*, w.display_code, w.name, w.anon_number FROM admin_log a LEFT JOIN wallets w ON w.id = a.wallet_id
      ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY a.id DESC LIMIT ?`
   ).bind(...b, clampInt(q.get('limit'), 1, 500, 100)).all()).results;
+  // Nudge/message events were logged as "Nudge #6" / "Message #6": show the actual words instead
+  const ids = [...new Set(rows.map(r => /^(?:Nudge|Message) #(\d+)$/.exec(r.detail || '')).filter(Boolean).map(m => +m[1]))];
+  if (ids.length) {
+    const msgs = {};
+    (await env.DB.prepare(`SELECT id, message, kind FROM nudges WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all()).results
+      .forEach(n => { msgs[n.id] = (n.kind === 'note' ? '\u{1F48C} ' : '\u{1F514} ') + (n.message || 'Your wallet will be closed if it stays at $0! Add funds to keep your wallet.'); });
+    rows.forEach(r => { const m = /^(?:Nudge|Message) #(\d+)$/.exec(r.detail || ''); if (m && msgs[+m[1]]) r.detail = msgs[+m[1]]; });
+  }
   return json({ rows });
 };
 
@@ -2938,6 +2967,18 @@ routes['POST hq/nudge'] = async (env, request) => {
   if (kind === 'note' && !message) throw new Oops('Write the message first.');
   await env.DB.prepare('INSERT INTO nudges (wallet_id, message, kind, created_at) VALUES (?, ?, ?, ?)').bind(w.id, message, kind, Date.now()).run();
   await logEvent(env, request, kind === 'note' ? 'backstage_note_sent' : 'backstage_nudge', w.id, message || '(no message)');
+  return json({ ok: true });
+};
+
+// Take back a nudge or message before they've seen it
+routes['POST hq/nudge-cancel'] = async (env, request) => {
+  await needHQ(env, request);
+  const b = await readJson(request);
+  const w = await hqWallet(env.DB, b.code);
+  const was = await env.DB.prepare('SELECT message FROM nudges WHERE id = ? AND wallet_id = ?').bind(b.id, w.id).first();
+  const r = await env.DB.prepare('DELETE FROM nudges WHERE id = ? AND wallet_id = ? AND seen_at IS NULL AND closed_at IS NULL').bind(b.id, w.id).run();
+  if (r.meta.changes !== 1) throw new Oops('They already saw it, so it can\u2019t be canceled.');
+  await logEvent(env, request, 'backstage_nudge_cancel', w.id, 'Canceled: ' + ((was && was.message) || 'nudge'));
   return json({ ok: true });
 };
 
